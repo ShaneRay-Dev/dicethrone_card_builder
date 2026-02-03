@@ -194,10 +194,10 @@
   // --------------------------
   // Types & subtypes
   // --------------------------
-  const CARD_TYPES = ["Roll Phase", "Ability Upgrade", "Other"];
+  const CARD_TYPES = ["Roll Phase", "Hero Upgrade", "Other"];
   const SUBTYPES = {
-    "Roll Phase": ["Blue", "Red", "Orange"],
-    "Ability Upgrade": ["Standard Ability", "Passive Ability", "Defensive Ability"],
+    "Roll Phase": ["Main Phase", "Instant", "Roll Phase"],
+    "Hero Upgrade": ["Standard Ability", "Passive Ability", "Defensive Ability"],
     "Other": []
   };
 
@@ -255,6 +255,9 @@
   const referenceImg = new Image();
   // preload a reference image from the project's Assets/Reference folder (if present)
   referenceImg.src = "Assets/Reference/Roll_Phase_Main_Refernece.png";
+  let referenceLoaded = false;
+  referenceImg.onload = () => { referenceLoaded = true; try { requestRender(); } catch (e) { /* ignore if not ready */ } };
+  referenceImg.onerror = () => { referenceLoaded = false; };
 
   // Current state
   const state = {
@@ -382,10 +385,10 @@
     }
 
     // Reference overlay (draw on top of border if enabled)
-    if (state.showReference && referenceImg && referenceImg.complete && referenceImg.naturalWidth > 0) {
+    if (state.showReference && referenceLoaded) {
       mctx.save();
       mctx.globalAlpha = 0.65; // semi-transparent so underlying layers remain visible
-      mctx.drawImage(referenceImg, 0, 0, BLEED.w, BLEED.h);
+      try { mctx.drawImage(referenceImg, 0, 0, BLEED.w, BLEED.h); } catch (e) { /* ignore draw errors */ }
       mctx.restore();
       elStatus.textContent = elStatus.textContent + ` Reference overlay drawn.`;
     }
@@ -424,14 +427,18 @@
   // --------------------------
   function loadBorderForCurrentSubtype(file) {
     const img = new Image();
+    const url = URL.createObjectURL(file);
     img.onload = () => {
       borderImages.set(state.subType, img);
       renderPreview();
+      // revoke object URL after image is loaded (give browser a tick)
+      setTimeout(() => { try { URL.revokeObjectURL(url); } catch (e) {} }, 500);
     };
     img.onerror = () => {
+      try { URL.revokeObjectURL(url); } catch (e) {}
       alert("Failed to load image. Try a PNG with transparency.");
     };
-    img.src = URL.createObjectURL(file);
+    img.src = url;
   }
 
   // --------------------------
@@ -474,10 +481,12 @@ SAFE:  ${SAFE.w}×${SAFE.h}px (2.05"×3.30") — keep title/icons/text inside`;
   // --------------------------
   // Event wiring
   // --------------------------
-  let renderTimer = null;
+  let pendingRender = false;
   function requestRender() {
-    if (renderTimer) clearTimeout(renderTimer);
-    renderTimer = setTimeout(renderPreview, 25);
+    if (pendingRender) return;
+    pendingRender = true;
+    // use rAF to coalesce rapid updates and keep UI responsive
+    requestAnimationFrame(() => { try { renderPreview(); } finally { pendingRender = false; } });
   }
 
   elTitle.addEventListener("input", () => { state.title = elTitle.value; requestRender(); });
