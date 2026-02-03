@@ -151,6 +151,7 @@
       <div class="checks">
         <label class="check"><input id="showGuides" type="checkbox" checked /> Show guides in preview</label>
         <label class="check"><input id="exportGuides" type="checkbox" /> Export guides (usually OFF)</label>
+        <label class="check"><input id="showReference" type="checkbox" /> Show reference overlay</label>
       </div>
 
       <label>Border Layer (PNG, transparent recommended)</label>
@@ -232,6 +233,7 @@
   const elFont = document.getElementById("fontSel");
   const elShowGuides = document.getElementById("showGuides");
   const elExportGuides = document.getElementById("exportGuides");
+  const elShowReference = document.getElementById("showReference");
   const elBorderFile = document.getElementById("borderFile");
   const elExportBtn = document.getElementById("exportBtn");
   const elRulesText = document.getElementById("rulesText");
@@ -249,6 +251,11 @@
   // Border image storage (per subtype)
   const borderImages = new Map(); // key=subtype, value=Image()
 
+  // Reference overlay image (single)
+  const referenceImg = new Image();
+  // preload a reference image from the project's Assets/Reference folder (if present)
+  referenceImg.src = "Assets/Reference/Roll_Phase_Main_Refernece.png";
+
   // Current state
   const state = {
     title: elTitle.value,
@@ -257,6 +264,7 @@
     font: "Segoe UI",
     showGuides: true,
     exportGuides: false,
+    showReference: false,
   };
 
   // --------------------------
@@ -373,6 +381,15 @@
       elStatus.textContent = `No border loaded for "${state.subType}". Choose a border PNG file to layer on top.`;
     }
 
+    // Reference overlay (draw on top of border if enabled)
+    if (state.showReference && referenceImg && referenceImg.complete && referenceImg.naturalWidth > 0) {
+      mctx.save();
+      mctx.globalAlpha = 0.65; // semi-transparent so underlying layers remain visible
+      mctx.drawImage(referenceImg, 0, 0, BLEED.w, BLEED.h);
+      mctx.restore();
+      elStatus.textContent = elStatus.textContent + ` Reference overlay drawn.`;
+    }
+
     // Guides last
     if (includeGuides) drawGuides(mctx);
   }
@@ -426,6 +443,8 @@
   // Default selections
   elCardType.value = state.cardType;
   elFont.value = state.font;
+  // reference checkbox follows state
+  elShowReference.checked = state.showReference;
 
   function syncSubtypes() {
     const opts = SUBTYPES[state.cardType] || [];
@@ -477,6 +496,7 @@ SAFE:  ${SAFE.w}×${SAFE.h}px (2.05"×3.30") — keep title/icons/text inside`;
 
   elShowGuides.addEventListener("change", () => { state.showGuides = elShowGuides.checked; requestRender(); });
   elExportGuides.addEventListener("change", () => { state.exportGuides = elExportGuides.checked; });
+  elShowReference.addEventListener("change", () => { state.showReference = elShowReference.checked; requestRender(); });
 
   elBorderFile.addEventListener("change", () => {
     const file = elBorderFile.files?.[0];
