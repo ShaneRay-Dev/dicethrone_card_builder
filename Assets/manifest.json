@@ -1,0 +1,54 @@
+{
+  "Hero Upgrade": {
+    "Ability Upgrade": {
+      "border": "Assets/Action Cards/Instant/Instant Action Frame.png",
+      "backgroundLower": "Assets/Action Cards/Instant/Instant Action background lower.png",
+      "backgroundUpper": "Assets/Action Cards/Instant/Instant Action background upper.png",
+      "imageFrame": "Assets/Action Cards/Instant/Instant Action Image Frame.png",
+      "panelLower": "Assets/Action Cards/Instant/Instant Action Panel Lower Interior.png",
+      "panelUpper": "Assets/Action Cards/Instant/Instant Action Panel Upper Interior.png"
+    },
+    "Defense Upgrade": {
+      "border": "Assets/Action Cards/Instant/Instant Action Frame.png",
+      "backgroundLower": "Assets/Action Cards/Instant/Instant Action background lower.png",
+      "backgroundUpper": "Assets/Action Cards/Instant/Instant Action background upper.png",
+      "imageFrame": "Assets/Action Cards/Instant/Instant Action Image Frame.png",
+      "panelLower": "Assets/Action Cards/Instant/Instant Action Panel Lower Interior.png",
+      "panelUpper": "Assets/Action Cards/Instant/Instant Action Panel Upper Interior.png"
+    },
+    "Passive Upgrade": {
+      "border": "Assets/Action Cards/Instant/Instant Action Frame.png",
+      "backgroundLower": "Assets/Action Cards/Instant/Instant Action background lower.png",
+      "backgroundUpper": "Assets/Action Cards/Instant/Instant Action background upper.png",
+      "imageFrame": "Assets/Action Cards/Instant/Instant Action Image Frame.png",
+      "panelLower": "Assets/Action Cards/Instant/Instant Action Panel Lower Interior.png",
+      "panelUpper": "Assets/Action Cards/Instant/Instant Action Panel Upper Interior.png"
+    }
+  },
+  "Action Cards": {
+    "Main Phase": {
+      "border": "Assets/Action Cards/Instant/Instant Action Frame.png",
+      "backgroundLower": "Assets/Action Cards/Instant/Instant Action background lower.png",
+      "backgroundUpper": "Assets/Action Cards/Instant/Instant Action background upper.png",
+      "imageFrame": "Assets/Action Cards/Instant/Instant Action Image Frame.png",
+      "panelLower": "Assets/Action Cards/Instant/Instant Action Panel Lower Interior.png",
+      "panelUpper": "Assets/Action Cards/Instant/Instant Action Panel Upper Interior.png"
+    },
+    "Instant": {
+      "border": "Assets/Action Cards/Instant/Instant Action Frame.png",
+      "backgroundLower": "Assets/Action Cards/Instant/Instant Action background lower.png",
+      "backgroundUpper": "Assets/Action Cards/Instant/Instant Action background upper.png",
+      "imageFrame": "Assets/Action Cards/Instant/Instant Action Image Frame.png",
+      "panelLower": "Assets/Action Cards/Instant/Instant Action Panel Lower Interior.png",
+      "panelUpper": "Assets/Action Cards/Instant/Instant Action Panel Upper Interior.png"
+    },
+    "Roll Phase": {
+      "border": "Assets/Action Cards/Instant/Instant Action Frame.png",
+      "backgroundLower": "Assets/Action Cards/Instant/Instant Action background lower.png",
+      "backgroundUpper": "Assets/Action Cards/Instant/Instant Action background upper.png",
+      "imageFrame": "Assets/Action Cards/Instant/Instant Action Image Frame.png",
+      "panelLower": "Assets/Action Cards/Instant/Instant Action Panel Lower Interior.png",
+      "panelUpper": "Assets/Action Cards/Instant/Instant Action Panel Upper Interior.png"
+    }
+  }
+}

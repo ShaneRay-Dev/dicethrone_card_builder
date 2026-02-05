@@ -1,0 +1,397 @@
+/* Preview Panel */
+.preview-panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  overflow: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.preview-container {
+  --zoom-scale: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  flex: 1;
+  gap: 24px;
+  /* Allow panels to stay side-by-side and scroll when zoomed large */
+  overflow-x: auto;
+  padding-bottom: 18px;
+}
+
+.preview-container.side-by-side {
+  gap: 24px;
+  justify-content: center;
+}
+
+/* removed pseudo-element to avoid duplicate panel; use real .reference-side element instead */
+.preview-container.side-by-side::after {
+  display: none;
+}
+
+/* Reference side element (used instead of pseudo-element for reliability) */
+.reference-side {
+  display: none;
+  width: calc(225px * var(--zoom-scale));
+  height: calc(350px * var(--zoom-scale));
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  border: calc(4px * var(--zoom-scale)) solid #4a7ba7;
+  border-radius: calc(8px * var(--zoom-scale));
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  flex: 0 0 auto;
+}
+
+.preview-container.side-by-side .reference-side {
+  display: block;
+}
+
+/* removed transform-based scaling (use computed width/height via --zoom-scale instead) */
+
+/* Card Preview - Bridge Size (2.25" x 3.5" / Cut Area) */
+.card-preview {
+  /* base cut size 225x350 scaled by --zoom-scale to keep layout flow */
+  width: calc(225px * var(--zoom-scale));
+  height: calc(350px * var(--zoom-scale));
+  perspective: 1000px;
+  position: relative;
+  transition: width 0.18s ease-out, height 0.18s ease-out;
+  /* Bleed area padding (2.49" x 3.74") approximated */
+  padding: calc(12px * var(--zoom-scale));
+  box-sizing: border-box;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.05) 100%);
+  flex: 0 0 auto;
+  overflow: hidden;
+}
+
+/* Card Layer Base */
+.card-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Layer z-index stack (bottom to top) */
+.card-layer-bleed { z-index: 1; }
+.card-layer-artwork { z-index: 2; }
+.card-layer-bg-lower { z-index: 3; }
+.card-layer-bg-upper { z-index: 4; }
+.card-layer-image-frame { z-index: 5; }
+.card-layer-frame { z-index: 6; }
+.card-layer-panel-lower { z-index: 7; }
+.card-layer-panel-upper { z-index: 8; }
+
+/* Bleed area (extends to edges) */
+.card-preview::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 1px dashed rgba(100, 150, 200, 0.3);
+  pointer-events: none;
+  border-radius: 2px;
+}
+
+/* Safe area guide (2.05" x 3.3") = 205x330px */
+.card-preview::after {
+  content: '';
+  position: absolute;
+  top: 22px;
+  left: 22px;
+  right: 22px;
+  bottom: 22px;
+  border: 1px dashed rgba(150, 200, 255, 0.2);
+  pointer-events: none;
+  border-radius: 1px;
+}
+
+/* Bleed layer styling */
+.card-layer-bleed {
+  background-color: var(--bleed-color, #ffffff);
+  pointer-events: none;
+  transition: background-color 0.12s linear;
+}
+
+/* Draggable and Editable Card Title */
+.card-title-text {
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  padding: 8px 12px;
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: move;
+  user-select: none;
+  z-index: 10;
+  outline: none;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  transition: background 0.12s ease, border-color 0.12s ease;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.card-title-text:focus {
+  background: rgba(0, 0, 0, 0.6);
+  border-color: rgba(255, 255, 255, 0.6);
+  cursor: text;
+}
+
+.card-title-text.dragging {
+  opacity: 0.8;
+  background: rgba(74, 123, 167, 0.5);
+}
+
+/* Top Left Corner - Cost & Phase */
+.card-top-corner {
+  position: absolute;
+  top: 36px;
+  left: 8px;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  display: none;
+}
+
+.cost-badge {
+  background: #3a5a8a;
+  border: 2px solid white;
+  border-radius: 6px;
+  padding: 4px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 40px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.cost-icon {
+  font-size: 12px;
+}
+
+.cost-value {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.phase-icon {
+  width: 32px;
+  height: 32px;
+  background: #3a5a8a;
+  border: 2px solid white;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* Right Side Label (Vertical) */
+.card-right-label {
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%) rotate(90deg);
+  z-index: 14;
+  background: #4a7ba7;
+  padding: 4px 20px;
+  border: 2px solid white;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  transform-origin: center;
+}
+
+/* Card Artwork Layer */
+.card-layer-artwork {
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.art-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+/* Card Text Section */
+.card-text-section {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: calc(10px * var(--zoom-scale)) calc(12px * var(--zoom-scale));
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.card-text-section p {
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.3;
+  text-align: center;
+  color: #ffffff;
+}
+
+/* Reference Overlay */
+.reference-side {
+  display: none;
+  width: calc(225px * var(--zoom-scale));
+  height: calc(350px * var(--zoom-scale));
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  border: calc(4px * var(--zoom-scale)) solid #4a7ba7;
+  border-radius: calc(8px * var(--zoom-scale));
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  transition: width 0.18s ease-out, height 0.18s ease-out, border 0.18s ease-out;
+}
+
+.preview-container.side-by-side .reference-side {
+  display: block;
+}
+
+.stat-box {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  padding: 6px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  backdrop-filter: blur(10px);
+}
+
+.stat-label {
+  font-size: 9px;
+  font-weight: 700;
+  opacity: 0.8;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.stat-value {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* Card Ability Section */
+.card-ability {
+  z-index: 2;
+  position: relative;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 6px;
+  padding: 6px;
+  flex: 0 1 auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ability-label {
+  font-size: 9px;
+  font-weight: 700;
+  opacity: 0.7;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.ability-text {
+  font-size: 10px;
+  line-height: 1.3;
+  opacity: 0.95;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Card Footer */
+.card-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  z-index: 2;
+  position: relative;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  opacity: 0.9;
+}
+
+/* Rarity Color Variations */
+.card-inner.common {
+  background: linear-gradient(135deg, #808080 0%, #696969 100%);
+}
+
+.card-inner.uncommon {
+  background: linear-gradient(135deg, #4ecdc4 0%, #3db8b0 100%);
+}
+
+.card-inner.rare {
+  background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+}
+
+.card-inner.legendary {
+  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .preview-panel {
+    padding: 20px;
+  }
+
+  .card-preview {
+    width: 240px;
+    height: 340px;
+  }
+
+  .card-header h3 {
+    font-size: 18px;
+  }
+
+  .stat-value {
+    font-size: 18px;
+  }
+}

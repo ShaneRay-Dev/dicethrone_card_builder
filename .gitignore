@@ -1,0 +1,41 @@
+# Dice Throne Card Builder
+# Git ignore file
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Editor
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build/dist
+dist/
+build/
+*.bundle.js
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+
+# IDE
+*.iml
+*.iws

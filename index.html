@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dice Throne Creator</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/editor-panel.css">
+  <link rel="stylesheet" href="css/preview.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <h1>Dice Throne Creator</h1>
+      <div class="header-actions">
+        <button id="btn-new" class="btn btn-primary">New Card</button>
+        <button id="btn-save" class="btn btn-primary">Save</button>
+        <button id="btn-load" class="btn btn-secondary">Load</button>
+        <button id="btn-export" class="btn btn-secondary">Export</button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+      <!-- Left Panel: Editor -->
+      <aside class="editor-panel">
+        <div class="panel-section">
+          <h2>Card Properties</h2>
+          
+          <div class="form-group">
+            <label for="cardType">Card Type</label>
+            <select id="cardType">
+              <option>Hero Upgrade</option>
+              <option selected>Action Cards</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="cardSubType" id="cardSubTypeLabel">Card Phase</label>
+            <select id="cardSubType">
+              <option>Main Phase</option>
+              <option>Instant</option>
+              <option>Roll Phase</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="cardName">Card Name</label>
+            <input type="text" id="cardName" placeholder="Enter card name" maxlength="50">
+          </div>
+
+          <div class="form-group">
+            <label for="cardDescription">Description</label>
+            <textarea id="cardDescription" placeholder="Card description" rows="4" maxlength="200"></textarea>
+          </div>
+
+        </div>
+
+        <!-- Image Upload Section -->
+        <div class="panel-section">
+          <h2>Card Art</h2>
+          <div class="form-group">
+            <label for="imageUpload">Upload Image</label>
+            <input type="file" id="imageUpload" accept="image/*" class="file-input">
+            <label for="imageUpload" class="upload-label" style="margin: 0; cursor: pointer;">
+              Click to upload or drag and drop
+            </label>
+            <small class="help-text">Recommended: 600x800px (JPG, PNG, WebP)</small>
+          </div>
+          <div id="imagePreview" class="image-preview-small"></div>
+          <button id="btn-clear-image" class="btn btn-small btn-danger" style="display: none; margin-top: 8px;">Clear Image</button>
+        </div>
+
+        <!-- Templates removed -->
+
+        <!-- Layers -->
+        <div class="panel-section">
+          <h2>Layers</h2>
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="toggleBleedLayer" />
+              Show Bleed Layer
+            </label>
+          </div>
+          <div class="form-group">
+            <label for="bleedColor">Bleed Color</label>
+            <input type="color" id="bleedColor" value="#ffffff">
+            <small class="help-text">This fills the bleed area behind the card. Follow the design guide for print-safe colors.</small>
+          </div>
+          <div class="form-group layers-group">
+            <h3>Card Elements</h3>
+            <label><input type="checkbox" id="toggleBorder" /> Border</label>
+            <label><input type="checkbox" id="toggleTitleBar" /> Title Bar</label>
+            <label><input type="checkbox" id="toggleArtwork" /> Artwork</label>
+            <label><input type="checkbox" id="toggleBottomText" /> Bottom Text</label>
+          </div>
+        </div>
+
+        <!-- Reference Overlay -->
+        <div class="panel-section">
+          <h2>Reference</h2>
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="showReference" />
+              Show Reference Overlay
+            </label>
+          </div>
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="showReferenceSideBySide" />
+              Show Reference Side-by-Side
+            </label>
+          </div>
+          <div class="form-group">
+            <label for="referenceImage">Reference Image</label>
+            <input type="file" id="referenceImage" accept="image/*" class="file-input">
+            <label for="referenceImage" class="upload-label" style="margin: 0; cursor: pointer;">
+              Upload Reference Image
+            </label>
+          </div>
+          <div id="referencePreview" class="image-preview-small"></div>
+        </div>
+      </aside>
+
+      <!-- Right Panel: Preview -->
+      <main class="preview-panel">
+        <div class="preview-container">
+          <div class="card-preview" id="cardPreview">
+            <!-- Layer 1: Bleed (bottom) -->
+            <div id="bleedLayer" class="card-layer card-layer-bleed"></div>
+            
+            <!-- Layer 2: Artwork -->
+            <div id="artworkLayer" class="card-layer card-layer-artwork">
+              <div id="cardArtArea" class="art-placeholder">Card Art</div>
+            </div>
+            
+            <!-- Layer 3: Background Lower -->
+            <div id="backgroundLowerLayer" class="card-layer card-layer-bg-lower"></div>
+            
+            <!-- Layer 4: Background Upper -->
+            <div id="backgroundUpperLayer" class="card-layer card-layer-bg-upper"></div>
+            
+            <!-- Layer 5: Image Frame -->
+            <div id="imageFrameLayer" class="card-layer card-layer-image-frame"></div>
+            
+            <!-- Layer 6: Frame -->
+            <div id="frameLayer" class="card-layer card-layer-frame"></div>
+            
+            <!-- Layer 7: Panel Lower -->
+            <div id="panelLowerLayer" class="card-layer card-layer-panel-lower">
+              <div id="cardTextSection" class="card-text-section">
+                <p id="previewDescription">Transfer 1 status effect token from a player to another chosen player.</p>
+              </div>
+            </div>
+            
+            <!-- Layer 8: Panel Upper -->
+            <div id="panelUpperLayer" class="card-layer card-layer-panel-upper">
+              <!-- Card Title - Draggable and Editable -->
+              <div id="cardTitleBar" class="card-title-text" contenteditable="true" draggable="true" data-x="0" data-y="0">TRANSFERENCE!</div>
+            </div>
+            
+            <!-- Reference Overlay -->
+            <div id="referenceOverlay" class="reference-overlay"></div>
+          </div>
+          <!-- Reference Side (for side-by-side view) -->
+          <div id="referenceSide" class="reference-side" aria-hidden="true"></div>
+        </div>
+        <!-- Zoom Controls at Bottom -->
+        <div class="preview-controls">
+          <label for="zoomSlider">Zoom: <span id="zoomValue">100</span>%</label>
+          <input type="range" id="zoomSlider" min="50" max="200" value="100" class="zoom-slider">
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- File Input (hidden) -->
+  <input type="file" id="fileInput" accept=".json" style="display: none;">
+
+  <!-- Scripts -->
+  <script src="js/fonts.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/cardRenderer.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
