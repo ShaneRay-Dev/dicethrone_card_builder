@@ -44,6 +44,18 @@
               <option>Roll Phase</option>
             </select>
           </div>
+
+          <div class="form-group">
+            <label for="costSelect">Cost Badge</label>
+            <select id="costSelect">
+              <option value="0">0</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+          </div>
           
           <div class="form-group">
             <label for="cardName">Card Name</label>
@@ -68,6 +80,16 @@
             </label>
             <small class="help-text">Recommended: 600x800px (JPG, PNG, WebP)</small>
           </div>
+          <div class="form-group">
+            <label for="artSelect">Default Art</label>
+            <select id="artSelect">
+              <option value="">None</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <button id="btn-crop-art" class="btn btn-secondary btn-small">Crop Art To Frame</button>
+            <small class="help-text">Applies a frame-shaped crop to the artwork only.</small>
+          </div>
           <div id="imagePreview" class="image-preview-small"></div>
           <button id="btn-clear-image" class="btn btn-small btn-danger" style="display: none; margin-top: 8px;">Clear Image</button>
         </div>
@@ -78,22 +100,23 @@
         <div class="panel-section">
           <h2>Layers</h2>
           <div class="form-group">
-            <label>
-              <input type="checkbox" id="toggleBleedLayer" />
-              Show Bleed Layer
-            </label>
-          </div>
-          <div class="form-group">
             <label for="bleedColor">Bleed Color</label>
             <input type="color" id="bleedColor" value="#ffffff">
             <small class="help-text">This fills the bleed area behind the card. Follow the design guide for print-safe colors.</small>
           </div>
           <div class="form-group layers-group">
             <h3>Card Elements</h3>
+            <label><input type="checkbox" id="toggleBleedLayer" /> Bleed</label>
+            <label><input type="checkbox" id="toggleBackgroundLower" /> Background Lower</label>
+            <label><input type="checkbox" id="toggleBackgroundUpper" /> Background Upper</label>
+            <label><input type="checkbox" id="toggleImageFrame" /> Image Frame</label>
             <label><input type="checkbox" id="toggleBorder" /> Border</label>
-            <label><input type="checkbox" id="toggleTitleBar" /> Title Bar</label>
+            <label><input type="checkbox" id="toggleTitleBar" /> Panel Upper</label>
+            <label><input type="checkbox" id="toggleTitleText" /> Title</label>
             <label><input type="checkbox" id="toggleArtwork" /> Artwork</label>
-            <label><input type="checkbox" id="toggleBottomText" /> Bottom Text</label>
+            <label><input type="checkbox" id="toggleBottomText" /> Panel Lower</label>
+            <label><input type="checkbox" id="toggleCostBadge" /> Cost Badge</label>
+            <label><input type="checkbox" id="toggleCardText" /> Card Text</label>
           </div>
         </div>
 
@@ -121,6 +144,18 @@
           </div>
           <div id="referencePreview" class="image-preview-small"></div>
         </div>
+
+        <!-- Export -->
+        <div class="panel-section">
+          <h2>Export</h2>
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="toggleExportBleed" />
+              Include Bleed (Print)
+            </label>
+          </div>
+          <small class="help-text">600 DPI bridge size export. Toggle bleed for print-safe margins.</small>
+        </div>
       </aside>
 
       <!-- Right Panel: Preview -->
@@ -132,7 +167,8 @@
             
             <!-- Layer 2: Artwork -->
             <div id="artworkLayer" class="card-layer card-layer-artwork">
-              <div id="cardArtArea" class="art-placeholder">Card Art</div>
+              <img id="cardArtImage" class="card-art-image" alt="Card Art" />
+              <div id="cardArtArea" class="art-placeholder"></div>
             </div>
             
             <!-- Layer 3: Background Lower -->
@@ -149,15 +185,25 @@
             
             <!-- Layer 7: Panel Lower -->
             <div id="panelLowerLayer" class="card-layer card-layer-panel-lower">
-              <div id="cardTextSection" class="card-text-section">
-                <p id="previewDescription">Transfer 1 status effect token from a player to another chosen player.</p>
-              </div>
             </div>
-            
+
             <!-- Layer 8: Panel Upper -->
             <div id="panelUpperLayer" class="card-layer card-layer-panel-upper">
-              <!-- Card Title - Draggable and Editable -->
+            </div>
+            
+            <!-- Layer 9: Cost Badge -->
+            <div id="costBadgeLayer" class="card-layer card-layer-cost-badge"></div>
+
+            <!-- Layer 10: Title -->
+            <div id="titleLayer" class="card-layer card-layer-title">
               <div id="cardTitleBar" class="card-title-text" contenteditable="true" draggable="true" data-x="0" data-y="0">TRANSFERENCE!</div>
+            </div>
+
+            <!-- Layer 11: Card Text -->
+            <div id="cardTextLayer" class="card-layer card-layer-card-text">
+              <div id="cardTextSection" class="card-text-section">
+                <div id="previewDescription" class="card-description-text" contenteditable="true" draggable="true">Transfer 1 status effect token from a player to another chosen player.</div>
+              </div>
             </div>
             
             <!-- Reference Overlay -->
@@ -179,6 +225,7 @@
   <input type="file" id="fileInput" accept=".json" style="display: none;">
 
   <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="js/fonts.js"></script>
   <script src="js/state.js"></script>
   <script src="js/cardRenderer.js"></script>

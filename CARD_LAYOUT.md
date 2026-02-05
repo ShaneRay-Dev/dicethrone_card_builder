@@ -30,6 +30,21 @@ Here's exactly how your Dice Throne cards are laid out:
 ╚════════════════════════════════╝
 ```
 
+## Layer Order
+
+From bottom to top:
+- Bleed
+- Artwork
+- Background Lower
+- Background Upper
+- Image Frame
+- Frame
+- Panel Lower
+- Panel Upper
+- Cost Badge
+- Title
+- Card Text
+
 ## Component Sizes
 
 ### Card Dimensions

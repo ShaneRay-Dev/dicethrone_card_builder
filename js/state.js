@@ -14,19 +14,37 @@ class CardState {
       description: 'Card description goes here',
       artUrl: null,
       artData: null, // Base64 encoded image
+      artTransform: { x: 0, y: 0, scale: 1 },
+      artCropToFrame: false,
       titlePosition: { x: 0, y: 0 },
+      cardTextPosition: { x: 0, y: 0 },
+      export: {
+        includeBleed: true
+      },
       bleed: {
         enabled: false,
         color: '#ffffff'
       },
       layers: {
+        bleed: true,
+        backgroundLower: true,
+        backgroundUpper: true,
+        imageFrame: true,
         border: true,
         titleBar: true,
+        panelUpper: true,
+        titleText: true,
         artwork: true,
-        bottomText: true
+        bottomText: true,
+        panelLower: true,
+        costBadge: true,
+        cardText: true
       },
       theme: 'warrior',
-      font: 'Arial'
+      font: 'Arial',
+      costBadge: {
+        value: 0
+      }
     };
   }
 

@@ -36,39 +36,33 @@
 }
 
 /* Reference side element (used instead of pseudo-element for reliability) */
-.reference-side {
-  display: none;
-  width: calc(225px * var(--zoom-scale));
-  height: calc(350px * var(--zoom-scale));
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center;
-  border: calc(4px * var(--zoom-scale)) solid #4a7ba7;
-  border-radius: calc(8px * var(--zoom-scale));
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-  flex: 0 0 auto;
-}
-
-.preview-container.side-by-side .reference-side {
-  display: block;
-}
-
 /* removed transform-based scaling (use computed width/height via --zoom-scale instead) */
 
 /* Card Preview - Bridge Size (2.25" x 3.5" / Cut Area) */
 .card-preview {
   /* base cut size 225x350 scaled by --zoom-scale to keep layout flow */
-  width: calc(225px * var(--zoom-scale));
-  height: calc(350px * var(--zoom-scale));
+  width: calc(520px * var(--zoom-scale));
+  height: calc(810px * var(--zoom-scale));
   perspective: 1000px;
   position: relative;
   transition: width 0.18s ease-out, height 0.18s ease-out;
   /* Bleed area padding (2.49" x 3.74") approximated */
-  padding: calc(12px * var(--zoom-scale));
+  padding: calc(28px * var(--zoom-scale));
   box-sizing: border-box;
   background: linear-gradient(135deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.05) 100%);
   flex: 0 0 auto;
   overflow: hidden;
+}
+
+.card-art-image.crop-to-frame {
+  -webkit-mask-image: var(--frame-mask);
+  mask-image: var(--frame-mask);
+  -webkit-mask-size: cover;
+  mask-size: cover;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
 }
 
 /* Card Layer Base */
@@ -92,6 +86,9 @@
 .card-layer-frame { z-index: 6; }
 .card-layer-panel-lower { z-index: 7; }
 .card-layer-panel-upper { z-index: 8; }
+.card-layer-cost-badge { z-index: 9; }
+.card-layer-title { z-index: 10; }
+.card-layer-card-text { z-index: 11; }
 
 /* Bleed area (extends to edges) */
 .card-preview::before {
@@ -160,39 +157,7 @@
   background: rgba(74, 123, 167, 0.5);
 }
 
-/* Top Left Corner - Cost & Phase */
-.card-top-corner {
-  position: absolute;
-  top: 36px;
-  left: 8px;
-  z-index: 15;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  display: none;
-}
 
-.cost-badge {
-  background: #3a5a8a;
-  border: 2px solid white;
-  border-radius: 6px;
-  padding: 4px 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  min-width: 40px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-}
-
-.cost-icon {
-  font-size: 12px;
-}
-
-.cost-value {
-  font-size: 14px;
-  font-weight: 700;
-}
 
 .phase-icon {
   width: 32px;
@@ -233,6 +198,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 
 .art-placeholder {
@@ -243,6 +209,36 @@
   justify-content: center;
   font-size: 12px;
   opacity: 0.6;
+}
+
+.card-art-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transform: translate(0, 0) scale(1);
+  transform-origin: center;
+  cursor: move;
+  user-select: none;
+  display: none;
+}
+
+.card-layer-artwork.active .card-art-image {
+  outline: 2px dashed rgba(255, 255, 255, 0.6);
+  outline-offset: -4px;
+  cursor: grab;
+}
+
+.card-layer-artwork.active .card-art-image:active {
+  cursor: grabbing;
+}
+
+.card-layer-artwork.dragging .card-art-image {
+  opacity: 0.85;
+  cursor: grabbing;
 }
 
 /* Card Text Section */
@@ -258,13 +254,62 @@
   overflow: hidden;
 }
 
-.card-text-section p {
+.card-description-text {
   margin: 0;
   font-size: 10px;
   line-height: 1.3;
   text-align: center;
   color: #ffffff;
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 6px 8px;
+  cursor: move;
+  user-select: none;
+  outline: none;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  max-width: 100%;
+  word-wrap: break-word;
+  white-space: pre-wrap;
 }
+
+.card-preview.export-card .card-title-text {
+  font-size: calc(16px * var(--export-text-scale, 1));
+  padding: calc(8px * var(--export-text-scale, 1)) calc(12px * var(--export-text-scale, 1));
+  letter-spacing: calc(1px * var(--export-text-scale, 1));
+  border-width: calc(1px * var(--export-text-scale, 1));
+}
+
+.card-preview.export-card .card-description-text {
+  font-size: calc(10px * var(--export-text-scale, 1));
+  padding: calc(6px * var(--export-text-scale, 1)) calc(8px * var(--export-text-scale, 1));
+  border-width: calc(1px * var(--export-text-scale, 1));
+}
+
+.card-preview.export-no-bleed {
+  padding: 0;
+}
+
+.card-preview.export-no-bleed::before,
+.card-preview.export-no-bleed::after {
+  display: none;
+}
+
+.card-description-text:focus {
+  background: rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.5);
+  cursor: text;
+}
+
+.card-description-text.dragging {
+  opacity: 0.8;
+  background: rgba(74, 123, 167, 0.35);
+}
+
+/* Cost Badge Layer */
+
 
 /* Reference Overlay */
 .reference-side {
@@ -277,6 +322,7 @@
   border: calc(4px * var(--zoom-scale)) solid #4a7ba7;
   border-radius: calc(8px * var(--zoom-scale));
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  flex: 0 0 auto;
   transition: width 0.18s ease-out, height 0.18s ease-out, border 0.18s ease-out;
 }
 

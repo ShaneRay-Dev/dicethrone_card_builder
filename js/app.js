@@ -4,12 +4,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const defaultArtPath = 'Assets/images/Card Art/Common Loot.png';
   
   // Load default art into the card if no custom art is set
-  const artworkLayer = document.getElementById('artworkLayer');
-  if (artworkLayer && !gameState.card.artData) {
-    // Set background image for the artwork layer
-    artworkLayer.style.backgroundImage = `url('${defaultArtPath}')`;
-    artworkLayer.style.backgroundSize = 'cover';
-    artworkLayer.style.backgroundPosition = 'center';
+  if (!gameState.card.artData && !gameState.card.artUrl) {
+    gameState.updateProperty('artUrl', defaultArtPath);
+    gameState.updateProperty('artTransform', { x: 0, y: 0, scale: 1 });
+    renderer.setCardArt(defaultArtPath);
   }
   
   // Initialize the app

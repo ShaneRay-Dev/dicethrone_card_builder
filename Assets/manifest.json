@@ -1,4 +1,16 @@
 {
+  "CardArt": {
+    "Common Loot": "Assets/images/Card Art/Common Loot.png",
+    "Vegas Baby": "Assets/images/Card Art/Vegas Baby.png"
+  },
+  "CostBadge": {
+    "0": "Assets/CostBadge/cp_cost_0.png",
+    "1": "Assets/CostBadge/cp_cost_1.png",
+    "2": "Assets/CostBadge/cp_cost_2.png",
+    "3": "Assets/CostBadge/cp_cost_3.png",
+    "4": "Assets/CostBadge/cp_cost_4.png",
+    "5": "Assets/CostBadge/cp_cost_5.png"
+  },
   "Hero Upgrade": {
     "Ability Upgrade": {
       "border": "Assets/Action Cards/Instant/Instant Action Frame.png",
@@ -27,12 +39,12 @@
   },
   "Action Cards": {
     "Main Phase": {
-      "border": "Assets/Action Cards/Instant/Instant Action Frame.png",
-      "backgroundLower": "Assets/Action Cards/Instant/Instant Action background lower.png",
-      "backgroundUpper": "Assets/Action Cards/Instant/Instant Action background upper.png",
-      "imageFrame": "Assets/Action Cards/Instant/Instant Action Image Frame.png",
-      "panelLower": "Assets/Action Cards/Instant/Instant Action Panel Lower Interior.png",
-      "panelUpper": "Assets/Action Cards/Instant/Instant Action Panel Upper Interior.png"
+      "border": "Assets/Action Cards/Main Phase/Main Action Frame.png",
+      "backgroundLower": "Assets/Action Cards/Main Phase/Main Action background lower.png",
+      "backgroundUpper": "Assets/Action Cards/Main Phase/Main Action background upper.png",
+      "imageFrame": "Assets/Action Cards/Main Phase/Main Action Image Frame.png",
+      "panelLower": "Assets/Action Cards/Main Phase/Main Action Panel Lower.png",
+      "panelUpper": "Assets/Action Cards/Main Phase/Main Action Panel Upper.png"
     },
     "Instant": {
       "border": "Assets/Action Cards/Instant/Instant Action Frame.png",

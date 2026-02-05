@@ -5,10 +5,13 @@ class UI {
     this.cardDescInput = document.getElementById('cardDescription');
     this.cardTypeSelect = document.getElementById('cardType');
     this.cardSubTypeSelect = document.getElementById('cardSubType');
+    this.costSelect = document.getElementById('costSelect');
 
     this.imageUploadInput = document.getElementById('imageUpload');
     this.imagePreview = document.getElementById('imagePreview');
     this.btnClearImage = document.getElementById('btn-clear-image');
+    this.artSelect = document.getElementById('artSelect');
+    this.btnCropArt = document.getElementById('btn-crop-art');
 
     this.referenceImageInput = document.getElementById('referenceImage');
     this.referencePreview = document.getElementById('referencePreview');
@@ -17,19 +20,31 @@ class UI {
     this.referenceOverlay = document.getElementById('referenceOverlay');
     this.referenceSide = document.getElementById('referenceSide');
 
+    this.toggleExportBleed = document.getElementById('toggleExportBleed');
+
     this.toggleBleedLayer = document.getElementById('toggleBleedLayer');
+    this.toggleBackgroundLower = document.getElementById('toggleBackgroundLower');
+    this.toggleBackgroundUpper = document.getElementById('toggleBackgroundUpper');
+    this.toggleImageFrame = document.getElementById('toggleImageFrame');
     this.bleedColorInput = document.getElementById('bleedColor');
     this.toggleBorder = document.getElementById('toggleBorder');
     this.toggleTitleBar = document.getElementById('toggleTitleBar');
+    this.toggleTitleText = document.getElementById('toggleTitleText');
     this.toggleArtwork = document.getElementById('toggleArtwork');
     this.toggleBottomText = document.getElementById('toggleBottomText');
+    this.toggleCostBadge = document.getElementById('toggleCostBadge');
+    this.toggleCardText = document.getElementById('toggleCardText');
 
     this.cardTitleEl = document.getElementById('cardTitleBar');
+    this.cardTextEl = document.getElementById('previewDescription');
+    this.artworkLayer = document.getElementById('artworkLayer');
+    this.artImage = document.getElementById('cardArtImage');
 
     this.zoomSlider = document.getElementById('zoomSlider');
     this.zoomValue = document.getElementById('zoomValue');
     this.previewContainer = document.querySelector('.preview-container');
     this.previewElement = document.getElementById('cardPreview');
+    this.panelLowerLayer = document.getElementById('panelLowerLayer');
 
     this.btnNew = document.getElementById('btn-new');
     this.btnSave = document.getElementById('btn-save');
@@ -38,6 +53,7 @@ class UI {
     this.fileInput = document.getElementById('fileInput');
 
     this.initEventListeners();
+    this.loadCardArtOptions();
   }
 
   initEventListeners() {
@@ -64,6 +80,15 @@ class UI {
       renderer.applyAssetsForCardType(this.cardTypeSelect.value, e.target.value);
     });
 
+    if (this.costSelect) {
+      this.costSelect.addEventListener('change', (e) => {
+        const value = Math.max(0, Math.min(5, Number(e.target.value) || 0));
+        gameState.updateProperty('costBadge.value', value);
+        renderer.updateCostBadge(gameState.getCard());
+      });
+    }
+
+
     // Buttons
     this.btnNew.addEventListener('click', () => this.newCard());
     this.btnSave.addEventListener('click', () => this.saveCard());
@@ -73,17 +98,32 @@ class UI {
     // Image upload
     this.imageUploadInput.addEventListener('change', (e) => this.handleImageUpload(e));
     this.btnClearImage.addEventListener('click', () => this.clearImage());
+    if (this.artSelect) {
+      this.artSelect.addEventListener('change', (e) => this.handleArtSelect(e));
+    }
+    if (this.btnCropArt) {
+      this.btnCropArt.addEventListener('click', () => this.cropArtToFrame());
+    }
 
     // Reference overlay
     this.referenceImageInput.addEventListener('change', (e) => this.handleReferenceUpload(e));
     this.showReferenceCheckbox.addEventListener('change', (e) => this.toggleReferenceOverlay(e.target.checked));
     this.showReferenceSideBySideCheckbox.addEventListener('change', (e) => this.toggleReferenceSideBySide(e.target.checked));
 
+    // Export settings
+    if (this.toggleExportBleed) {
+      this.toggleExportBleed.addEventListener('change', (e) => {
+        gameState.updateProperty('export.includeBleed', e.target.checked);
+      });
+    }
+
     // Bleed layer controls
     if (this.toggleBleedLayer) {
       this.toggleBleedLayer.addEventListener('change', (e) => {
         gameState.updateProperty('bleed.enabled', e.target.checked);
+        gameState.updateProperty('layers.bleed', e.target.checked);
         renderer.updateBleed(gameState.getCard());
+        renderer.updateVisibility(gameState.getCard());
       });
     }
 
@@ -95,6 +135,27 @@ class UI {
     }
 
     // Layer toggles for individual card elements
+    if (this.toggleBackgroundLower) {
+      this.toggleBackgroundLower.addEventListener('change', (e) => {
+        gameState.updateProperty('layers.backgroundLower', e.target.checked);
+        renderer.updateVisibility(gameState.getCard());
+      });
+    }
+
+    if (this.toggleBackgroundUpper) {
+      this.toggleBackgroundUpper.addEventListener('change', (e) => {
+        gameState.updateProperty('layers.backgroundUpper', e.target.checked);
+        renderer.updateVisibility(gameState.getCard());
+      });
+    }
+
+    if (this.toggleImageFrame) {
+      this.toggleImageFrame.addEventListener('change', (e) => {
+        gameState.updateProperty('layers.imageFrame', e.target.checked);
+        renderer.updateVisibility(gameState.getCard());
+      });
+    }
+
     if (this.toggleBorder) {
       this.toggleBorder.addEventListener('change', (e) => {
         gameState.updateProperty('layers.border', e.target.checked);
@@ -105,6 +166,14 @@ class UI {
     if (this.toggleTitleBar) {
       this.toggleTitleBar.addEventListener('change', (e) => {
         gameState.updateProperty('layers.titleBar', e.target.checked);
+        gameState.updateProperty('layers.panelUpper', e.target.checked);
+        renderer.updateVisibility(gameState.getCard());
+      });
+    }
+
+    if (this.toggleTitleText) {
+      this.toggleTitleText.addEventListener('change', (e) => {
+        gameState.updateProperty('layers.titleText', e.target.checked);
         renderer.updateVisibility(gameState.getCard());
       });
     }
@@ -119,9 +188,25 @@ class UI {
     if (this.toggleBottomText) {
       this.toggleBottomText.addEventListener('change', (e) => {
         gameState.updateProperty('layers.bottomText', e.target.checked);
+        gameState.updateProperty('layers.panelLower', e.target.checked);
         renderer.updateVisibility(gameState.getCard());
       });
     }
+
+    if (this.toggleCostBadge) {
+      this.toggleCostBadge.addEventListener('change', (e) => {
+        gameState.updateProperty('layers.costBadge', e.target.checked);
+        renderer.updateVisibility(gameState.getCard());
+      });
+    }
+
+    if (this.toggleCardText) {
+      this.toggleCardText.addEventListener('change', (e) => {
+        gameState.updateProperty('layers.cardText', e.target.checked);
+        renderer.updateVisibility(gameState.getCard());
+      });
+    }
+
 
     // Title bar drag and edit handlers
     if (this.cardTitleEl) {
@@ -178,6 +263,61 @@ class UI {
       });
     }
 
+    // Card text drag and edit handlers
+    if (this.cardTextEl) {
+      let isDragging = false;
+      let offsetX = 0;
+      let offsetY = 0;
+
+      this.cardTextEl.addEventListener('dragstart', (e) => {
+        isDragging = true;
+        this.cardTextEl.classList.add('dragging');
+        const rect = this.cardTextEl.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+        e.dataTransfer.effectAllowed = 'move';
+      });
+
+      this.cardTextEl.addEventListener('dragend', () => {
+        isDragging = false;
+        this.cardTextEl.classList.remove('dragging');
+      });
+
+      this.previewElement.addEventListener('dragover', (e) => {
+        if (isDragging) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+        }
+      });
+
+      this.previewElement.addEventListener('drop', (e) => {
+        if (isDragging) {
+          e.preventDefault();
+          const panelRect = (this.panelLowerLayer || this.previewElement).getBoundingClientRect();
+          const newX = e.clientX - panelRect.left - offsetX;
+          const newY = e.clientY - panelRect.top - offsetY;
+
+          const maxX = panelRect.width - 80;
+          const maxY = panelRect.height - 30;
+          const clampedX = Math.max(0, Math.min(newX, maxX));
+          const clampedY = Math.max(0, Math.min(newY, maxY));
+
+          this.cardTextEl.style.left = `${clampedX}px`;
+          this.cardTextEl.style.top = `${clampedY}px`;
+
+          gameState.updateProperty('cardTextPosition', { x: clampedX, y: clampedY });
+        }
+      });
+
+      this.cardTextEl.addEventListener('input', () => {
+        gameState.updateProperty('description', this.cardTextEl.textContent);
+      });
+
+      this.cardTextEl.addEventListener('blur', () => {
+        gameState.updateProperty('description', this.cardTextEl.textContent);
+      });
+    }
+
     // Zoom slider
     this.zoomSlider.addEventListener('input', (e) => this.handleZoom(e.target.value));
 
@@ -200,6 +340,174 @@ class UI {
         this.handleImageUpload({ target: { files } });
       }
     });
+
+    // Artwork drag and scale (click to activate)
+    if (this.artworkLayer) {
+      let isDragging = false;
+      let startX = 0;
+      let startY = 0;
+      let startPos = { x: 0, y: 0 };
+      let isArtActive = false;
+
+      const startArtDrag = (e) => {
+        if (!this.artImage || !this.artImage.src) return;
+        setActive(true);
+        isDragging = true;
+        this.artworkLayer.classList.add('dragging');
+        startX = e.clientX;
+        startY = e.clientY;
+        const current = gameState.getCard().artTransform || { x: 0, y: 0, scale: 1 };
+        startPos = { x: current.x || 0, y: current.y || 0 };
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onUp);
+      };
+
+      const onMove = (e) => {
+        if (!isDragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        const newX = startPos.x + dx;
+        const newY = startPos.y + dy;
+        gameState.updateProperty('artTransform', {
+          ...gameState.getCard().artTransform,
+          x: newX,
+          y: newY
+        });
+        renderer.updateArtTransform(gameState.getCard());
+      };
+
+      const onUp = () => {
+        if (!isDragging) return;
+        isDragging = false;
+        this.artworkLayer.classList.remove('dragging');
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onUp);
+      };
+
+      const setActive = (active) => {
+        isArtActive = active;
+        this.artworkLayer.classList.toggle('active', active);
+      };
+
+      this.artworkLayer.addEventListener('mousedown', (e) => {
+        if (!this.artImage || !this.artImage.src) return;
+        startArtDrag(e);
+      });
+
+      this.artworkLayer.addEventListener('wheel', (e) => {
+        if (!this.artImage || !this.artImage.src) return;
+        if (!isArtActive) return;
+        e.preventDefault();
+        const current = gameState.getCard().artTransform || { x: 0, y: 0, scale: 1 };
+        const delta = e.deltaY > 0 ? -0.05 : 0.05;
+        const nextScale = Math.max(0.5, Math.min(3, (current.scale || 1) + delta));
+        gameState.updateProperty('artTransform', {
+          ...current,
+          scale: nextScale
+        });
+        renderer.updateArtTransform(gameState.getCard());
+      }, { passive: false });
+
+      if (this.previewElement) {
+        this.previewElement.addEventListener('mousedown', (e) => {
+          if (!this.artImage || !this.artImage.src) return;
+          if (this.cardTitleEl && this.cardTitleEl.contains(e.target)) return;
+          if (this.cardTextEl && this.cardTextEl.contains(e.target)) return;
+          if (e.target && e.target.isContentEditable) return;
+          const rect = this.artworkLayer.getBoundingClientRect();
+          const inside =
+            e.clientX >= rect.left &&
+            e.clientX <= rect.right &&
+            e.clientY >= rect.top &&
+            e.clientY <= rect.bottom;
+          if (inside) {
+            startArtDrag(e);
+          }
+        });
+
+        this.previewElement.addEventListener('wheel', (e) => {
+          if (!this.artImage || !this.artImage.src) return;
+          if (!isArtActive) return;
+          e.preventDefault();
+          const current = gameState.getCard().artTransform || { x: 0, y: 0, scale: 1 };
+          const delta = e.deltaY > 0 ? -0.05 : 0.05;
+          const nextScale = Math.max(0.5, Math.min(3, (current.scale || 1) + delta));
+          gameState.updateProperty('artTransform', {
+            ...current,
+            scale: nextScale
+          });
+          renderer.updateArtTransform(gameState.getCard());
+        }, { passive: false });
+      }
+
+      document.addEventListener('mousedown', (e) => {
+        if (!this.artImage || !this.artImage.src) return;
+        if (this.artworkLayer.contains(e.target)) return;
+        const rect = this.artworkLayer.getBoundingClientRect();
+        const inside =
+          e.clientX >= rect.left &&
+          e.clientX <= rect.right &&
+          e.clientY >= rect.top &&
+          e.clientY <= rect.bottom;
+        if (inside) return;
+        setActive(false);
+      });
+    }
+
+    // Artwork edit (Alt + drag / Alt + wheel) from anywhere on the card
+    if (this.previewElement) {
+      let isAltDragging = false;
+      let startX = 0;
+      let startY = 0;
+      let startPos = { x: 0, y: 0 };
+
+      const onAltMove = (e) => {
+        if (!isAltDragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        const newX = startPos.x + dx;
+        const newY = startPos.y + dy;
+        gameState.updateProperty('artTransform', {
+          ...gameState.getCard().artTransform,
+          x: newX,
+          y: newY
+        });
+        renderer.updateArtTransform(gameState.getCard());
+      };
+
+      const onAltUp = () => {
+        if (!isAltDragging) return;
+        isAltDragging = false;
+        window.removeEventListener('mousemove', onAltMove);
+        window.removeEventListener('mouseup', onAltUp);
+      };
+
+      this.previewElement.addEventListener('mousedown', (e) => {
+        if (!e.altKey) return;
+        if (!this.artImage || !this.artImage.src) return;
+        isAltDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        const current = gameState.getCard().artTransform || { x: 0, y: 0, scale: 1 };
+        startPos = { x: current.x || 0, y: current.y || 0 };
+        window.addEventListener('mousemove', onAltMove);
+        window.addEventListener('mouseup', onAltUp);
+      });
+
+      this.previewElement.addEventListener('wheel', (e) => {
+        if (!e.altKey) return;
+        if (!this.artImage || !this.artImage.src) return;
+        e.preventDefault();
+        const current = gameState.getCard().artTransform || { x: 0, y: 0, scale: 1 };
+        const delta = e.deltaY > 0 ? -0.05 : 0.05;
+        const nextScale = Math.max(0.5, Math.min(3, (current.scale || 1) + delta));
+        gameState.updateProperty('artTransform', {
+          ...current,
+          scale: nextScale
+        });
+        renderer.updateArtTransform(gameState.getCard());
+      }, { passive: false });
+    }
 
     // Templates removed
 
@@ -314,6 +622,8 @@ class UI {
     reader.onload = (e) => {
       const imageData = e.target.result;
       gameState.updateProperty('artData', imageData);
+      gameState.updateProperty('artTransform', { x: 0, y: 0, scale: 1 });
+      gameState.updateProperty('artCropToFrame', false);
       
       // Display preview
       this.imagePreview.innerHTML = `<img src="${imageData}" alt="Card Art">`;
@@ -327,10 +637,35 @@ class UI {
 
   clearImage() {
     gameState.updateProperty('artData', null);
+    gameState.updateProperty('artUrl', null);
     this.imageUploadInput.value = '';
     this.imagePreview.innerHTML = '';
     this.btnClearImage.style.display = 'none';
     renderer.setCardArt(null);
+  }
+
+  handleArtSelect(event) {
+    const value = event.target.value || '';
+    gameState.updateProperty('artUrl', value);
+    gameState.updateProperty('artData', null);
+    gameState.updateProperty('artTransform', { x: 0, y: 0, scale: 1 });
+    gameState.updateProperty('artCropToFrame', false);
+    if (value) {
+      renderer.setCardArt(value);
+      this.imagePreview.innerHTML = `<img src="${value}" alt="Card Art">`;
+      this.btnClearImage.style.display = 'inline-block';
+    } else {
+      this.imagePreview.innerHTML = '';
+      this.btnClearImage.style.display = 'none';
+      renderer.setCardArt(null);
+    }
+  }
+
+  cropArtToFrame() {
+    const card = gameState.getCard();
+    if (!card.artData && !card.artUrl) return;
+    gameState.updateProperty('artCropToFrame', true);
+    renderer.updateArtCrop(gameState.getCard());
   }
 
   handleReferenceUpload(event) {
@@ -444,27 +779,73 @@ class UI {
     this.updateSubTypeOptions(card.cardType);
     this.cardSubTypeSelect.value = card.cardSubType;
 
+    if (this.costSelect) {
+      this.costSelect.value = String(Math.max(0, Math.min(5, Number(card?.costBadge?.value) || 0)));
+    }
+
+
     // Update image preview
     if (card.artData) {
+      if (!card.artTransform) {
+        gameState.updateProperty('artTransform', { x: 0, y: 0, scale: 1 });
+      }
+      if (card.artCropToFrame === undefined) {
+        gameState.updateProperty('artCropToFrame', false);
+      }
       this.imagePreview.innerHTML = `<img src="${card.artData}" alt="Card Art">`;
       this.btnClearImage.style.display = 'inline-block';
+      if (this.artSelect) this.artSelect.value = '';
+      renderer.setCardArt(card.artData);
+      renderer.updateArtCrop(card);
+    } else if (card.artUrl) {
+      if (!card.artTransform) {
+        gameState.updateProperty('artTransform', { x: 0, y: 0, scale: 1 });
+      }
+      if (card.artCropToFrame === undefined) {
+        gameState.updateProperty('artCropToFrame', false);
+      }
+      this.imagePreview.innerHTML = `<img src="${card.artUrl}" alt="Card Art">`;
+      this.btnClearImage.style.display = 'inline-block';
+      if (this.artSelect) this.artSelect.value = card.artUrl;
+      renderer.setCardArt(card.artUrl);
+      renderer.updateArtCrop(card);
     } else {
       this.imagePreview.innerHTML = '';
       this.btnClearImage.style.display = 'none';
+      if (this.artSelect) this.artSelect.value = '';
+      renderer.setCardArt(null);
+      renderer.updateArtCrop(card);
     }
 
     // Update renderer
     renderer.render(card);
+
+    // Update export settings
+    if (this.toggleExportBleed) {
+      this.toggleExportBleed.checked = !!(card.export && card.export.includeBleed);
+    }
 
     // Update bleed UI
     if (this.toggleBleedLayer) this.toggleBleedLayer.checked = !!(card.bleed && card.bleed.enabled);
     if (this.bleedColorInput) this.bleedColorInput.value = (card.bleed && card.bleed.color) || '#ffffff';
 
     // Update element layer toggles
+    if (this.toggleBackgroundLower) this.toggleBackgroundLower.checked = !!(card.layers && card.layers.backgroundLower);
+    if (this.toggleBackgroundUpper) this.toggleBackgroundUpper.checked = !!(card.layers && card.layers.backgroundUpper);
+    if (this.toggleImageFrame) this.toggleImageFrame.checked = !!(card.layers && card.layers.imageFrame);
     if (this.toggleBorder) this.toggleBorder.checked = !!(card.layers && card.layers.border);
-    if (this.toggleTitleBar) this.toggleTitleBar.checked = !!(card.layers && card.layers.titleBar);
+    if (this.toggleTitleBar) {
+      const panelUpper = card.layers && (card.layers.panelUpper ?? card.layers.titleBar);
+      this.toggleTitleBar.checked = !!panelUpper;
+    }
+    if (this.toggleTitleText) this.toggleTitleText.checked = !!(card.layers && card.layers.titleText);
     if (this.toggleArtwork) this.toggleArtwork.checked = !!(card.layers && card.layers.artwork);
-    if (this.toggleBottomText) this.toggleBottomText.checked = !!(card.layers && card.layers.bottomText);
+    if (this.toggleBottomText) {
+      const panelLower = card.layers && (card.layers.panelLower ?? card.layers.bottomText);
+      this.toggleBottomText.checked = !!panelLower;
+    }
+    if (this.toggleCostBadge) this.toggleCostBadge.checked = !!(card.layers && card.layers.costBadge);
+    if (this.toggleCardText) this.toggleCardText.checked = !!(card.layers && card.layers.cardText);
 
     // Templates removed
   }
@@ -503,6 +884,23 @@ class UI {
     const label = document.getElementById('cardSubTypeLabel');
     if (label) {
       label.textContent = cardType === 'Action Cards' ? 'Card Phase' : 'Upgrade Type';
+    }
+  }
+
+  async loadCardArtOptions() {
+    if (!this.artSelect) return;
+    try {
+      const response = await fetch('Assets/manifest.json');
+      const manifest = await response.json();
+      const artMap = manifest.CardArt || {};
+      Object.entries(artMap).forEach(([label, path]) => {
+        const opt = document.createElement('option');
+        opt.value = path;
+        opt.textContent = label;
+        this.artSelect.appendChild(opt);
+      });
+    } catch (error) {
+      console.warn('Could not load card art options:', error);
     }
   }
   undo() {
