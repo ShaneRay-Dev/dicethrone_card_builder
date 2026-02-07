@@ -1,18 +1,19 @@
 # Dice Throne Creator
 
-A modern web-based tool for creating custom Dice Throne game cards with a live preview, customizable stats, and export capabilities.
+A web-based tool for creating custom Dice Throne-style cards with a live preview, layered art, and high-resolution export.
 
 ## Features
 
-- **Card Editor**: Easily customize card properties like name, description, stats, and rarity
-- **Live Preview**: See your card design in real-time as you edit
-- **Card Templates**: Quick-start with predefined templates (Warrior, Mage, Rogue, Healer)
+- **Card Editor**: Customize card type, phase, name, description, and cost badge
+- **Live Preview**: See your card design update in real time
+- **Layer Controls**: Toggle each visual layer on/off
+- **Art Controls**: Upload art, choose default art, move/scale art in the preview
 - **Save & Load**: Export your cards as JSON files and reload them later
 - **Export Options**:
   - Export as JSON (for saving and sharing)
-  - Export as PNG image
+  - Export as PNG image (600 DPI)
   - Copy JSON to clipboard
-- **Auto-save**: Your work is automatically saved to browser storage every 30 seconds
+- **Auto-save**: Your work is saved to browser storage every 30 seconds
 - **Undo/Redo**: Use Ctrl+Z (Cmd+Z on Mac) to undo and Ctrl+Shift+Z to redo
 
 ## Project Structure
@@ -26,10 +27,10 @@ Dice throne Card Builder/
 │   └── preview.css        # Card preview styles
 ├── js/
 │   ├── state.js           # State management and card data
-│   ├── cardRenderer.js    # Card rendering logic
+│   ├── cardRenderer.js    # Rendering logic and export
 │   ├── ui.js              # UI event handlers
 │   └── app.js             # App initialization
-├── assets/
+├── Assets/
 │   ├── images/            # Card art and decorative elements
 │   ├── fonts/             # Custom fonts
 │   └── data/              # Sample cards and templates
@@ -41,22 +42,15 @@ Dice throne Card Builder/
 1. Open `index.html` in a modern web browser
 2. Start creating your custom card using the editor panel on the left
 3. Watch your card design update in real-time on the right
-4. Use templates for quick-start designs
-5. Save your card when you're happy with it
+4. Save your card when you're happy with it
 
 ## Card Properties
 
 ### Basic Properties
 - **Name**: Card name (max 50 characters)
 - **Description**: Card description (max 200 characters)
-- **Color**: Choose a base color for the card
-- **Rarity**: Select from Common, Uncommon, Rare, or Legendary
-
-### Stats
-- **Attack**: Attack power (0-10)
-- **Defense**: Defense value (0-10)
-- **Speed**: Speed stat (0-10)
-- **Cost**: Mana/resource cost (0-10)
+- **Card Type / Phase**: Action cards and phases
+- **Cost Badge**: 0-5 selection
 
 ## Keyboard Shortcuts
 
@@ -66,12 +60,9 @@ Dice throne Card Builder/
 
 ## Future Enhancements
 
-- [ ] Image upload for card art
-- [ ] Advanced color schemes and gradients
+- [ ] Advanced text styling and effects
 - [ ] Card set management
 - [ ] Collaboration features
-- [ ] Card printing support
-- [ ] Custom fonts and text effects
 
 ## Browser Compatibility
 

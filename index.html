@@ -18,6 +18,7 @@
         <button id="btn-save" class="btn btn-primary">Save</button>
         <button id="btn-load" class="btn btn-secondary">Load</button>
         <button id="btn-export" class="btn btn-secondary">Export</button>
+        <button id="btn-reset-canvas" class="btn btn-secondary">Reset Canvas</button>
       </div>
     </header>
 
@@ -58,8 +59,8 @@
           </div>
           
           <div class="form-group">
-            <label for="cardName">Card Name</label>
-            <input type="text" id="cardName" placeholder="Enter card name" maxlength="50">
+            <label for="cardName">Title</label>
+            <input type="text" id="cardName" placeholder="Enter title" maxlength="50">
           </div>
 
           <div class="form-group">
@@ -94,8 +95,6 @@
           <button id="btn-clear-image" class="btn btn-small btn-danger" style="display: none; margin-top: 8px;">Clear Image</button>
         </div>
 
-        <!-- Templates removed -->
-
         <!-- Layers -->
         <div class="panel-section">
           <h2>Layers</h2>
@@ -110,12 +109,15 @@
             <label><input type="checkbox" id="toggleBackgroundLower" /> Background Lower</label>
             <label><input type="checkbox" id="toggleBackgroundUpper" /> Background Upper</label>
             <label><input type="checkbox" id="toggleImageFrame" /> Image Frame</label>
+            <label><input type="checkbox" id="toggleFrameShading" /> Frame Shading</label>
             <label><input type="checkbox" id="toggleBorder" /> Border</label>
             <label><input type="checkbox" id="toggleTitleBar" /> Panel Upper</label>
             <label><input type="checkbox" id="toggleTitleText" /> Title</label>
             <label><input type="checkbox" id="toggleArtwork" /> Artwork</label>
+            <label><input type="checkbox" id="togglePanelBleed" /> Panel Bleed</label>
             <label><input type="checkbox" id="toggleBottomText" /> Panel Lower</label>
             <label><input type="checkbox" id="toggleCostBadge" /> Cost Badge</label>
+            <label><input type="checkbox" id="toggleAttackModifier" /> Attack Modifier (Roll)</label>
             <label><input type="checkbox" id="toggleCardText" /> Card Text</label>
           </div>
         </div>
@@ -179,10 +181,16 @@
             
             <!-- Layer 5: Image Frame -->
             <div id="imageFrameLayer" class="card-layer card-layer-image-frame"></div>
+
+            <!-- Layer 6: Frame Shading -->
+            <div id="frameShadingLayer" class="card-layer card-layer-frame-shading"></div>
             
             <!-- Layer 6: Frame -->
             <div id="frameLayer" class="card-layer card-layer-frame"></div>
-            
+
+            <!-- Layer 7: Panel Bleed -->
+            <div id="panelBleedLayer" class="card-layer card-layer-panel-bleed"></div>
+
             <!-- Layer 7: Panel Lower -->
             <div id="panelLowerLayer" class="card-layer card-layer-panel-lower">
             </div>
@@ -194,16 +202,17 @@
             <!-- Layer 9: Cost Badge -->
             <div id="costBadgeLayer" class="card-layer card-layer-cost-badge"></div>
 
-            <!-- Layer 10: Title -->
+            <!-- Layer 10: Attack Modifier (Roll Phase only) -->
+            <div id="attackModifierLayer" class="card-layer card-layer-attack-modifier"></div>
+
+            <!-- Layer 11: Title -->
             <div id="titleLayer" class="card-layer card-layer-title">
-              <div id="cardTitleBar" class="card-title-text" contenteditable="true" draggable="true" data-x="0" data-y="0">TRANSFERENCE!</div>
+              <div id="cardTitleBar" class="card-title-image"></div>
             </div>
 
-            <!-- Layer 11: Card Text -->
+            <!-- Layer 12: Card Description Image -->
             <div id="cardTextLayer" class="card-layer card-layer-card-text">
-              <div id="cardTextSection" class="card-text-section">
-                <div id="previewDescription" class="card-description-text" contenteditable="true" draggable="true">Transfer 1 status effect token from a player to another chosen player.</div>
-              </div>
+              <div id="descriptionImageLayer" class="card-description-image"></div>
             </div>
             
             <!-- Reference Overlay -->

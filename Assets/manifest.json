@@ -43,6 +43,8 @@
       "backgroundLower": "Assets/Action Cards/Main Phase/Main Action background lower.png",
       "backgroundUpper": "Assets/Action Cards/Main Phase/Main Action background upper.png",
       "imageFrame": "Assets/Action Cards/Main Phase/Main Action Image Frame.png",
+      "frameShading": "Assets/Action Cards/Main Phase/Main Action Frame Shading.png",
+      "panelBleed": "Assets/Action Cards/Main Phase/Main Action Panel Bleed.png",
       "panelLower": "Assets/Action Cards/Main Phase/Main Action Panel Lower.png",
       "panelUpper": "Assets/Action Cards/Main Phase/Main Action Panel Upper.png"
     },
@@ -51,16 +53,21 @@
       "backgroundLower": "Assets/Action Cards/Instant/Instant Action background lower.png",
       "backgroundUpper": "Assets/Action Cards/Instant/Instant Action background upper.png",
       "imageFrame": "Assets/Action Cards/Instant/Instant Action Image Frame.png",
+      "frameShading": "Assets/Action Cards/Instant/Instant Action Card Frame Shading.png",
+      "panelBleed": "Assets/Action Cards/Instant/Instant Action Panel Lower Bleed.png",
       "panelLower": "Assets/Action Cards/Instant/Instant Action Panel Lower Interior.png",
       "panelUpper": "Assets/Action Cards/Instant/Instant Action Panel Upper Interior.png"
     },
     "Roll Phase": {
-      "border": "Assets/Action Cards/Instant/Instant Action Frame.png",
-      "backgroundLower": "Assets/Action Cards/Instant/Instant Action background lower.png",
-      "backgroundUpper": "Assets/Action Cards/Instant/Instant Action background upper.png",
-      "imageFrame": "Assets/Action Cards/Instant/Instant Action Image Frame.png",
-      "panelLower": "Assets/Action Cards/Instant/Instant Action Panel Lower Interior.png",
-      "panelUpper": "Assets/Action Cards/Instant/Instant Action Panel Upper Interior.png"
+      "border": "Assets/Action Cards/Roll Phase/Roll_Action_Frame.png",
+      "backgroundLower": "Assets/Action Cards/Roll Phase/Roll_Action_Background_lower.png",
+      "backgroundUpper": "Assets/Action Cards/Roll Phase/Roll_Action_Background_upper.png",
+      "imageFrame": "Assets/Action Cards/Roll Phase/Roll_Action_Image_Frame.png",
+      "frameShading": "Assets/Action Cards/Roll Phase/Roll_Action_Frame_Shading.png",
+      "panelBleed": "Assets/Action Cards/Roll Phase/Roll_Action_Panel_bleed.png",
+      "panelLower": "Assets/Action Cards/Roll Phase/Roll_Action_Panel_lower.png",
+      "panelUpper": "Assets/Action Cards/Roll Phase/Roll_Action_Panel_upper.png",
+      "attackModifier": "Assets/Action Cards/Roll Phase/Roll_Action_Attack_Modifier.png"
     }
   }
 }

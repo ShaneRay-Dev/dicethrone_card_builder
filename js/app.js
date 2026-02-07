@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Initialize the app
   ui.updateUI();
+  // Ensure default Action Cards + Main Phase assets apply on load
+  renderer.applyAssetsForCardType(gameState.card.cardType, gameState.card.cardSubType);
   
   // Load default reference image
   const referenceOverlay = document.getElementById('referenceOverlay');
@@ -19,14 +21,14 @@ document.addEventListener('DOMContentLoaded', () => {
   window.defaultReferencePath = 'Assets/Reference/Roll_Phase_Main_Refernece.png';
   const defaultReferencePath = window.defaultReferencePath;
   referenceOverlay.style.backgroundImage = `url('${defaultReferencePath}')`;
-  referenceOverlay.style.backgroundSize = 'contain';
+  referenceOverlay.style.backgroundSize = '100% 100%';
   referenceOverlay.style.backgroundRepeat = 'no-repeat';
   referenceOverlay.style.backgroundPosition = 'center';
   // Also set side-by-side element if present
   const referenceSideEl = document.getElementById('referenceSide');
   if (referenceSideEl) {
     referenceSideEl.style.backgroundImage = `url('${defaultReferencePath}')`;
-    referenceSideEl.style.backgroundSize = 'cover';
+    referenceSideEl.style.backgroundSize = '100% 100%';
     referenceSideEl.style.backgroundRepeat = 'no-repeat';
     referenceSideEl.style.backgroundPosition = 'center';
     referenceSideEl.style.display = 'none';
