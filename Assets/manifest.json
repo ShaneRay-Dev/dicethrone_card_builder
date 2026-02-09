@@ -40,6 +40,7 @@
   "Action Cards": {
     "Main Phase": {
       "border": "Assets/Action Cards/Main Phase/Main Action Frame.png",
+      "cardId": "Assets/Action Cards/Main Phase/card_id.png",
       "backgroundLower": "Assets/Action Cards/Main Phase/Main Action background lower.png",
       "backgroundUpper": "Assets/Action Cards/Main Phase/Main Action background upper.png",
       "imageFrame": "Assets/Action Cards/Main Phase/Main Action Image Frame.png",
@@ -50,6 +51,7 @@
     },
     "Instant": {
       "border": "Assets/Action Cards/Instant/Instant Action Frame.png",
+      "cardId": "Assets/Action Cards/Instant/card_id.png",
       "backgroundLower": "Assets/Action Cards/Instant/Instant Action background lower.png",
       "backgroundUpper": "Assets/Action Cards/Instant/Instant Action background upper.png",
       "imageFrame": "Assets/Action Cards/Instant/Instant Action Image Frame.png",
@@ -60,6 +62,7 @@
     },
     "Roll Phase": {
       "border": "Assets/Action Cards/Roll Phase/Roll_Action_Frame.png",
+      "cardId": "Assets/Action Cards/Roll Phase/card_id.png",
       "backgroundLower": "Assets/Action Cards/Roll Phase/Roll_Action_Background_lower.png",
       "backgroundUpper": "Assets/Action Cards/Roll Phase/Roll_Action_Background_upper.png",
       "imageFrame": "Assets/Action Cards/Roll Phase/Roll_Action_Image_Frame.png",

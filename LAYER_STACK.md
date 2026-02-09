@@ -9,13 +9,15 @@ Current render order from bottom to top:
 5. Image Frame
 6. Frame Shading
 7. Frame (Border)
-8. Panel Bleed
-9. Panel Lower
-10. Panel Upper
-11. Cost Badge
-12. Attack Modifier (Roll Phase only)
-13. Title
-14. Card Text
+8. Card ID
+9. Card ID Text
+10. Panel Bleed
+11. Panel Lower
+12. Panel Upper
+13. Cost Badge
+14. Attack Modifier (Roll Phase only)
+15. Title
+16. Card Text
 
 Notes:
 - Title and Card Text are separate layers above panels for visibility.

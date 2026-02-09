@@ -1,0 +1,59 @@
+{
+  "fonts": [
+    {
+      "label": "MYRIADPRO-BOLD",
+      "family": "MYRIADPRO-BOLD",
+      "file": "Assets/fonts/MYRIADPRO-BOLD.OTF"
+    },
+    {
+      "label": "MYRIADPRO-BOLDCOND",
+      "family": "MYRIADPRO-BOLDCOND",
+      "file": "Assets/fonts/MYRIADPRO-BOLDCOND.OTF"
+    },
+    {
+      "label": "MYRIADPRO-BOLDCONDIT",
+      "family": "MYRIADPRO-BOLDCONDIT",
+      "file": "Assets/fonts/MYRIADPRO-BOLDCONDIT.OTF"
+    },
+    {
+      "label": "MYRIADPRO-BOLDIT",
+      "family": "MYRIADPRO-BOLDIT",
+      "file": "Assets/fonts/MYRIADPRO-BOLDIT.OTF"
+    },
+    {
+      "label": "MYRIADPRO-COND",
+      "family": "MYRIADPRO-COND",
+      "file": "Assets/fonts/MYRIADPRO-COND.OTF"
+    },
+    {
+      "label": "MYRIADPRO-CONDIT",
+      "family": "MYRIADPRO-CONDIT",
+      "file": "Assets/fonts/MYRIADPRO-CONDIT.OTF"
+    },
+    {
+      "label": "MyriadPro-Light",
+      "family": "MyriadPro-Light",
+      "file": "Assets/fonts/MyriadPro-Light.otf"
+    },
+    {
+      "label": "MYRIADPRO-REGULAR",
+      "family": "MYRIADPRO-REGULAR",
+      "file": "Assets/fonts/MYRIADPRO-REGULAR.OTF"
+    },
+    {
+      "label": "MYRIADPRO-SEMIBOLD",
+      "family": "MYRIADPRO-SEMIBOLD",
+      "file": "Assets/fonts/MYRIADPRO-SEMIBOLD.OTF"
+    },
+    {
+      "label": "MYRIADPRO-SEMIBOLDIT",
+      "family": "MYRIADPRO-SEMIBOLDIT",
+      "file": "Assets/fonts/MYRIADPRO-SEMIBOLDIT.OTF"
+    },
+    {
+      "label": "PhosphateSolid",
+      "family": "PhosphateSolid",
+      "file": "Assets/fonts/PhosphateSolid.ttf"
+    }
+  ]
+}

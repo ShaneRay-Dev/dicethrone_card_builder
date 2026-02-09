@@ -26,143 +26,228 @@
     <div class="container">
       <!-- Left Panel: Editor -->
       <aside class="editor-panel">
-        <div class="panel-section">
-          <h2>Card Properties</h2>
-          
-          <div class="form-group">
-            <label for="cardType">Card Type</label>
-            <select id="cardType">
-              <option>Hero Upgrade</option>
-              <option selected>Action Cards</option>
-            </select>
-          </div>
+        <details class="panel-section" open>
+          <summary>Card Properties</summary>
+          <div class="panel-content">
+            <div class="form-group">
+              <label for="cardType">Card Type</label>
+              <select id="cardType">
+                <option>Hero Upgrade</option>
+                <option selected>Action Cards</option>
+              </select>
+            </div>
 
-          <div class="form-group">
-            <label for="cardSubType" id="cardSubTypeLabel">Card Phase</label>
-            <select id="cardSubType">
-              <option>Main Phase</option>
-              <option>Instant</option>
-              <option>Roll Phase</option>
-            </select>
-          </div>
+            <div class="form-group">
+              <label for="cardSubType" id="cardSubTypeLabel">Card Phase</label>
+              <select id="cardSubType">
+                <option>Main Phase</option>
+                <option>Instant</option>
+                <option>Roll Phase</option>
+              </select>
+            </div>
 
-          <div class="form-group">
-            <label for="costSelect">Cost Badge</label>
-            <select id="costSelect">
-              <option value="0">0</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-            </select>
-          </div>
-          
-          <div class="form-group">
-            <label for="cardName">Title</label>
-            <input type="text" id="cardName" placeholder="Enter title" maxlength="50">
-          </div>
+            <div class="form-group">
+              <label for="costSelect">Cost Badge</label>
+              <select id="costSelect">
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+            </div>
 
-          <div class="form-group">
-            <label for="cardDescription">Description</label>
-            <textarea id="cardDescription" placeholder="Card description" rows="4" maxlength="200"></textarea>
-          </div>
+            <details class="panel-subsection" open>
+              <summary>Card ID</summary>
+              <div class="panel-subcontent">
+                <div class="form-group">
+                  <label for="cardIdInput">Card ID</label>
+                  <input type="text" id="cardIdInput" placeholder="ABCD 00 v00" maxlength="11">
+                  <small class="help-text">Format: 4 caps, 2 numbers, v, 2 numbers (ex: ABCD 00 v00)</small>
+                </div>
+                <div class="form-group">
+                  <label for="cardIdFontSize">Card ID Size (px)</label>
+                  <input type="range" id="cardIdFontSize" min="8" max="48" step="1" value="24">
+                  <small class="help-text">Size: <span id="cardIdFontSizeValue">24</span>px</small>
+                </div>
+                <div class="form-group">
+                  <label for="cardIdPositionX">Card ID Horizontal (px)</label>
+                  <input type="range" id="cardIdPositionX" min="-10" max="10" step="0.5" value="0">
+                  <small class="help-text">X Offset: <span id="cardIdPositionXValue">0.0</span>px</small>
+                </div>
+                <div class="form-group">
+                  <label for="cardIdPositionY">Card ID Vertical (px)</label>
+                  <input type="range" id="cardIdPositionY" min="-10" max="10" step="0.5" value="0">
+                  <small class="help-text">Y Offset: <span id="cardIdPositionYValue">0.0</span>px</small>
+                </div>
+              </div>
+            </details>
 
-        </div>
+            <div class="form-group">
+              <label for="cardName">Title</label>
+              <input type="text" id="cardName" placeholder="Enter title" maxlength="50">
+            </div>
+
+            <div class="form-group">
+              <label for="titleFontSelect">Title Font</label>
+              <select id="titleFontSelect"></select>
+            </div>
+
+            <div class="form-group">
+              <label for="titleFontSize">Title Size (px)</label>
+              <input type="number" id="titleFontSize" min="8" max="96" step="1" value="40">
+            </div>
+
+            <div class="form-group">
+              <label for="titleLetterSpacing">Title Spacing (px)</label>
+              <input type="range" id="titleLetterSpacing" min="-10" max="10" step="0.5" value="1.5">
+              <small class="help-text">Spacing: <span id="titleLetterSpacingValue">1.5</span>px</small>
+            </div>
+
+            <div class="form-group">
+              <label for="cardDescription">Description</label>
+              <textarea id="cardDescription" placeholder="Card description" rows="4" maxlength="200"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="descriptionFontSelect">Description Font</label>
+              <select id="descriptionFontSelect"></select>
+            </div>
+
+            <div class="form-group">
+              <label for="descriptionFontSize">Description Size (px)</label>
+              <input type="number" id="descriptionFontSize" min="8" max="96" step="1" value="35">
+            </div>
+
+            <div class="form-group">
+              <label for="descriptionLineHeight">Description Line Spacing</label>
+              <input type="range" id="descriptionLineHeight" min="0.8" max="1.6" step="0.02" value="1.4">
+              <small class="help-text">Line spacing: <span id="descriptionLineHeightValue">1.4</span></small>
+            </div>
+
+            <div class="form-group">
+              <label for="descriptionLetterSpacing">Description Spacing (px)</label>
+              <input type="range" id="descriptionLetterSpacing" min="-10" max="10" step="0.5" value="0">
+              <small class="help-text">Spacing: <span id="descriptionLetterSpacingValue">0</span>px</small>
+            </div>
+          </div>
+        </details>
 
         <!-- Image Upload Section -->
-        <div class="panel-section">
-          <h2>Card Art</h2>
-          <div class="form-group">
-            <label for="imageUpload">Upload Image</label>
-            <input type="file" id="imageUpload" accept="image/*" class="file-input">
-            <label for="imageUpload" class="upload-label" style="margin: 0; cursor: pointer;">
-              Click to upload or drag and drop
-            </label>
-            <small class="help-text">Recommended: 600x800px (JPG, PNG, WebP)</small>
+        <details class="panel-section" open>
+          <summary>Card Art</summary>
+          <div class="panel-content">
+            <div class="form-group">
+              <label for="imageUpload">Upload Image</label>
+              <input type="file" id="imageUpload" accept="image/*" class="file-input">
+              <label for="imageUpload" class="upload-label" style="margin: 0; cursor: pointer;">
+                Click to upload or drag and drop
+              </label>
+              <small class="help-text">Recommended: 600x800px (JPG, PNG, WebP)</small>
+            </div>
+            <div class="form-group">
+              <label for="artSelect">Default Art</label>
+              <select id="artSelect">
+                <option value="">None</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="artScaleRange">Art Scale</label>
+              <input type="range" id="artScaleRange" min="0.5" max="3" step="0.01" value="1">
+              <input type="number" id="artScaleInput" min="0.5" max="3" step="0.01" value="1">
+              <small class="help-text">Fine adjustment for artwork scale.</small>
+            </div>
+            <div class="form-group">
+              <button id="btn-crop-art" class="btn btn-secondary btn-small">Crop Art To Frame</button>
+              <small class="help-text">Applies a frame-shaped crop to the artwork only.</small>
+            </div>
+            <div id="imagePreview" class="image-preview-small"></div>
+            <button id="btn-clear-image" class="btn btn-small btn-danger" style="display: none; margin-top: 8px;">Clear Image</button>
           </div>
-          <div class="form-group">
-            <label for="artSelect">Default Art</label>
-            <select id="artSelect">
-              <option value="">None</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <button id="btn-crop-art" class="btn btn-secondary btn-small">Crop Art To Frame</button>
-            <small class="help-text">Applies a frame-shaped crop to the artwork only.</small>
-          </div>
-          <div id="imagePreview" class="image-preview-small"></div>
-          <button id="btn-clear-image" class="btn btn-small btn-danger" style="display: none; margin-top: 8px;">Clear Image</button>
-        </div>
+        </details>
 
         <!-- Layers -->
-        <div class="panel-section">
-          <h2>Layers</h2>
-          <div class="form-group">
-            <label for="bleedColor">Bleed Color</label>
-            <input type="color" id="bleedColor" value="#ffffff">
-            <small class="help-text">This fills the bleed area behind the card. Follow the design guide for print-safe colors.</small>
+        <details class="panel-section" open>
+          <summary>Layers</summary>
+          <div class="panel-content">
+            <div class="form-group">
+              <label for="bleedColor">Bleed Color</label>
+              <input type="color" id="bleedColor" value="#000000">
+              <small class="help-text">This fills the bleed area behind the card. Follow the design guide for print-safe colors.</small>
+            </div>
+            <div class="form-group layers-group">
+              <h3>Card Elements</h3>
+              <label><input type="checkbox" id="toggleBleedLayer" /> Bleed</label>
+              <label><input type="checkbox" id="toggleBackgroundLower" /> Background Lower</label>
+              <label><input type="checkbox" id="toggleBackgroundUpper" /> Background Upper</label>
+              <label><input type="checkbox" id="toggleImageFrame" /> Image Frame</label>
+              <label><input type="checkbox" id="toggleFrameShading" /> Frame Shading</label>
+              <label><input type="checkbox" id="toggleBorder" /> Border</label>
+              <label><input type="checkbox" id="toggleCardId" /> Card ID</label>
+              <label><input type="checkbox" id="toggleTitleBar" /> Panel Upper</label>
+              <label><input type="checkbox" id="toggleTitleText" /> Title</label>
+              <label><input type="checkbox" id="toggleArtwork" /> Artwork</label>
+              <label><input type="checkbox" id="togglePanelBleed" /> Panel Bleed</label>
+              <label><input type="checkbox" id="toggleBottomText" /> Panel Lower</label>
+              <label><input type="checkbox" id="toggleCostBadge" /> Cost Badge</label>
+              <label><input type="checkbox" id="toggleAttackModifier" /> Attack Modifier (Roll)</label>
+              <label><input type="checkbox" id="toggleCardText" /> Card Text</label>
+            </div>
           </div>
-          <div class="form-group layers-group">
-            <h3>Card Elements</h3>
-            <label><input type="checkbox" id="toggleBleedLayer" /> Bleed</label>
-            <label><input type="checkbox" id="toggleBackgroundLower" /> Background Lower</label>
-            <label><input type="checkbox" id="toggleBackgroundUpper" /> Background Upper</label>
-            <label><input type="checkbox" id="toggleImageFrame" /> Image Frame</label>
-            <label><input type="checkbox" id="toggleFrameShading" /> Frame Shading</label>
-            <label><input type="checkbox" id="toggleBorder" /> Border</label>
-            <label><input type="checkbox" id="toggleTitleBar" /> Panel Upper</label>
-            <label><input type="checkbox" id="toggleTitleText" /> Title</label>
-            <label><input type="checkbox" id="toggleArtwork" /> Artwork</label>
-            <label><input type="checkbox" id="togglePanelBleed" /> Panel Bleed</label>
-            <label><input type="checkbox" id="toggleBottomText" /> Panel Lower</label>
-            <label><input type="checkbox" id="toggleCostBadge" /> Cost Badge</label>
-            <label><input type="checkbox" id="toggleAttackModifier" /> Attack Modifier (Roll)</label>
-            <label><input type="checkbox" id="toggleCardText" /> Card Text</label>
-          </div>
-        </div>
+        </details>
 
         <!-- Reference Overlay -->
-        <div class="panel-section">
-          <h2>Reference</h2>
+        <details class="panel-section">
+          <summary>Reference</summary>
+          <div class="panel-content">
           <div class="form-group">
-            <label>
-              <input type="checkbox" id="showReference" />
-              Show Reference Overlay
-            </label>
-          </div>
-          <div class="form-group">
-            <label>
-              <input type="checkbox" id="showReferenceSideBySide" />
-              Show Reference Side-by-Side
-            </label>
+            <label for="referenceSelect">Reference Library</label>
+            <select id="referenceSelect"></select>
           </div>
           <div class="form-group">
             <label for="referenceImage">Reference Image</label>
             <input type="file" id="referenceImage" accept="image/*" class="file-input">
-            <label for="referenceImage" class="upload-label" style="margin: 0; cursor: pointer;">
-              Upload Reference Image
-            </label>
+              <label for="referenceImage" class="upload-label" style="margin: 0; cursor: pointer;">
+                Upload Reference Image
+              </label>
+            </div>
+            <div id="referencePreview" class="image-preview-small"></div>
           </div>
-          <div id="referencePreview" class="image-preview-small"></div>
-        </div>
+        </details>
 
         <!-- Export -->
-        <div class="panel-section">
-          <h2>Export</h2>
-          <div class="form-group">
-            <label>
-              <input type="checkbox" id="toggleExportBleed" />
-              Include Bleed (Print)
-            </label>
+        <details class="panel-section">
+          <summary>Export</summary>
+          <div class="panel-content">
+            <div class="form-group">
+              <label>
+                <input type="checkbox" id="toggleExportBleed" />
+                Include Bleed (Print)
+              </label>
+            </div>
+            <small class="help-text">600 DPI bridge size export. Toggle bleed for print-safe margins.</small>
           </div>
-          <small class="help-text">600 DPI bridge size export. Toggle bleed for print-safe margins.</small>
-        </div>
+        </details>
       </aside>
 
       <!-- Right Panel: Preview -->
       <main class="preview-panel">
         <div class="preview-container">
+          <div class="reference-toggle">
+            <label>
+              <input type="checkbox" id="showReference" />
+              Show Reference
+            </label>
+            <label>
+              <input type="checkbox" id="showReferenceSideBySide" />
+              Side-by-Side
+            </label>
+            <div class="ref-row">
+              <span>Opacity</span>
+              <input type="range" id="referenceOpacity" min="0" max="1" step="0.05" value="0.7">
+            </div>
+          </div>
           <div class="card-preview" id="cardPreview">
             <!-- Layer 1: Bleed (bottom) -->
             <div id="bleedLayer" class="card-layer card-layer-bleed"></div>
@@ -185,32 +270,38 @@
             <!-- Layer 6: Frame Shading -->
             <div id="frameShadingLayer" class="card-layer card-layer-frame-shading"></div>
             
-            <!-- Layer 6: Frame -->
+            <!-- Layer 7: Frame -->
             <div id="frameLayer" class="card-layer card-layer-frame"></div>
 
-            <!-- Layer 7: Panel Bleed -->
+            <!-- Layer 8: Card ID -->
+            <div id="cardIdLayer" class="card-layer card-layer-card-id"></div>
+
+            <!-- Layer 9: Card ID Text -->
+            <div id="cardIdTextLayer" class="card-layer card-layer-card-id-text"></div>
+
+            <!-- Layer 10: Panel Bleed -->
             <div id="panelBleedLayer" class="card-layer card-layer-panel-bleed"></div>
 
-            <!-- Layer 7: Panel Lower -->
+            <!-- Layer 11: Panel Lower -->
             <div id="panelLowerLayer" class="card-layer card-layer-panel-lower">
             </div>
 
-            <!-- Layer 8: Panel Upper -->
+            <!-- Layer 12: Panel Upper -->
             <div id="panelUpperLayer" class="card-layer card-layer-panel-upper">
             </div>
             
-            <!-- Layer 9: Cost Badge -->
+            <!-- Layer 13: Cost Badge -->
             <div id="costBadgeLayer" class="card-layer card-layer-cost-badge"></div>
 
-            <!-- Layer 10: Attack Modifier (Roll Phase only) -->
+            <!-- Layer 14: Attack Modifier (Roll Phase only) -->
             <div id="attackModifierLayer" class="card-layer card-layer-attack-modifier"></div>
 
-            <!-- Layer 11: Title -->
+            <!-- Layer 15: Title -->
             <div id="titleLayer" class="card-layer card-layer-title">
               <div id="cardTitleBar" class="card-title-image"></div>
             </div>
 
-            <!-- Layer 12: Card Description Image -->
+            <!-- Layer 16: Card Description Image -->
             <div id="cardTextLayer" class="card-layer card-layer-card-text">
               <div id="descriptionImageLayer" class="card-description-image"></div>
             </div>
@@ -225,6 +316,8 @@
         <div class="preview-controls">
           <label for="zoomSlider">Zoom: <span id="zoomValue">100</span>%</label>
           <input type="range" id="zoomSlider" min="50" max="200" value="100" class="zoom-slider">
+          <label for="cardScaleSlider">Card Scale: <span id="cardScaleValue">100</span>%</label>
+          <input type="range" id="cardScaleSlider" min="80" max="120" value="100" class="zoom-slider">
         </div>
       </main>
     </div>
@@ -235,10 +328,10 @@
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script src="js/fonts.js"></script>
   <script src="js/state.js"></script>
   <script src="js/cardRenderer.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
+

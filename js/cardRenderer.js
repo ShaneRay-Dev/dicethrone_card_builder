@@ -11,6 +11,8 @@ class CardRenderer {
     this.imageFrameLayer = document.getElementById('imageFrameLayer');
     this.frameShadingLayer = document.getElementById('frameShadingLayer');
     this.frameLayer = document.getElementById('frameLayer');
+    this.cardIdLayer = document.getElementById('cardIdLayer');
+    this.cardIdTextLayer = document.getElementById('cardIdTextLayer');
     this.panelBleedLayer = document.getElementById('panelBleedLayer');
     this.panelLowerLayer = document.getElementById('panelLowerLayer');
     this.costBadgeLayer = document.getElementById('costBadgeLayer');
@@ -23,11 +25,19 @@ class CardRenderer {
     this.artMaskUrl = '';
     this.artMaskCache = {};
     this.bgLowerBoundsCache = {};
+    this.cardIdBoundsCache = {};
     this.iconCache = {};
     this.iconPromises = {};
-    
+    this.fontManifest = null;
+    this.fontMap = {};
+    this.fontPromises = {};
+    this.statusEffectsManifest = null;
+    this.statusEffectMap = {};
+
     this.assetManifest = null;
     this.loadAssetManifest();
+    this.fontManifestPromise = this.loadFontManifest();
+    this.loadStatusEffectsManifest();
   }
 
   async loadAssetManifest() {
@@ -38,6 +48,87 @@ class CardRenderer {
       console.warn('Could not load asset manifest:', error);
       this.assetManifest = {};
     }
+  }
+
+  async loadFontManifest() {
+    try {
+      const response = await fetch('Assets/fonts/manifest.json');
+      const manifest = await response.json();
+      this.fontManifest = manifest;
+      this.fontMap = {};
+      (manifest.fonts || []).forEach((font) => {
+        if (font.family && font.file) {
+          this.fontMap[font.family] = font.file;
+        }
+      });
+    } catch (error) {
+      console.warn('Could not load font manifest:', error);
+      this.fontManifest = { fonts: [] };
+      this.fontMap = {};
+    }
+  }
+
+  async loadStatusEffectsManifest() {
+    try {
+      const response = await fetch('Assets/Status effects/manifest.json');
+      const manifest = await response.json();
+      this.statusEffectsManifest = manifest;
+      const files = Array.isArray(manifest.files) ? manifest.files : [];
+      this.statusEffectMap = {};
+      files.forEach((file) => {
+        const base = String(file || '').replace(/\.[^/.]+$/, '');
+        const key = this.normalizeStatusEffectKey(base);
+        if (!key) return;
+        this.statusEffectMap[key] = `Assets/Status effects/${file}`;
+      });
+    } catch (error) {
+      console.warn('Could not load status effects manifest:', error);
+      this.statusEffectsManifest = { files: [] };
+      this.statusEffectMap = {};
+    }
+  }
+
+  getFontFamily(family) {
+    const safe = (family || '').trim();
+    if (!safe) return 'Arial, sans-serif';
+    return `"${safe}", Arial, sans-serif`;
+  }
+
+  normalizeStatusEffectKey(value) {
+    return String(value || '')
+      .toLowerCase()
+      .replace(/['’]/g, '')
+      .replace(/[\s-]+/g, '_')
+      .replace(/[^a-z0-9_]/g, '')
+      .trim();
+  }
+
+  async ensureFontLoaded(family, weight = 700) {
+    const safe = (family || '').trim();
+    if (!safe) return;
+    const key = `${safe}:${weight}`;
+    if (this.fontPromises[key]) return this.fontPromises[key];
+
+    const loadPromise = (async () => {
+      if (this.fontManifestPromise) {
+        await this.fontManifestPromise;
+      }
+      const src = this.fontMap[safe];
+      if (src) {
+        const face = new FontFace(safe, `url('${src}')`, { weight: String(weight) });
+        const loaded = await face.load();
+        document.fonts.add(loaded);
+        return true;
+      }
+      await document.fonts.load(`${weight} 18px "${safe}"`);
+      return true;
+    })().catch((error) => {
+      console.warn('Failed to load font:', safe, error);
+      return false;
+    });
+
+    this.fontPromises[key] = loadPromise;
+    return loadPromise;
   }
 
   applyAssetsForCardType(cardType, cardSubType) {
@@ -72,6 +163,14 @@ class CardRenderer {
     // Apply frame shading
     if (assets.frameShading && this.frameShadingLayer) {
       this.frameShadingLayer.style.backgroundImage = `url('${assets.frameShading}')`;
+    }
+
+    // Apply card ID layer (above frame)
+    if (this.cardIdLayer) {
+      this.cardIdLayer.style.backgroundImage = assets.cardId ? `url('${assets.cardId}')` : '';
+    }
+    if (this.cardIdTextLayer) {
+      this.updateCardIdText(gameState.getCard());
     }
 
     // Apply panel upper (title bar area)
@@ -398,6 +497,16 @@ class CardRenderer {
       this.frameLayer.style.pointerEvents = layers.border === false ? 'none' : 'auto';
     }
 
+    // Card ID layer (above frame)
+    if (this.cardIdLayer) {
+      this.cardIdLayer.style.opacity = layers.cardId === false ? '0' : '1';
+      this.cardIdLayer.style.pointerEvents = layers.cardId === false ? 'none' : 'auto';
+    }
+    if (this.cardIdTextLayer) {
+      this.cardIdTextLayer.style.opacity = layers.cardId === false ? '0' : '1';
+      this.cardIdTextLayer.style.pointerEvents = layers.cardId === false ? 'none' : 'auto';
+    }
+
     // Panel bleed
     if (this.panelBleedLayer) {
       this.panelBleedLayer.style.opacity = layers.panelBleed === false ? '0' : '1';
@@ -468,6 +577,52 @@ class CardRenderer {
 
     // Update description image (in Panel Lower)
     this.updateDescriptionImage(card);
+
+    // Update card ID text (right edge)
+    this.updateCardIdText(card);
+  }
+
+  normalizeCardIdText(value) {
+    const raw = String(value || '');
+    const letters = raw.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 4);
+    const digits = raw.replace(/[^0-9]/g, '').slice(0, 4);
+    const parts = [];
+    if (letters) parts.push(letters);
+    if (digits.length > 0) {
+      parts.push(digits.slice(0, Math.min(2, digits.length)));
+    }
+    if (digits.length >= 2) {
+      parts.push(`v${digits.slice(2, 4)}`);
+    }
+    return parts.join(' ').slice(0, 11);
+  }
+
+  getCardIdSegments(text) {
+    const safe = String(text || '').replace(/\s+/g, '');
+    const letters = safe.slice(0, 4);
+    const nums = safe.slice(4, 6);
+    const tail = safe.slice(6);
+    return [letters, nums, tail].filter(Boolean);
+  }
+
+  measureCardIdSegments(ctx, segments, segmentSpacing, letterSpacing) {
+    const parts = segments.filter(Boolean);
+    let width = 0;
+    parts.forEach((part, idx) => {
+      width += this.measureTextWithSpacing(ctx, part, letterSpacing);
+      if (idx < parts.length - 1) width += segmentSpacing;
+    });
+    return width;
+  }
+
+  drawCardIdSegments(ctx, segments, x, y, segmentSpacing, letterSpacing) {
+    const parts = segments.filter(Boolean);
+    let cursorX = x;
+    parts.forEach((part, idx) => {
+      cursorX += this.drawTextWithSpacing(ctx, part, cursorX, y, letterSpacing);
+      if (idx < parts.length - 1) cursorX += segmentSpacing;
+    });
+    return cursorX - x;
   }
 
   async updateTitleImage(card) {
@@ -494,8 +649,10 @@ class CardRenderer {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const fontSize = 18;
-    ctx.font = `700 ${fontSize}px Arial`;
+    const fontSize = Number(card.titleFontSize) || 18;
+    const titleFont = card.titleFont || 'Arial';
+    await this.ensureFontLoaded(titleFont, 700);
+    ctx.font = `700 ${fontSize}px ${this.getFontFamily(titleFont)}`;
     ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
@@ -536,7 +693,16 @@ class CardRenderer {
     const offsetX = (Number(offset.x) || 0) * currentScale;
     const offsetY = (Number(offset.y) || 0) * currentScale;
     const iconSize = Math.round(fontSize * 1.8);
-    const layout = this.layoutTextWithIcons(ctx, text, maxWidth, fontSize * 1.35, iconSize);
+    const letterSpacing = Number(card.titleLetterSpacing) || 0;
+    const layout = this.layoutTextWithIcons(
+      ctx,
+      text,
+      maxWidth,
+      fontSize * 1.35,
+      iconSize,
+      letterSpacing,
+      1.05
+    );
     const pad = Math.ceil(Math.max(iconSize * 0.2, ctx.shadowBlur + 2));
 
     const tightCanvas = document.createElement('canvas');
@@ -551,7 +717,7 @@ class CardRenderer {
     tightCtx.shadowColor = ctx.shadowColor;
     tightCtx.shadowBlur = ctx.shadowBlur;
     tightCtx.shadowOffsetY = ctx.shadowOffsetY;
-    this.drawLaidOutTextWithIcons(tightCtx, layout, pad, pad, iconSize, 'center');
+    this.drawLaidOutTextWithIcons(tightCtx, layout, pad, pad, iconSize, 'center', letterSpacing);
 
     titleEl.style.backgroundImage = `url('${tightCanvas.toDataURL('image/png')}')`;
     titleEl.style.backgroundSize = `${tightCanvas.width}px ${tightCanvas.height}px`;
@@ -564,6 +730,106 @@ class CardRenderer {
     titleEl.style.left = `${left}px`;
     titleEl.style.top = `${top}px`;
     titleEl.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+  }
+
+  async updateCardIdText(card) {
+    const idEl = this.cardIdTextLayer;
+    if (!idEl) return;
+    const text = this.normalizeCardIdText(card.cardId || '');
+    if (!text) {
+      idEl.style.backgroundImage = '';
+      idEl.style.width = '0';
+      idEl.style.height = '0';
+      return;
+    }
+
+    const assets = this.getLayerAssets(card);
+    const idSrc = assets.cardId;
+    if (idSrc && !this.cardIdBoundsCache[idSrc]) {
+      this.computeOpaqueBounds(idSrc).then((bounds) => {
+        if (bounds) this.cardIdBoundsCache[idSrc] = bounds;
+        this.updateCardIdText(card);
+      }).catch(() => {});
+    }
+
+    const container = this.previewElement;
+    if (!container) return;
+    const width = Math.max(1, Math.round(container.clientWidth));
+    const height = Math.max(1, Math.round(container.clientHeight));
+    let boxLeft = width * 0.9;
+    let boxTop = height * 0.18;
+    let boxWidth = width * 0.08;
+    let boxHeight = height * 0.18;
+
+    const bounds = idSrc ? this.cardIdBoundsCache[idSrc] : null;
+    if (bounds) {
+      const scaleX = width / bounds.iw;
+      const scaleY = height / bounds.ih;
+      boxLeft = bounds.x * scaleX;
+      boxTop = bounds.y * scaleY;
+      boxWidth = bounds.w * scaleX;
+      boxHeight = bounds.h * scaleY;
+    }
+
+    const fallbackSize = Math.max(10, Math.round(Math.min(boxWidth, boxHeight) * 0.6));
+    const fontSize = Number.isFinite(Number(card.cardIdFontSize))
+      ? Number(card.cardIdFontSize)
+      : fallbackSize;
+    const fontFamily = card.cardIdFont || 'MyriadPro-Light';
+    const fontWeight = 400;
+    await this.ensureFontLoaded(fontFamily, fontWeight);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const cardIdColor = '#ffffff';
+    ctx.font = `${fontWeight} ${fontSize}px ${this.getFontFamily(fontFamily)}`;
+    ctx.fillStyle = cardIdColor;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.shadowColor = 'rgba(0,0,0,0.45)';
+    ctx.shadowBlur = 4;
+    ctx.shadowOffsetY = 2;
+
+    const segments = this.getCardIdSegments(text);
+    const segmentSpacing = 0.5;
+    const letterSpacing = 0;
+    const metrics = ctx.measureText('Mg');
+    const textHeight = (metrics.actualBoundingBoxAscent || 0) + (metrics.actualBoundingBoxDescent || 0);
+    const lineHeight = Math.max(fontSize * 1.2, textHeight + Math.max(2, textHeight * 0.1));
+    const lineWidth = this.measureCardIdSegments(ctx, segments, segmentSpacing, letterSpacing);
+    const rotatedWidth = lineHeight;
+    const rotatedHeight = lineWidth;
+    const scaleFit = Math.min(boxWidth / rotatedWidth, boxHeight / rotatedHeight, 1);
+    const offsetY = Number(card.cardIdOffset) || 0;
+    const offsetX = Number(card.cardIdOffsetX) || 0;
+    const centerX = boxLeft + boxWidth / 2 + offsetX;
+    const centerY = boxTop + boxHeight / 2 + offsetY;
+
+    ctx.save();
+    ctx.translate(centerX, centerY);
+    ctx.rotate(Math.PI / 2);
+    ctx.scale(scaleFit, scaleFit);
+    this.drawCardIdSegments(
+      ctx,
+      segments,
+      -lineWidth / 2,
+      -lineHeight / 2,
+      segmentSpacing,
+      letterSpacing
+    );
+    ctx.restore();
+
+    idEl.style.position = 'absolute';
+    idEl.style.left = '0';
+    idEl.style.top = '0';
+    idEl.style.width = '100%';
+    idEl.style.height = '100%';
+    idEl.style.backgroundImage = `url('${canvas.toDataURL('image/png')}')`;
+    idEl.style.backgroundSize = '100% 100%';
+    idEl.style.backgroundPosition = 'center';
   }
   async updateDescriptionImage(card) {
     const descLayer = document.getElementById('descriptionImageLayer');
@@ -589,8 +855,10 @@ class CardRenderer {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const fontSize = 18;
-    ctx.font = `700 ${fontSize}px Arial`;
+    const fontSize = Number(card.descriptionFontSize) || 18;
+    const descFont = card.descriptionFont || 'Arial';
+    await this.ensureFontLoaded(descFont, 700);
+    ctx.font = `700 ${fontSize}px ${this.getFontFamily(descFont)}`;
     ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
@@ -601,7 +869,9 @@ class CardRenderer {
     const containerRect = container.getBoundingClientRect();
     let centerX = width / 2;
     let centerY = height / 2;
-    let maxWidth = width * 0.6;
+    const descriptionWidthRatio = 0.8;
+    const descriptionLineHeightScale = Number(card.descriptionLineHeightScale) || 1.0;
+    let maxWidth = width * descriptionWidthRatio;
 
     const assets = this.getLayerAssets(card);
     const bgLowerSrc = assets.backgroundLower;
@@ -618,12 +888,12 @@ class CardRenderer {
       const scaleY = height / bounds.ih;
       centerX = (bounds.x + bounds.w / 2) * scaleX;
       centerY = (bounds.y + bounds.h / 2) * scaleY;
-      maxWidth = bounds.w * scaleX * 0.6;
+      maxWidth = bounds.w * scaleX * descriptionWidthRatio;
     } else if (this.bgLowerLayer) {
       const lowerRect = this.bgLowerLayer.getBoundingClientRect();
       centerX = (lowerRect.left - containerRect.left) + (lowerRect.width / 2);
       centerY = (lowerRect.top - containerRect.top) + (lowerRect.height / 2);
-      maxWidth = (lowerRect.width / containerRect.width) * width * 0.6;
+      maxWidth = (lowerRect.width / containerRect.width) * width * descriptionWidthRatio;
     }
 
     const offset = card.descriptionPosition || { x: 0, y: 0 };
@@ -631,7 +901,16 @@ class CardRenderer {
     const offsetX = (Number(offset.x) || 0) * currentScale;
     const offsetY = (Number(offset.y) || 0) * currentScale;
     const iconSize = Math.round(fontSize * 1.8);
-    const layout = this.layoutTextWithIcons(ctx, text, maxWidth, fontSize * 1.35, iconSize);
+    const letterSpacing = Number(card.descriptionLetterSpacing) || 0;
+    const layout = this.layoutTextWithIcons(
+      ctx,
+      text,
+      maxWidth,
+      fontSize * descriptionLineHeightScale,
+      iconSize,
+      letterSpacing,
+      1.0
+    );
     const pad = Math.ceil(Math.max(iconSize * 0.2, ctx.shadowBlur + 2));
 
     const tightCanvas = document.createElement('canvas');
@@ -646,7 +925,7 @@ class CardRenderer {
     tightCtx.shadowColor = ctx.shadowColor;
     tightCtx.shadowBlur = ctx.shadowBlur;
     tightCtx.shadowOffsetY = ctx.shadowOffsetY;
-    this.drawLaidOutTextWithIcons(tightCtx, layout, pad, pad, iconSize, 'center');
+    this.drawLaidOutTextWithIcons(tightCtx, layout, pad, pad, iconSize, 'center', letterSpacing);
 
     descLayer.style.backgroundImage = `url('${tightCanvas.toDataURL('image/png')}')`;
     descLayer.style.backgroundSize = `${tightCanvas.width}px ${tightCanvas.height}px`;
@@ -818,6 +1097,80 @@ class CardRenderer {
         }
       };
 
+      const drawCardIdText = async () => {
+        if (layers.cardId === false) return;
+        const raw = this.normalizeCardIdText(card.cardId || '');
+        if (!raw) return;
+        if (!assets.cardId) return;
+
+        let bounds = this.cardIdBoundsCache[assets.cardId];
+        if (!bounds) {
+          try {
+            bounds = await this.computeOpaqueBounds(assets.cardId);
+            if (bounds) this.cardIdBoundsCache[assets.cardId] = bounds;
+          } catch (error) {
+            return;
+          }
+        }
+        if (!bounds) return;
+
+        const scaleX = rect.width / bounds.iw;
+        const scaleY = rect.height / bounds.ih;
+        const boxLeft = bounds.x * scaleX;
+        const boxTop = bounds.y * scaleY;
+        const boxWidth = bounds.w * scaleX;
+        const boxHeight = bounds.h * scaleY;
+
+        const fallbackSize = Math.max(10, Math.round(Math.min(boxWidth, boxHeight) * 0.6));
+        const baseFontSize = Number.isFinite(Number(card.cardIdFontSize))
+          ? Number(card.cardIdFontSize)
+          : fallbackSize;
+        const fontFamily = card.cardIdFont || 'MyriadPro-Light';
+        const fontWeight = 400;
+        await this.ensureFontLoaded(fontFamily, fontWeight);
+
+        const fontSize = baseFontSize * scale;
+        const cardIdColor = '#ffffff';
+        ctx.save();
+        ctx.font = `${fontWeight} ${fontSize}px ${this.getFontFamily(fontFamily)}`;
+        ctx.fillStyle = cardIdColor;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.shadowColor = 'rgba(0,0,0,0.45)';
+        ctx.shadowBlur = 4 * scale;
+        ctx.shadowOffsetY = 2 * scale;
+
+        const segments = this.getCardIdSegments(raw);
+        const segmentSpacing = 0.5 * scale;
+        const letterSpacing = 0;
+        const metrics = ctx.measureText('Mg');
+        const textHeight = (metrics.actualBoundingBoxAscent || 0) + (metrics.actualBoundingBoxDescent || 0);
+        const lineHeight = Math.max(fontSize * 1.2, textHeight + Math.max(2, textHeight * 0.1));
+        const lineWidth = this.measureCardIdSegments(ctx, segments, segmentSpacing, letterSpacing);
+        const rotatedWidth = lineHeight;
+        const rotatedHeight = lineWidth;
+        const boxWidthPx = boxWidth * scale;
+        const boxHeightPx = boxHeight * scale;
+        const scaleFit = Math.min(boxWidthPx / rotatedWidth, boxHeightPx / rotatedHeight, 1);
+        const idOffsetY = Number(card.cardIdOffset) || 0;
+        const idOffsetX = Number(card.cardIdOffsetX) || 0;
+        const centerX = offsetX + boxLeft * scale + boxWidthPx / 2 + idOffsetX * scale;
+        const centerY = offsetY + boxTop * scale + boxHeightPx / 2 + idOffsetY * scale;
+
+        ctx.translate(centerX, centerY);
+        ctx.rotate(Math.PI / 2);
+        ctx.scale(scaleFit, scaleFit);
+        this.drawCardIdSegments(
+          ctx,
+          segments,
+          -lineWidth / 2,
+          -lineHeight / 2,
+          segmentSpacing,
+          letterSpacing
+        );
+        ctx.restore();
+      };
+
       // Bleed
       if (layers.bleed !== false) {
         ctx.save();
@@ -833,6 +1186,8 @@ class CardRenderer {
       if (layers.imageFrame !== false) await drawLayer(assets.imageFrame, true);
       if (layers.frameShading !== false) await drawLayer(assets.frameShading, true);
       if (layers.border !== false) await drawLayer(assets.border, true);
+      if (layers.cardId !== false) await drawLayer(assets.cardId, true);
+      await drawCardIdText();
       if (layers.panelBleed !== false) await drawLayer(assets.panelBleed, true);
       if (panelLowerVisible !== false) await drawLayer(assets.panelLower, true);
       if (panelUpperVisible !== false) await drawLayer(assets.panelUpper, true);
@@ -855,14 +1210,20 @@ class CardRenderer {
         include,
         align = 'left',
         boundsSrc = null,
-        widthRatio = 0.6
+        widthRatio = 0.6,
+        fontFamily = 'Arial',
+        baseFontSize = 18,
+        lineHeightScale = 1.35,
+        letterSpacing = 0,
+        iconLineHeightScale = 1.0
       ) => {
         if (!include) return;
         const trimmed = (text || '').trim();
         if (!trimmed) return;
         ctx.save();
-        const fontSize = 18 * scale;
-        ctx.font = `700 ${fontSize}px Arial`;
+        const fontSize = baseFontSize * scale;
+        await this.ensureFontLoaded(fontFamily, 700);
+        ctx.font = `700 ${fontSize}px ${this.getFontFamily(fontFamily)}`;
         ctx.fillStyle = '#ffffff';
         ctx.textBaseline = 'top';
         ctx.textAlign = 'left';
@@ -909,12 +1270,15 @@ class CardRenderer {
         const scaledOffsetX = (Number(offset.x) || 0) * currentScale;
         const scaledOffsetY = (Number(offset.y) || 0) * currentScale;
         const iconSize = Math.round(fontSize * 1.8);
+        const scaledSpacing = (Number(letterSpacing) || 0) * scale;
         const layout = this.layoutTextWithIcons(
           ctx,
           trimmed,
           pw * widthRatio * scale,
-          fontSize * 1.35,
-          iconSize
+          fontSize * lineHeightScale,
+          iconSize,
+          scaledSpacing,
+          iconLineHeightScale
         );
         const drawX =
           offsetX +
@@ -926,7 +1290,7 @@ class CardRenderer {
           (py + ph / 2) * scale +
           scaledOffsetY * scale -
           layout.height / 2;
-        this.drawLaidOutTextWithIcons(ctx, layout, drawX, drawY, iconSize, align);
+        this.drawLaidOutTextWithIcons(ctx, layout, drawX, drawY, iconSize, align, scaledSpacing);
         ctx.restore();
       };
 
@@ -938,7 +1302,12 @@ class CardRenderer {
         layers.titleText !== false,
         'center',
         assets.backgroundUpper,
-        0.8
+        0.8,
+        card.titleFont || 'Arial',
+        Number(card.titleFontSize) || 18,
+        1.35,
+        Number(card.titleLetterSpacing) || 0,
+        1.05
       );
 
       // Card description text
@@ -949,7 +1318,12 @@ class CardRenderer {
         layers.cardText !== false,
         'center',
         assets.backgroundLower,
-        0.6
+        0.8,
+        card.descriptionFont || 'Arial',
+        Number(card.descriptionFontSize) || 18,
+        Number(card.descriptionLineHeightScale) || 1.0,
+        Number(card.descriptionLetterSpacing) || 0,
+        1.0
       );
 
       const link = document.createElement('a');
@@ -964,47 +1338,6 @@ class CardRenderer {
     }
   }
 
-  drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
-    const words = text.split(' ');
-    let line = '';
-    let yPos = y;
-    const lh = (parseFloat(ctx.font) || 12) * lineHeight;
-
-    for (let i = 0; i < words.length; i += 1) {
-      const testLine = line + words[i] + ' ';
-      const metrics = ctx.measureText(testLine);
-      if (metrics.width > maxWidth && i > 0) {
-        ctx.fillText(line.trim(), x, yPos);
-        line = words[i] + ' ';
-        yPos += lh;
-      } else {
-        line = testLine;
-      }
-    }
-    ctx.fillText(line.trim(), x, yPos);
-  }
-
-  parseIconTokens(text) {
-    const tokens = [];
-    const regex = /\{\{([^}]+)\}\}/g;
-    let lastIndex = 0;
-    let match;
-    while ((match = regex.exec(text)) !== null) {
-      if (match.index > lastIndex) {
-        tokens.push({ type: 'text', value: text.slice(lastIndex, match.index) });
-      }
-      const content = match[1].trim();
-      const parts = content.split(',').map((p) => p.trim());
-      const name = parts[0].toLowerCase();
-      const value = parts[1] || '';
-      tokens.push({ type: 'icon', name, value });
-      lastIndex = regex.lastIndex;
-    }
-    if (lastIndex < text.length) {
-      tokens.push({ type: 'text', value: text.slice(lastIndex) });
-    }
-    return tokens;
-  }
 
   resolveIconPath(token) {
     const name = (token?.name || '').toLowerCase();
@@ -1055,6 +1388,28 @@ class CardRenderer {
       return 'Assets/Icons/Dice/dice.png';
     }
 
+    if (name) {
+      const suffix = rawValue ? `_${rawValue}` : '';
+      const key = this.normalizeStatusEffectKey(`${name}${suffix}`);
+      if (key && this.statusEffectMap && this.statusEffectMap[key]) {
+        return this.statusEffectMap[key];
+      }
+      const baseKey = this.normalizeStatusEffectKey(name);
+      if (rawValue && baseKey) {
+        const combined = this.normalizeStatusEffectKey(`${baseKey}_${rawValue}`);
+        if (combined && this.statusEffectMap && this.statusEffectMap[combined]) {
+          return this.statusEffectMap[combined];
+        }
+      }
+      if (baseKey && this.statusEffectMap && this.statusEffectMap[baseKey]) {
+        return this.statusEffectMap[baseKey];
+      }
+      const safe = this.normalizeStatusEffectKey(`${name}${suffix}`);
+      if (safe) {
+        return encodeURI(`Assets/Status effects/${safe}.png`);
+      }
+    }
+
     console.warn('No icon mapping for token:', token);
     return '';
   }
@@ -1099,13 +1454,13 @@ class CardRenderer {
       }
     };
 
-    const tokenRegex = /\{\{([^}]+)\}\}|\{([^}]+)\}/g;
+    const tokenRegex = /\{\{([^}]+)\}\}/g;
     let lastIndex = 0;
     let match;
 
     while ((match = tokenRegex.exec(normalized)) !== null) {
       pushWhitespaceSensitive(normalized.slice(lastIndex, match.index));
-      const raw = match[1] || match[2] || '';
+      const raw = match[1] || '';
       const token = parseToken(raw);
       if (token) {
         atoms.push({ type: 'icon', name: token.name, value: token.value });
@@ -1118,17 +1473,60 @@ class CardRenderer {
     return atoms;
   }
 
-  layoutTextWithIcons(ctx, text, maxWidth, lineHeight, iconSize) {
+  measureTextWithSpacing(ctx, text, spacing) {
+    if (!spacing || spacing <= 0) {
+      return ctx.measureText(text).width;
+    }
+    let width = 0;
+    for (let i = 0; i < text.length; i += 1) {
+      width += ctx.measureText(text[i]).width;
+      if (i < text.length - 1) width += spacing;
+    }
+    return width;
+  }
+
+  drawTextWithSpacing(ctx, text, x, y, spacing) {
+    if (!spacing || spacing <= 0) {
+      ctx.fillText(text, x, y);
+      return ctx.measureText(text).width;
+    }
+    let cursorX = x;
+    for (let i = 0; i < text.length; i += 1) {
+      const ch = text[i];
+      ctx.fillText(ch, cursorX, y);
+      cursorX += ctx.measureText(ch).width;
+      if (i < text.length - 1) cursorX += spacing;
+    }
+    return cursorX - x;
+  }
+
+  layoutTextWithIcons(
+    ctx,
+    text,
+    maxWidth,
+    lineHeight,
+    iconSize,
+    letterSpacing = 0,
+    iconLineHeightScale = 1.0
+  ) {
     const atoms = this.tokenizeForLayout(text);
     const lines = [];
     let current = [];
     let width = 0;
-    const spaceWidth = ctx.measureText(' ').width;
+    const spaceWidth = ctx.measureText(' ').width - 3;
     const iconGap = Math.round(iconSize * 0.15);
-    const effectiveLineHeight = Math.max(lineHeight, iconSize * 1.15);
+    const hasIcons = atoms.some((atom) => atom.type === 'icon');
+    const iconLineHeight = iconSize * iconLineHeightScale;
+    const metrics = ctx.measureText('Mg');
+    const textHeight = (metrics.actualBoundingBoxAscent || 0) + (metrics.actualBoundingBoxDescent || 0);
+    const minLineHeight = textHeight ? textHeight + Math.max(2, textHeight * 0.1) : lineHeight;
+    let effectiveLineHeight = Math.max(lineHeight, minLineHeight);
+    if (hasIcons) {
+      effectiveLineHeight = Math.max(effectiveLineHeight, iconLineHeight);
+    }
 
     const measureAtom = (atom) => {
-      if (atom.type === 'text') return ctx.measureText(atom.value).width;
+      if (atom.type === 'text') return this.measureTextWithSpacing(ctx, atom.value, letterSpacing);
       if (atom.type === 'icon') return iconSize + iconGap;
       return spaceWidth;
     };
@@ -1182,7 +1580,7 @@ class CardRenderer {
     };
   }
 
-  drawLaidOutTextWithIcons(ctx, layout, originX, originY, iconSize, align = 'left') {
+  drawLaidOutTextWithIcons(ctx, layout, originX, originY, iconSize, align = 'left', letterSpacing = 0) {
     const iconGap = layout.iconGap;
     const spaceWidth = layout.spaceWidth;
     const effectiveLineHeight = layout.lineHeight;
@@ -1191,6 +1589,9 @@ class CardRenderer {
     const iconYOffset = Math.max(0, (textHeight - iconSize) / 2) - Math.round(iconSize * 0.225);
 
     const getOpaqueBounds = (img) => {
+      if (img.__opaqueBounds !== undefined) {
+        return img.__opaqueBounds;
+      }
       const canvas = document.createElement('canvas');
       canvas.width = img.width;
       canvas.height = img.height;
@@ -1213,8 +1614,13 @@ class CardRenderer {
           }
         }
       }
-      if (maxX < minX || maxY < minY) return null;
-      return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
+      if (maxX < minX || maxY < minY) {
+        img.__opaqueBounds = null;
+        return null;
+      }
+      const bounds = { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
+      img.__opaqueBounds = bounds;
+      return bounds;
     };
 
     const drawIconToBox = (img, x, y, size) => {
@@ -1248,8 +1654,8 @@ class CardRenderer {
           return;
         }
         if (atom.type === 'text') {
-          ctx.fillText(atom.value, x, y);
-          x += ctx.measureText(atom.value).width;
+          const textWidth = this.drawTextWithSpacing(ctx, atom.value, x, y, letterSpacing);
+          x += textWidth;
           return;
         }
         if (atom.type === 'icon') {
@@ -1261,7 +1667,6 @@ class CardRenderer {
               x += iconSize + iconGap;
               return;
             }
-            this.loadIcon(path).then(() => this.updateDescriptionImage(gameState.getCard()));
           }
           const boxY = y + iconYOffset;
           ctx.save();
@@ -1277,30 +1682,6 @@ class CardRenderer {
     });
   }
 
-  drawWrappedTextCentered(ctx, text, centerX, centerY, maxWidth, lineHeight) {
-    const words = text.split(' ');
-    const lines = [];
-    let line = '';
-    for (let i = 0; i < words.length; i += 1) {
-      const testLine = line + words[i] + ' ';
-      const metrics = ctx.measureText(testLine);
-      if (metrics.width > maxWidth && i > 0) {
-        lines.push(line.trim());
-        line = words[i] + ' ';
-      } else {
-        line = testLine;
-      }
-    }
-    lines.push(line.trim());
-
-    const fontSize = parseFloat(ctx.font) || 12;
-    const totalHeight = lines.length * lineHeight;
-    let y = centerY - totalHeight / 2;
-    for (const l of lines) {
-      ctx.fillText(l, centerX, y);
-      y += lineHeight;
-    }
-  }
 }
 
 // Initialize renderer

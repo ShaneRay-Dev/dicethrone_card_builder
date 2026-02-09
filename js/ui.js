@@ -2,7 +2,35 @@
 class UI {
   constructor() {
     this.cardNameInput = document.getElementById('cardName');
+    this.cardIdInput = document.getElementById('cardIdInput');
     this.cardDescInput = document.getElementById('cardDescription');
+    this.cardIdFontSizeInput = document.getElementById('cardIdFontSize');
+    this.cardIdFontSizeValue = document.getElementById('cardIdFontSizeValue');
+    this.cardIdPositionXInput = document.getElementById('cardIdPositionX');
+    this.cardIdPositionXValue = document.getElementById('cardIdPositionXValue');
+    this.cardIdPositionYInput = document.getElementById('cardIdPositionY');
+    this.cardIdPositionYValue = document.getElementById('cardIdPositionYValue');
+    this.titleFontSelect = document.getElementById('titleFontSelect');
+    this.descriptionFontSelect = document.getElementById('descriptionFontSelect');
+    this.titleFontSizeInput = document.getElementById('titleFontSize');
+    this.descriptionFontSizeInput = document.getElementById('descriptionFontSize');
+    this.descriptionLineHeightInput = document.getElementById('descriptionLineHeight');
+    this.descriptionLineHeightValue = document.getElementById('descriptionLineHeightValue');
+    this.titleLetterSpacingInput = document.getElementById('titleLetterSpacing');
+    this.descriptionLetterSpacingInput = document.getElementById('descriptionLetterSpacing');
+    this.titleLetterSpacingValue = document.getElementById('titleLetterSpacingValue');
+    this.descriptionLetterSpacingValue = document.getElementById('descriptionLetterSpacingValue');
+    this.defaultTitleFont = 'PhosphateSolid';
+    this.defaultDescriptionFont = 'MYRIADPRO-BOLDCOND';
+    this.defaultTitleFontSize = 40;
+    this.defaultDescriptionFontSize = 35;
+    this.defaultDescriptionLineHeight = 1.4;
+    this.defaultTitleLetterSpacing = 1.5;
+    this.defaultDescriptionLetterSpacing = 0;
+    this.defaultCardIdFont = 'MyriadPro-Light';
+    this.defaultCardIdFontSize = 24;
+    this.defaultCardIdOffset = 0;
+    this.defaultCardIdOffsetX = 0;
     this.cardTypeSelect = document.getElementById('cardType');
     this.cardSubTypeSelect = document.getElementById('cardSubType');
     this.costSelect = document.getElementById('costSelect');
@@ -12,13 +40,17 @@ class UI {
     this.btnClearImage = document.getElementById('btn-clear-image');
     this.artSelect = document.getElementById('artSelect');
     this.btnCropArt = document.getElementById('btn-crop-art');
+    this.artScaleRange = document.getElementById('artScaleRange');
+    this.artScaleInput = document.getElementById('artScaleInput');
 
     this.referenceImageInput = document.getElementById('referenceImage');
     this.referencePreview = document.getElementById('referencePreview');
+    this.referenceSelect = document.getElementById('referenceSelect');
     this.showReferenceCheckbox = document.getElementById('showReference');
     this.showReferenceSideBySideCheckbox = document.getElementById('showReferenceSideBySide');
     this.referenceOverlay = document.getElementById('referenceOverlay');
     this.referenceSide = document.getElementById('referenceSide');
+    this.referenceOpacity = document.getElementById('referenceOpacity');
 
     this.toggleExportBleed = document.getElementById('toggleExportBleed');
 
@@ -29,6 +61,7 @@ class UI {
     this.toggleFrameShading = document.getElementById('toggleFrameShading');
     this.bleedColorInput = document.getElementById('bleedColor');
     this.toggleBorder = document.getElementById('toggleBorder');
+    this.toggleCardId = document.getElementById('toggleCardId');
     this.toggleTitleBar = document.getElementById('toggleTitleBar');
     this.toggleTitleText = document.getElementById('toggleTitleText');
     this.toggleArtwork = document.getElementById('toggleArtwork');
@@ -39,13 +72,14 @@ class UI {
     this.toggleCardText = document.getElementById('toggleCardText');
 
     this.cardTitleEl = document.getElementById('cardTitleBar');
-    this.cardTextEl = null;
     this.artworkLayer = document.getElementById('artworkLayer');
     this.artImage = document.getElementById('cardArtImage');
     this.descriptionImageLayer = document.getElementById('descriptionImageLayer');
 
     this.zoomSlider = document.getElementById('zoomSlider');
     this.zoomValue = document.getElementById('zoomValue');
+    this.cardScaleSlider = document.getElementById('cardScaleSlider');
+    this.cardScaleValue = document.getElementById('cardScaleValue');
     this.previewContainer = document.querySelector('.preview-container');
     this.previewElement = document.getElementById('cardPreview');
     this.panelLowerLayer = document.getElementById('panelLowerLayer');
@@ -59,6 +93,8 @@ class UI {
 
     this.initEventListeners();
     this.loadCardArtOptions();
+    this.loadFontOptions();
+    this.loadReferenceOptions();
   }
 
   initEventListeners() {
@@ -71,21 +107,128 @@ class UI {
       });
     }
 
+    if (this.cardIdInput) {
+      this.cardIdInput.addEventListener('input', (e) => {
+        const normalized = this.normalizeCardIdInput(e.target.value);
+        e.target.value = normalized;
+        gameState.updateProperty('cardId', normalized);
+        renderer.updateCardIdText(gameState.getCard());
+      });
+    }
+
+    if (this.cardIdFontSizeInput) {
+      this.cardIdFontSizeInput.addEventListener('input', (e) => {
+        const size = this.clampCardIdFontSize(e.target.value);
+        e.target.value = size;
+        if (this.cardIdFontSizeValue) this.cardIdFontSizeValue.textContent = size;
+        gameState.updateProperty('cardIdFontSize', size);
+        renderer.updateCardIdText(gameState.getCard());
+      });
+    }
+
+    if (this.cardIdPositionXInput) {
+      this.cardIdPositionXInput.addEventListener('input', (e) => {
+        const offset = this.clampCardIdOffset(e.target.value);
+        e.target.value = offset;
+        if (this.cardIdPositionXValue) this.cardIdPositionXValue.textContent = offset.toFixed(1);
+        gameState.updateProperty('cardIdOffsetX', offset);
+        renderer.updateCardIdText(gameState.getCard());
+      });
+    }
+
+    if (this.cardIdPositionYInput) {
+      this.cardIdPositionYInput.addEventListener('input', (e) => {
+        const offset = this.clampCardIdOffset(e.target.value);
+        e.target.value = offset;
+        if (this.cardIdPositionYValue) this.cardIdPositionYValue.textContent = offset.toFixed(1);
+        gameState.updateProperty('cardIdOffset', offset);
+        renderer.updateCardIdText(gameState.getCard());
+      });
+    }
+
+    if (this.titleFontSelect) {
+      this.titleFontSelect.addEventListener('change', (e) => {
+        gameState.updateProperty('titleFont', e.target.value || this.defaultTitleFont);
+        renderer.updateTitleImage(gameState.getCard());
+      });
+    }
+
+    if (this.titleFontSizeInput) {
+      this.titleFontSizeInput.addEventListener('change', (e) => {
+        const value = Number(e.target.value);
+        const size = Number.isFinite(value) ? Math.max(8, Math.min(96, value)) : this.defaultTitleFontSize;
+        e.target.value = size;
+        gameState.updateProperty('titleFontSize', size);
+        renderer.updateTitleImage(gameState.getCard());
+      });
+    }
+
+    if (this.titleLetterSpacingInput) {
+      this.titleLetterSpacingInput.addEventListener('input', (e) => {
+        const spacing = this.clampLetterSpacing(e.target.value);
+        e.target.value = spacing;
+        if (this.titleLetterSpacingValue) this.titleLetterSpacingValue.textContent = spacing;
+        gameState.updateProperty('titleLetterSpacing', spacing);
+        renderer.updateTitleImage(gameState.getCard());
+      });
+    }
+
     this.cardDescInput.addEventListener('input', (e) => {
       gameState.updateProperty('description', e.target.value);
-      renderer.updateCardContent(gameState.getCard());
+      renderer.updateDescriptionImage(gameState.getCard());
     });
+
+    if (this.descriptionFontSelect) {
+      this.descriptionFontSelect.addEventListener('change', (e) => {
+        gameState.updateProperty('descriptionFont', e.target.value || this.defaultDescriptionFont);
+        renderer.updateDescriptionImage(gameState.getCard());
+        renderer.updateCardIdText(gameState.getCard());
+      });
+    }
+
+    if (this.descriptionFontSizeInput) {
+      this.descriptionFontSizeInput.addEventListener('change', (e) => {
+        const value = Number(e.target.value);
+        const size = Number.isFinite(value) ? Math.max(8, Math.min(96, value)) : this.defaultDescriptionFontSize;
+        e.target.value = size;
+        gameState.updateProperty('descriptionFontSize', size);
+        renderer.updateDescriptionImage(gameState.getCard());
+      });
+    }
+
+    if (this.descriptionLineHeightInput) {
+      this.descriptionLineHeightInput.addEventListener('input', (e) => {
+        const value = Number(e.target.value);
+        const spacing = this.clampLineHeightScale(value);
+        e.target.value = spacing;
+        if (this.descriptionLineHeightValue) this.descriptionLineHeightValue.textContent = spacing.toFixed(2);
+        gameState.updateProperty('descriptionLineHeightScale', spacing);
+        renderer.updateDescriptionImage(gameState.getCard());
+      });
+    }
+
+    if (this.descriptionLetterSpacingInput) {
+      this.descriptionLetterSpacingInput.addEventListener('input', (e) => {
+        const spacing = this.clampLetterSpacing(e.target.value);
+        e.target.value = spacing;
+        if (this.descriptionLetterSpacingValue) this.descriptionLetterSpacingValue.textContent = spacing;
+        gameState.updateProperty('descriptionLetterSpacing', spacing);
+        renderer.updateDescriptionImage(gameState.getCard());
+      });
+    }
 
     this.cardTypeSelect.addEventListener('change', (e) => {
       gameState.updateProperty('cardType', e.target.value);
       this.updateSubTypeOptions(e.target.value);
       this.updateSubTypeLabel(e.target.value);
       renderer.applyAssetsForCardType(e.target.value, this.cardSubTypeSelect.value);
+      renderer.updateCardIdText(gameState.getCard());
     });
 
     this.cardSubTypeSelect.addEventListener('change', (e) => {
       gameState.updateProperty('cardSubType', e.target.value);
       renderer.applyAssetsForCardType(this.cardTypeSelect.value, e.target.value);
+      renderer.updateCardIdText(gameState.getCard());
     });
 
     if (this.costSelect) {
@@ -116,10 +259,45 @@ class UI {
       this.btnCropArt.addEventListener('click', () => this.cropArtToFrame());
     }
 
+    const onArtScaleChange = (value) => {
+      const scale = this.clampArtScale(value);
+      const current = gameState.getCard().artTransform || { x: 0, y: 0, scale: 1 };
+      gameState.updateProperty('artCroppedData', null);
+      gameState.updateProperty('artTransform', {
+        ...current,
+        scale
+      });
+      this.setArtScaleInputs(scale);
+      renderer.updateArtTransform(gameState.getCard());
+    };
+
+    if (this.artScaleRange) {
+      this.artScaleRange.addEventListener('input', (e) => {
+        onArtScaleChange(Number(e.target.value));
+      });
+    }
+
+    if (this.artScaleInput) {
+      this.artScaleInput.addEventListener('change', (e) => {
+        onArtScaleChange(Number(e.target.value));
+      });
+    }
+
     // Reference overlay
     this.referenceImageInput.addEventListener('change', (e) => this.handleReferenceUpload(e));
+    if (this.referenceSelect) {
+      this.referenceSelect.addEventListener('change', (e) => this.handleReferenceSelect(e));
+    }
     this.showReferenceCheckbox.addEventListener('change', (e) => this.toggleReferenceOverlay(e.target.checked));
     this.showReferenceSideBySideCheckbox.addEventListener('change', (e) => this.toggleReferenceSideBySide(e.target.checked));
+    if (this.referenceOpacity) {
+      this.referenceOpacity.addEventListener('input', (e) => {
+        const value = Number(e.target.value);
+        const opacity = Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0.7;
+        e.target.value = opacity;
+        if (this.referenceOverlay) this.referenceOverlay.style.opacity = String(opacity);
+      });
+    }
 
     // Export settings
     if (this.toggleExportBleed) {
@@ -177,6 +355,13 @@ class UI {
     if (this.toggleBorder) {
       this.toggleBorder.addEventListener('change', (e) => {
         gameState.updateProperty('layers.border', e.target.checked);
+        renderer.updateVisibility(gameState.getCard());
+      });
+    }
+
+    if (this.toggleCardId) {
+      this.toggleCardId.addEventListener('change', (e) => {
+        gameState.updateProperty('layers.cardId', e.target.checked);
         renderer.updateVisibility(gameState.getCard());
       });
     }
@@ -402,6 +587,7 @@ class UI {
             ...current,
             scale: nextScale
           });
+          this.setArtScaleInputs(nextScale);
           renderer.updateArtTransform(gameState.getCard());
         }, { passive: false });
 
@@ -409,7 +595,6 @@ class UI {
           this.previewElement.addEventListener('mousedown', (e) => {
             if (!this.artImage || !this.artImage.src) return;
             if (this.cardTitleEl && this.cardTitleEl.contains(e.target)) return;
-            if (this.cardTextEl && this.cardTextEl.contains(e.target)) return;
             if (this.descriptionImageLayer && this.descriptionImageLayer.contains(e.target)) return;
             if (e.target && e.target.isContentEditable) return;
             const rect = this.artworkLayer.getBoundingClientRect();
@@ -435,6 +620,7 @@ class UI {
               ...current,
               scale: nextScale
             });
+            this.setArtScaleInputs(nextScale);
             renderer.updateArtTransform(gameState.getCard());
           }, { passive: false });
         }
@@ -459,6 +645,9 @@ class UI {
 
     // Zoom slider
     this.zoomSlider.addEventListener('input', (e) => this.handleZoom(e.target.value));
+    if (this.cardScaleSlider) {
+      this.cardScaleSlider.addEventListener('input', (e) => this.handleCardScale(e.target.value));
+    }
 
     // Drag and drop
     this.imagePreview.addEventListener('dragover', (e) => {
@@ -531,6 +720,7 @@ class UI {
           ...current,
           scale: nextScale
         });
+        this.setArtScaleInputs(nextScale);
         renderer.updateArtTransform(gameState.getCard());
       }, { passive: false });
     }
@@ -646,6 +836,7 @@ class UI {
       gameState.updateProperty('artData', imageData);
       gameState.updateProperty('artTransform', { x: 0, y: 0, scale: 1 });
       gameState.updateProperty('artCropToFrame', false);
+      this.setArtScaleInputs(1);
       
       // Display preview
       this.imagePreview.innerHTML = `<img src="${imageData}" alt="Card Art">`;
@@ -683,6 +874,7 @@ class UI {
       renderer.setCardArt(value);
       this.imagePreview.innerHTML = `<img src="${value}" alt="Card Art">`;
       this.btnClearImage.style.display = 'inline-block';
+      this.setArtScaleInputs(1);
     } else {
       this.imagePreview.innerHTML = '';
       this.btnClearImage.style.display = 'none';
@@ -717,38 +909,80 @@ class UI {
     const reader = new FileReader();
     reader.onload = (e) => {
       const imageData = e.target.result;
-      
-      // Display preview
-      this.referencePreview.innerHTML = `<img src="${imageData}" alt="Reference">`;
-      
-      // Set overlay image with proper styling
-      this.referenceOverlay.style.backgroundImage = `url('${imageData}')`;
-      this.referenceOverlay.style.backgroundSize = '100% 100%';
-      this.referenceOverlay.style.backgroundRepeat = 'no-repeat';
-      this.referenceOverlay.style.backgroundPosition = 'center';
-      
-      // Also update the side-by-side pseudo-element
-      const style = document.documentElement.style;
-      style.setProperty('--reference-image', `url('${imageData}')`);
-
-      // Update the real side element if present
-      if (this.referenceSide) {
-        this.referenceSide.style.backgroundImage = `url('${imageData}')`;
-        this.referenceSide.style.backgroundSize = '100% 100%';
-        this.referenceSide.style.backgroundRepeat = 'no-repeat';
-        this.referenceSide.style.backgroundPosition = 'center';
-      }
-
-      // Show the overlay if checkbox is already checked
-      if (this.showReferenceCheckbox.checked) {
-        this.referenceOverlay.style.display = 'block';
+      this.applyReferenceImage(imageData, 'Uploaded Reference');
+      if (this.referenceSelect) {
+        this.referenceSelect.value = '__upload__';
       }
     };
     reader.readAsDataURL(file);
   }
 
+  handleReferenceSelect(event) {
+    const value = event.target.value;
+    if (value === '__upload__') return;
+    if (!value) {
+      this.clearReferenceImage();
+      return;
+    }
+    const label = event.target.options[event.target.selectedIndex]?.textContent || 'Reference';
+    this.applyReferenceImage(value, label);
+  }
+
+  applyReferenceImage(imageData, label = 'Reference') {
+    if (!imageData) return;
+    if (this.referencePreview) {
+      this.referencePreview.innerHTML = `<img src="${imageData}" alt="${label}">`;
+    }
+
+    if (this.referenceOverlay) {
+      this.referenceOverlay.style.backgroundImage = `url('${imageData}')`;
+      this.referenceOverlay.style.backgroundSize = '100% 100%';
+      this.referenceOverlay.style.backgroundRepeat = 'no-repeat';
+      this.referenceOverlay.style.backgroundPosition = 'center';
+      if (this.referenceOpacity) {
+        const value = Number(this.referenceOpacity.value);
+        const opacity = Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0.7;
+        this.referenceOverlay.style.opacity = String(opacity);
+      }
+      if (this.showReferenceCheckbox && this.showReferenceCheckbox.checked) {
+        this.referenceOverlay.style.display = 'block';
+      }
+    }
+
+    const style = document.documentElement.style;
+    style.setProperty('--reference-image', `url('${imageData}')`);
+    window.defaultReferencePath = imageData;
+
+    if (this.referenceSide) {
+      this.referenceSide.style.backgroundImage = `url('${imageData}')`;
+      this.referenceSide.style.backgroundSize = '100% 100%';
+      this.referenceSide.style.backgroundRepeat = 'no-repeat';
+      this.referenceSide.style.backgroundPosition = 'center';
+    }
+  }
+
+  clearReferenceImage() {
+    if (this.referencePreview) this.referencePreview.innerHTML = '';
+    if (this.referenceOverlay) {
+      this.referenceOverlay.style.backgroundImage = '';
+      this.referenceOverlay.style.display = 'none';
+    }
+    if (this.referenceSide) {
+      this.referenceSide.style.backgroundImage = '';
+      this.referenceSide.style.display = 'none';
+    }
+    const style = document.documentElement.style;
+    style.setProperty('--reference-image', '');
+    window.defaultReferencePath = '';
+  }
+
   toggleReferenceOverlay(show) {
     if (show) {
+      if (this.referenceOpacity) {
+        const value = Number(this.referenceOpacity.value);
+        const opacity = Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0.7;
+        this.referenceOverlay.style.opacity = String(opacity);
+      }
       // If the overlay has no inline image, try to fall back to CSS var or default
       let bg = this.referenceOverlay.style.backgroundImage;
       if (!bg || bg === 'none' || bg === '') {
@@ -798,6 +1032,20 @@ class UI {
     this.previewContainer.style.setProperty('--zoom-scale', zoomScale);
     renderer.updateTitleImage(gameState.getCard());
     renderer.updateDescriptionImage(gameState.getCard());
+    renderer.updateCardIdText(gameState.getCard());
+  }
+
+  handleCardScale(value) {
+    const scaleValue = Number(value);
+    const scale = Number.isFinite(scaleValue) ? Math.max(80, Math.min(120, scaleValue)) : 100;
+    if (this.cardScaleValue) this.cardScaleValue.textContent = String(scale);
+    if (this.previewContainer) {
+      this.previewContainer.style.setProperty('--card-scale', String(scale / 100));
+      this.previewContainer.style.setProperty('--card-scale-inverse', String(100 / scale));
+    }
+    renderer.updateTitleImage(gameState.getCard());
+    renderer.updateDescriptionImage(gameState.getCard());
+    renderer.updateCardIdText(gameState.getCard());
   }
 
   getPreviewScale() {
@@ -808,6 +1056,56 @@ class UI {
     const currentWidth = this.previewElement ? this.previewElement.clientWidth : baseWidth;
     if (!baseWidth || !currentWidth) return 1;
     return currentWidth / baseWidth;
+  }
+
+  clampArtScale(value) {
+    const scale = Number(value);
+    if (!Number.isFinite(scale)) return 1;
+    return Math.max(0.5, Math.min(3, scale));
+  }
+
+  clampLetterSpacing(value) {
+    const spacing = Number(value);
+    if (!Number.isFinite(spacing)) return 0;
+    return Math.max(-10, Math.min(10, spacing));
+  }
+
+  clampLineHeightScale(value) {
+    const spacing = Number(value);
+    if (!Number.isFinite(spacing)) return this.defaultDescriptionLineHeight;
+    return Math.max(0.8, Math.min(1.6, spacing));
+  }
+
+  clampCardIdFontSize(value) {
+    const size = Number(value);
+    if (!Number.isFinite(size)) return this.defaultCardIdFontSize;
+    return Math.max(8, Math.min(48, size));
+  }
+
+  clampCardIdOffset(value) {
+    const offset = Number(value);
+    if (!Number.isFinite(offset)) return this.defaultCardIdOffset;
+    return Math.max(-10, Math.min(10, offset));
+  }
+
+  normalizeCardIdInput(value) {
+    const raw = String(value || '');
+    const letters = raw.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 4);
+    const digits = raw.replace(/[^0-9]/g, '').slice(0, 4);
+    const parts = [];
+    if (letters) parts.push(letters);
+    if (digits.length > 0) {
+      parts.push(digits.slice(0, Math.min(2, digits.length)));
+    }
+    if (digits.length >= 2) {
+      parts.push(`v${digits.slice(2, 4)}`);
+    }
+    return parts.join(' ').slice(0, 11);
+  }
+
+  setArtScaleInputs(scale) {
+    if (this.artScaleRange) this.artScaleRange.value = String(scale);
+    if (this.artScaleInput) this.artScaleInput.value = String(scale);
   }
 
   updateUI() {
@@ -830,10 +1128,89 @@ class UI {
       gameState.updateProperties(updates);
       card = gameState.getCard();
     }
+    const fontUpdates = {};
+    if (!card.titleFont) fontUpdates.titleFont = this.defaultTitleFont;
+    if (!card.descriptionFont) fontUpdates.descriptionFont = this.defaultDescriptionFont;
+    if (!card.titleFontSize) fontUpdates.titleFontSize = this.defaultTitleFontSize;
+    if (!card.descriptionFontSize) fontUpdates.descriptionFontSize = this.defaultDescriptionFontSize;
+    if (!card.descriptionLineHeightScale) fontUpdates.descriptionLineHeightScale = this.defaultDescriptionLineHeight;
+    if (card.titleLetterSpacing === undefined) fontUpdates.titleLetterSpacing = this.defaultTitleLetterSpacing;
+    if (card.descriptionLetterSpacing === undefined) fontUpdates.descriptionLetterSpacing = this.defaultDescriptionLetterSpacing;
+    if (Object.keys(fontUpdates).length > 0) {
+      gameState.updateProperties(fontUpdates);
+      card = gameState.getCard();
+    }
+
+    if (card.cardId === undefined) {
+      gameState.updateProperty('cardId', '');
+      card = gameState.getCard();
+    }
+    if (!card.cardIdFont) {
+      gameState.updateProperty('cardIdFont', this.defaultCardIdFont);
+      card = gameState.getCard();
+    }
+    if (card.cardIdFontSize === undefined) {
+      gameState.updateProperty('cardIdFontSize', this.defaultCardIdFontSize);
+      card = gameState.getCard();
+    }
+    if (card.cardIdOffset === undefined) {
+      gameState.updateProperty('cardIdOffset', this.defaultCardIdOffset);
+      card = gameState.getCard();
+    }
+    if (card.cardIdOffsetX === undefined) {
+      gameState.updateProperty('cardIdOffsetX', this.defaultCardIdOffsetX);
+      card = gameState.getCard();
+    }
 
     // Update inputs
     if (this.cardNameInput) this.cardNameInput.value = card.name;
+    if (this.cardIdInput) this.cardIdInput.value = card.cardId || '';
+    if (this.cardIdFontSizeInput) {
+      const size = this.clampCardIdFontSize(card.cardIdFontSize);
+      this.cardIdFontSizeInput.value = size;
+      if (this.cardIdFontSizeValue) this.cardIdFontSizeValue.textContent = size;
+    }
+    if (this.cardIdPositionXInput) {
+      const offset = this.clampCardIdOffset(card.cardIdOffsetX);
+      this.cardIdPositionXInput.value = offset;
+      if (this.cardIdPositionXValue) this.cardIdPositionXValue.textContent = offset.toFixed(1);
+    }
+    if (this.cardIdPositionYInput) {
+      const offset = this.clampCardIdOffset(card.cardIdOffset);
+      this.cardIdPositionYInput.value = offset;
+      if (this.cardIdPositionYValue) this.cardIdPositionYValue.textContent = offset.toFixed(1);
+    }
     this.cardDescInput.value = card.description;
+    this.ensureFontSelection(this.titleFontSelect, card.titleFont || this.defaultTitleFont);
+    this.ensureFontSelection(this.descriptionFontSelect, card.descriptionFont || this.defaultDescriptionFont);
+    if (this.titleFontSizeInput) this.titleFontSizeInput.value = card.titleFontSize || this.defaultTitleFontSize;
+    if (this.descriptionFontSizeInput) this.descriptionFontSizeInput.value = card.descriptionFontSize || this.defaultDescriptionFontSize;
+    if (this.descriptionLineHeightInput) {
+      const spacing = this.clampLineHeightScale(card.descriptionLineHeightScale);
+      this.descriptionLineHeightInput.value = spacing;
+      if (this.descriptionLineHeightValue) this.descriptionLineHeightValue.textContent = spacing.toFixed(2);
+    }
+    if (this.titleLetterSpacingInput) {
+      const spacing = this.clampLetterSpacing(card.titleLetterSpacing);
+      this.titleLetterSpacingInput.value = spacing;
+      if (this.titleLetterSpacingValue) this.titleLetterSpacingValue.textContent = spacing;
+    }
+    if (this.descriptionLetterSpacingInput) {
+      const spacing = this.clampLetterSpacing(card.descriptionLetterSpacing);
+      this.descriptionLetterSpacingInput.value = spacing;
+      if (this.descriptionLetterSpacingValue) this.descriptionLetterSpacingValue.textContent = spacing;
+    }
+    if (this.cardScaleSlider) {
+      const current = this.previewContainer
+        ? parseFloat(getComputedStyle(this.previewContainer).getPropertyValue('--card-scale'))
+        : 1;
+      const percent = Math.round((Number.isFinite(current) ? current : 1) * 100);
+      this.cardScaleSlider.value = String(percent);
+      if (this.cardScaleValue) this.cardScaleValue.textContent = String(percent);
+      if (this.previewContainer) {
+        this.previewContainer.style.setProperty('--card-scale-inverse', String(100 / percent));
+      }
+    }
     this.cardTypeSelect.value = card.cardType;
     this.updateSubTypeLabel(card.cardType);
     this.updateSubTypeOptions(card.cardType);
@@ -876,6 +1253,10 @@ class UI {
       renderer.setCardArt(null);
       renderer.updateArtCrop(card);
     }
+    const artScale = card.artTransform && Number.isFinite(card.artTransform.scale)
+      ? card.artTransform.scale
+      : 1;
+    this.setArtScaleInputs(artScale);
 
     if (!card.titlePosition) {
       gameState.updateProperty('titlePosition', { x: 0, y: 0 });
@@ -902,6 +1283,7 @@ class UI {
     if (this.toggleImageFrame) this.toggleImageFrame.checked = !!(card.layers && card.layers.imageFrame);
     if (this.toggleFrameShading) this.toggleFrameShading.checked = !!(card.layers && card.layers.frameShading);
     if (this.toggleBorder) this.toggleBorder.checked = !!(card.layers && card.layers.border);
+    if (this.toggleCardId) this.toggleCardId.checked = !!(card.layers && card.layers.cardId);
     if (this.toggleTitleBar) {
       const panelUpper = card.layers && (card.layers.panelUpper ?? card.layers.titleBar);
       this.toggleTitleBar.checked = !!panelUpper;
@@ -971,6 +1353,128 @@ class UI {
     } catch (error) {
       console.warn('Could not load card art options:', error);
     }
+  }
+
+  async loadFontOptions() {
+    const selects = [this.titleFontSelect, this.descriptionFontSelect].filter(Boolean);
+    if (!selects.length) return;
+
+    const systemFonts = [
+      { label: 'Default (Arial)', family: 'Arial' },
+      { label: 'Georgia', family: 'Georgia' },
+      { label: 'Times New Roman', family: 'Times New Roman' },
+      { label: 'Verdana', family: 'Verdana' }
+    ];
+
+    let customFonts = [];
+    try {
+      const response = await fetch('Assets/fonts/manifest.json');
+      const manifest = await response.json();
+      customFonts = (manifest.fonts || []).map((font) => ({
+        label: font.label || font.family,
+        family: font.family
+      }));
+    } catch (error) {
+      console.warn('Could not load font manifest:', error);
+    }
+
+    const allFonts = [...systemFonts, ...customFonts];
+    selects.forEach((select) => {
+      select.innerHTML = '';
+      allFonts.forEach((font) => {
+        const option = document.createElement('option');
+        option.value = font.family;
+        option.textContent = font.label;
+        select.appendChild(option);
+      });
+    });
+
+    const card = gameState.getCard();
+    this.ensureFontSelection(this.titleFontSelect, card.titleFont || this.defaultTitleFont);
+    this.ensureFontSelection(this.descriptionFontSelect, card.descriptionFont || this.defaultDescriptionFont);
+    if (this.titleFontSizeInput) {
+      this.titleFontSizeInput.value = card.titleFontSize || this.defaultTitleFontSize;
+    }
+    if (this.descriptionFontSizeInput) {
+      this.descriptionFontSizeInput.value = card.descriptionFontSize || this.defaultDescriptionFontSize;
+    }
+    if (this.descriptionLineHeightInput) {
+      const spacing = this.clampLineHeightScale(card.descriptionLineHeightScale);
+      this.descriptionLineHeightInput.value = spacing;
+      if (this.descriptionLineHeightValue) this.descriptionLineHeightValue.textContent = spacing.toFixed(2);
+    }
+    if (this.titleLetterSpacingInput) {
+      const spacing = this.clampLetterSpacing(card.titleLetterSpacing);
+      this.titleLetterSpacingInput.value = spacing;
+      if (this.titleLetterSpacingValue) this.titleLetterSpacingValue.textContent = spacing;
+    }
+    if (this.descriptionLetterSpacingInput) {
+      const spacing = this.clampLetterSpacing(card.descriptionLetterSpacing);
+      this.descriptionLetterSpacingInput.value = spacing;
+      if (this.descriptionLetterSpacingValue) this.descriptionLetterSpacingValue.textContent = spacing;
+    }
+    if (this.referenceOpacity && this.referenceOverlay) {
+      const current = parseFloat(this.referenceOverlay.style.opacity || '0.7');
+      const opacity = Number.isFinite(current) ? Math.max(0, Math.min(1, current)) : 0.7;
+      this.referenceOpacity.value = String(opacity);
+      this.referenceOverlay.style.opacity = String(opacity);
+    }
+  }
+
+  async loadReferenceOptions() {
+    if (!this.referenceSelect) return;
+    try {
+      const response = await fetch('Assets/Reference/manifest.json');
+      const manifest = await response.json();
+      const files = Array.isArray(manifest.files) ? manifest.files : [];
+      const defaultFile = manifest.default && files.includes(manifest.default)
+        ? manifest.default
+        : files[0];
+
+      this.referenceSelect.innerHTML = '';
+      const uploadOption = document.createElement('option');
+      uploadOption.value = '__upload__';
+      uploadOption.textContent = 'Custom Upload';
+      this.referenceSelect.appendChild(uploadOption);
+
+      const noneOption = document.createElement('option');
+      noneOption.value = '';
+      noneOption.textContent = 'None';
+      this.referenceSelect.appendChild(noneOption);
+
+      files.forEach((file) => {
+        const option = document.createElement('option');
+        option.value = `Assets/Reference/${file}`;
+        option.textContent = this.formatReferenceLabel(file);
+        this.referenceSelect.appendChild(option);
+      });
+
+      if (defaultFile) {
+        const defaultValue = `Assets/Reference/${defaultFile}`;
+        this.referenceSelect.value = defaultValue;
+        this.applyReferenceImage(defaultValue, this.formatReferenceLabel(defaultFile));
+      }
+    } catch (error) {
+      console.warn('Could not load reference manifest:', error);
+    }
+  }
+
+  formatReferenceLabel(filename) {
+    const base = String(filename || '').replace(/\.[^/.]+$/, '');
+    const spaced = base.replace(/[_-]+/g, ' ');
+    return spaced.replace(/\b\w/g, (match) => match.toUpperCase());
+  }
+
+  ensureFontSelection(select, value) {
+    if (!select) return;
+    const existing = Array.from(select.options).some((opt) => opt.value === value);
+    if (!existing && value) {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = value;
+      select.appendChild(option);
+    }
+    select.value = value || 'Arial';
   }
   undo() {
     if (gameState.undo()) {

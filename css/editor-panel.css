@@ -12,24 +12,93 @@
 }
 
 .panel-section {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  background: #101524;
 }
 
-.panel-section h2 {
-  margin: 0;
-  font-size: 14px;
+.panel-section summary {
+  list-style: none;
+  cursor: pointer;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--secondary-color);
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
-.panel-section:last-child {
-  margin-bottom: auto;
+.panel-section summary::-webkit-details-marker {
+  display: none;
+}
+
+.panel-section summary::after {
+  content: '▾';
+  font-size: 11px;
+  color: var(--text-secondary);
+  transition: transform 0.2s ease;
+}
+
+.panel-section:not([open]) summary::after {
+  transform: rotate(-90deg);
+}
+
+.panel-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 12px;
+  margin-top: 10px;
+  border-top: 1px solid var(--border-color);
+}
+
+.panel-subsection {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  background: rgba(6, 10, 18, 0.65);
+}
+
+.panel-subsection summary {
+  list-style: none;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.panel-subsection summary::-webkit-details-marker {
+  display: none;
+}
+
+.panel-subsection summary::after {
+  content: '▾';
+  font-size: 10px;
+  color: var(--text-secondary);
+  transition: transform 0.2s ease;
+}
+
+.panel-subsection:not([open]) summary::after {
+  transform: rotate(-90deg);
+}
+
+.panel-subcontent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 10px;
+  margin-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 /* Template Buttons */

@@ -14,7 +14,9 @@
 
 .preview-container {
   --zoom-scale: 1;
-  --card-width: 520px;
+  --card-scale: 1;
+  --card-scale-inverse: 1;
+  --card-width: 540px;
   --card-height: 810px;
   --card-bleed: 28px;
   display: flex;
@@ -26,11 +28,50 @@
   /* Allow panels to stay side-by-side and scroll when zoomed large */
   overflow-x: auto;
   padding-bottom: 18px;
+  position: relative;
 }
 
 .preview-container.side-by-side {
   gap: 24px;
   justify-content: center;
+}
+
+.reference-toggle {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  background: rgba(10, 14, 22, 0.75);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 160px;
+}
+
+.reference-toggle label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 10px;
+}
+
+.reference-toggle .ref-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.reference-toggle input[type="range"] {
+  width: 120px;
 }
 
 /* removed pseudo-element to avoid duplicate panel; use real .reference-side element instead */
@@ -44,13 +85,13 @@
 /* Card Preview - Bridge Size (2.25" x 3.5" / Cut Area) */
 .card-preview {
   /* base cut size 225x350 scaled by --zoom-scale to keep layout flow */
-  width: calc(var(--card-width) * var(--zoom-scale));
-  height: calc(var(--card-height) * var(--zoom-scale));
+  width: calc(var(--card-width) * var(--zoom-scale) * var(--card-scale));
+  height: calc(var(--card-height) * var(--zoom-scale) * var(--card-scale));
   perspective: 1000px;
   position: relative;
   transition: width 0.18s ease-out, height 0.18s ease-out;
   /* Bleed area padding (2.49" x 3.74") approximated */
-  padding: calc(var(--card-bleed) * var(--zoom-scale));
+  padding: calc(var(--card-bleed) * var(--zoom-scale) * var(--card-scale));
   box-sizing: border-box;
   background: linear-gradient(135deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.05) 100%);
   flex: 0 0 auto;
@@ -88,13 +129,15 @@
 .card-layer-image-frame { z-index: 5; }
 .card-layer-frame-shading { z-index: 6; }
 .card-layer-frame { z-index: 7; }
-.card-layer-panel-bleed { z-index: 8; }
-.card-layer-panel-lower { z-index: 9; }
-.card-layer-panel-upper { z-index: 10; }
-.card-layer-cost-badge { z-index: 11; }
-.card-layer-attack-modifier { z-index: 12; }
-.card-layer-title { z-index: 13; }
-.card-layer-card-text { z-index: 14; }
+.card-layer-card-id { z-index: 8; }
+.card-layer-card-id-text { z-index: 9; }
+.card-layer-panel-bleed { z-index: 10; }
+.card-layer-panel-lower { z-index: 11; }
+.card-layer-panel-upper { z-index: 12; }
+.card-layer-cost-badge { z-index: 13; }
+.card-layer-attack-modifier { z-index: 14; }
+.card-layer-title { z-index: 15; }
+.card-layer-card-text { z-index: 16; }
 .card-layer-card-text {
   pointer-events: none;
 }
@@ -228,6 +271,14 @@
   outline-offset: -6px;
 }
 
+.card-layer-card-id-text {
+  position: absolute;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
+  pointer-events: none;
+}
+
 .card-preview.export-card .card-title-text {
   font-size: calc(16px * var(--export-text-scale, 1));
   padding: calc(8px * var(--export-text-scale, 1)) calc(12px * var(--export-text-scale, 1));
@@ -258,6 +309,8 @@
   background-size: 100% 100%;
   background-repeat: no-repeat;
   background-position: center;
+  transform: scale(var(--card-scale-inverse));
+  transform-origin: center;
 }
 
 .reference-side {
@@ -286,8 +339,8 @@
   }
 
   .card-preview {
-    width: 240px;
-    height: 340px;
+    width: calc(240px * var(--zoom-scale) * var(--card-scale));
+    height: calc(340px * var(--zoom-scale) * var(--card-scale));
   }
 
   .reference-side {

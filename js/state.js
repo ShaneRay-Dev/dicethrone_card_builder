@@ -10,8 +10,21 @@ class CardState {
     return {
       cardType: 'Action Cards',
       cardSubType: 'Main Phase',
+      cardId: '',
+      cardIdFont: 'MyriadPro-Light',
+      cardIdFontSize: 24,
+      cardIdOffset: 0,
+      cardIdOffsetX: 0,
       name: 'Title',
       description: 'place holder',
+      titleFont: 'PhosphateSolid',
+      descriptionFont: 'MYRIADPRO-BOLDCOND',
+      titleFontSize: 40,
+      descriptionFontSize: 35,
+      descriptionLineHeightScale: 1.4,
+      titleLetterSpacing: 1.5,
+      descriptionLetterSpacing: 0,
+      positionUnits: 'base',
       artUrl: null,
       artData: null, // Base64 encoded image
       artTransform: { x: 0, y: 0, scale: 1 },
@@ -23,7 +36,7 @@ class CardState {
       },
       bleed: {
         enabled: false,
-        color: '#ffffff'
+        color: '#000000'
       },
       layers: {
         bleed: true,
@@ -32,6 +45,7 @@ class CardState {
         imageFrame: true,
         frameShading: true,
         border: true,
+        cardId: true,
         titleBar: true,
         panelUpper: true,
         titleText: true,
@@ -134,3 +148,4 @@ class CardState {
 
 // Export for use in other files
 const gameState = new CardState();
+

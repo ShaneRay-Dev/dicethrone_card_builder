@@ -18,12 +18,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // Load default reference image
   const referenceOverlay = document.getElementById('referenceOverlay');
   // make defaultReferencePath available globally for UI fallbacks
-  window.defaultReferencePath = 'Assets/Reference/Roll_Phase_Main_Refernece.png';
+  window.defaultReferencePath = 'Assets/Reference/Transference_basic.png';
   const defaultReferencePath = window.defaultReferencePath;
   referenceOverlay.style.backgroundImage = `url('${defaultReferencePath}')`;
   referenceOverlay.style.backgroundSize = '100% 100%';
   referenceOverlay.style.backgroundRepeat = 'no-repeat';
   referenceOverlay.style.backgroundPosition = 'center';
+  referenceOverlay.style.opacity = '0.7';
   // Also set side-by-side element if present
   const referenceSideEl = document.getElementById('referenceSide');
   if (referenceSideEl) {
@@ -53,42 +54,3 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log('Dice Throne Creator initialized');
 });
 
-// Utility functions
-const utils = {
-  // Format numbers with commas
-  formatNumber(num) {
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  },
-
-  // Generate unique ID
-  generateId() {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2);
-  },
-
-  // Validate email
-  validateEmail(email) {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
-  },
-
-  // Debounce function
-  debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-      const later = () => {
-        clearTimeout(timeout);
-        func(...args);
-      };
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-    };
-  },
-
-  // Clone object
-  deepClone(obj) {
-    return JSON.parse(JSON.stringify(obj));
-  }
-};
-
-// Export utils for use in other files
-window.utils = utils;
