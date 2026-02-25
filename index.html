@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="css/editor-panel.css">
   <link rel="stylesheet" href="css/preview.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css">
 </head>
 <body>
   <div class="app">
@@ -15,9 +16,27 @@
       <h1>Dice Throne Creator</h1>
       <div class="header-actions">
         <button id="btn-new" class="btn btn-primary">New Card</button>
+        <div class="header-deck">
+          <input type="text" id="deckNameInput" placeholder="Deck name">
+          <button id="deckCreateBtn" class="btn btn-secondary btn-small" type="button">Create Deck</button>
+          <select id="deckSelect"></select>
+          <select id="deckCardSelect"></select>
+          <button id="deckSaveBtn" class="btn btn-secondary btn-small" type="button">Save Card</button>
+          <button id="deckLoadBtn" class="btn btn-secondary btn-small" type="button">Load Card</button>
+          <button id="deckDeleteCardBtn" class="btn btn-secondary btn-small" type="button">Delete Card</button>
+          <button id="deckDeleteBtn" class="btn btn-secondary btn-small" type="button">Delete Deck</button>
+        </div>
         <button id="btn-save" class="btn btn-primary">Save</button>
         <button id="btn-load" class="btn btn-secondary">Load</button>
-        <button id="btn-export" class="btn btn-secondary">Export</button>
+        <div class="export-menu" id="exportMenu">
+          <button id="btn-export" class="btn btn-secondary" type="button" aria-haspopup="true" aria-expanded="false">Export</button>
+          <div class="export-menu__panel" id="exportMenuPanel" aria-hidden="true">
+            <button class="export-menu__item" type="button" data-export="png">Export PNG</button>
+            <button class="export-menu__item" type="button" data-export="json">Export JSON</button>
+          </div>
+        </div>
+        <button id="btn-deck-view" class="btn btn-secondary" type="button">Deck View</button>
+        <button id="btn-print-sheet" class="btn btn-secondary" type="button">Print Sheet</button>
         <button id="btn-reset-canvas" class="btn btn-secondary">Reset Canvas</button>
       </div>
     </header>
@@ -47,17 +66,10 @@
             </div>
 
             <div class="form-group">
-              <label for="costSelect">Cost Badge</label>
-              <select id="costSelect">
-                <option value="0">0</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-              </select>
+              <label for="costInput">Cost Badge</label>
+              <input type="text" id="costInput" maxlength="6">
+              <small class="help-text">Type any value (e.g. 0, 3, 10).</small>
             </div>
-
             <details class="panel-subsection" open>
               <summary>Card ID</summary>
               <div class="panel-subcontent">
@@ -68,13 +80,13 @@
                 </div>
                 <div class="form-group">
                   <label for="cardIdFontSize">Card ID Size (px)</label>
-                  <input type="range" id="cardIdFontSize" min="8" max="48" step="1" value="24">
-                  <small class="help-text">Size: <span id="cardIdFontSizeValue">24</span>px</small>
+                  <input type="range" id="cardIdFontSize" min="8" max="48" step="1" value="16">
+                  <small class="help-text">Size: <span id="cardIdFontSizeValue">16</span>px</small>
                 </div>
                 <div class="form-group">
                   <label for="cardIdPositionX">Card ID Horizontal (px)</label>
-                  <input type="range" id="cardIdPositionX" min="-10" max="10" step="0.5" value="0">
-                  <small class="help-text">X Offset: <span id="cardIdPositionXValue">0.0</span>px</small>
+                  <input type="range" id="cardIdPositionX" min="-10" max="10" step="0.5" value="-3.5">
+                  <small class="help-text">X Offset: <span id="cardIdPositionXValue">-3.5</span>px</small>
                 </div>
                 <div class="form-group">
                   <label for="cardIdPositionY">Card ID Vertical (px)</label>
@@ -86,7 +98,13 @@
 
             <div class="form-group">
               <label for="cardName">Title</label>
-              <input type="text" id="cardName" placeholder="Enter title" maxlength="50">
+              <div class="title-input-row">
+                <input type="text" id="cardName" placeholder="Enter title" maxlength="50">
+                <div class="title-box-controls">
+                  <button type="button" id="titleBoxAdd" class="title-box-add">+ Box</button>
+                  <button type="button" id="titleBoxRemove" class="title-box-remove">- Box</button>
+                </div>
+              </div>
             </div>
 
             <div class="form-group">
@@ -96,18 +114,25 @@
 
             <div class="form-group">
               <label for="titleFontSize">Title Size (px)</label>
-              <input type="number" id="titleFontSize" min="8" max="96" step="1" value="40">
+              <input type="number" id="titleFontSize" min="8" max="96" step="1" value="38">
             </div>
 
             <div class="form-group">
               <label for="titleLetterSpacing">Title Spacing (px)</label>
-              <input type="range" id="titleLetterSpacing" min="-10" max="10" step="0.5" value="1.5">
-              <small class="help-text">Spacing: <span id="titleLetterSpacingValue">1.5</span>px</small>
+              <input type="range" id="titleLetterSpacing" min="-10" max="10" step="0.5" value="0.5">
+              <small class="help-text">Spacing: <span id="titleLetterSpacingValue">0.5</span>px</small>
             </div>
 
             <div class="form-group">
-              <label for="cardDescription">Description</label>
-              <textarea id="cardDescription" placeholder="Card description" rows="4" maxlength="200"></textarea>
+              <label for="descriptionEditor">Description</label>
+              <div id="descriptionToolbar" class="description-toolbar"></div>
+              <div id="descriptionEditor" class="description-editor"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="descriptionBoxScale">Description Box Scale</label>
+              <input type="range" id="descriptionBoxScale" min="-3" max="3" step="0.01" value="1">
+              <small class="help-text">Scale: <span id="descriptionBoxScaleValue">1.00</span></small>
             </div>
 
             <div class="form-group">
@@ -117,13 +142,13 @@
 
             <div class="form-group">
               <label for="descriptionFontSize">Description Size (px)</label>
-              <input type="number" id="descriptionFontSize" min="8" max="96" step="1" value="35">
+              <input type="number" id="descriptionFontSize" min="8" max="96" step="1" value="30">
             </div>
 
             <div class="form-group">
               <label for="descriptionLineHeight">Description Line Spacing</label>
-              <input type="range" id="descriptionLineHeight" min="0.8" max="1.6" step="0.02" value="1.4">
-              <small class="help-text">Line spacing: <span id="descriptionLineHeightValue">1.4</span></small>
+              <input type="range" id="descriptionLineHeight" min="0.8" max="1.6" step="0.02" value="1.2">
+              <small class="help-text">Line spacing: <span id="descriptionLineHeightValue">1.2</span></small>
             </div>
 
             <div class="form-group">
@@ -131,6 +156,26 @@
               <input type="range" id="descriptionLetterSpacing" min="-10" max="10" step="0.5" value="0">
               <small class="help-text">Spacing: <span id="descriptionLetterSpacingValue">0</span>px</small>
             </div>
+
+            <div class="form-group">
+              <label for="descriptionBaselineOffset">Description Baseline (px)</label>
+              <input type="range" id="descriptionBaselineOffset" min="-5" max="5" step="0.5" value="-1">
+              <small class="help-text">Baseline: <span id="descriptionBaselineOffsetValue">-1</span>px</small>
+            </div>
+
+            <details class="panel-subsection" open>
+              <summary>Ability Dice</summary>
+              <div class="panel-subcontent">
+                <div class="title-input-row">
+                  <select id="abilityDiceSelect"></select>
+                  <div class="title-box-controls">
+                    <button type="button" id="abilityDiceAddBtn" class="title-box-add">+ Add Dice</button>
+                  </div>
+                </div>
+                <small class="help-text">Slots A-F. Use `{{abilitydice,a}}` through `{{abilitydice,f}}` in text.</small>
+                <div id="abilityDiceList" class="ability-dice-list"></div>
+              </div>
+            </details>
           </div>
         </details>
 
@@ -147,20 +192,23 @@
               <small class="help-text">Recommended: 600x800px (JPG, PNG, WebP)</small>
             </div>
             <div class="form-group">
+              <label>
+                <input type="checkbox" id="toggleCropperOnUpload" />
+                Open Crop Tool On Upload
+              </label>
+            </div>
+            <div class="form-group">
+              <label for="cropMaskSelect">Crop Mask</label>
+              <select id="cropMaskSelect">
+                <option value="Assets/images/Card Art/Common Loot.png">Common Loot (Default)</option>
+                <option value="Assets/Hero Upgrade/Ability Upgrade/hero_upgrade_Ability_background_upper.png">Ability Upgrade Upper</option>
+              </select>
+            </div>
+            <div class="form-group">
               <label for="artSelect">Default Art</label>
               <select id="artSelect">
                 <option value="">None</option>
               </select>
-            </div>
-            <div class="form-group">
-              <label for="artScaleRange">Art Scale</label>
-              <input type="range" id="artScaleRange" min="0.5" max="3" step="0.01" value="1">
-              <input type="number" id="artScaleInput" min="0.5" max="3" step="0.01" value="1">
-              <small class="help-text">Fine adjustment for artwork scale.</small>
-            </div>
-            <div class="form-group">
-              <button id="btn-crop-art" class="btn btn-secondary btn-small">Crop Art To Frame</button>
-              <small class="help-text">Applies a frame-shaped crop to the artwork only.</small>
             </div>
             <div id="imagePreview" class="image-preview-small"></div>
             <button id="btn-clear-image" class="btn btn-small btn-danger" style="display: none; margin-top: 8px;">Clear Image</button>
@@ -171,28 +219,106 @@
         <details class="panel-section" open>
           <summary>Layers</summary>
           <div class="panel-content">
-            <div class="form-group">
-              <label for="bleedColor">Bleed Color</label>
-              <input type="color" id="bleedColor" value="#000000">
-              <small class="help-text">This fills the bleed area behind the card. Follow the design guide for print-safe colors.</small>
-            </div>
             <div class="form-group layers-group">
-              <h3>Card Elements</h3>
-              <label><input type="checkbox" id="toggleBleedLayer" /> Bleed</label>
-              <label><input type="checkbox" id="toggleBackgroundLower" /> Background Lower</label>
-              <label><input type="checkbox" id="toggleBackgroundUpper" /> Background Upper</label>
-              <label><input type="checkbox" id="toggleImageFrame" /> Image Frame</label>
-              <label><input type="checkbox" id="toggleFrameShading" /> Frame Shading</label>
-              <label><input type="checkbox" id="toggleBorder" /> Border</label>
-              <label><input type="checkbox" id="toggleCardId" /> Card ID</label>
-              <label><input type="checkbox" id="toggleTitleBar" /> Panel Upper</label>
-              <label><input type="checkbox" id="toggleTitleText" /> Title</label>
-              <label><input type="checkbox" id="toggleArtwork" /> Artwork</label>
-              <label><input type="checkbox" id="togglePanelBleed" /> Panel Bleed</label>
-              <label><input type="checkbox" id="toggleBottomText" /> Panel Lower</label>
-              <label><input type="checkbox" id="toggleCostBadge" /> Cost Badge</label>
-              <label><input type="checkbox" id="toggleAttackModifier" /> Attack Modifier (Roll)</label>
-              <label><input type="checkbox" id="toggleCardText" /> Card Text</label>
+              <div class="layer-list-header">
+                <h3>Card Elements</h3>
+                <label class="layer-show-hidden" for="toggleShowHiddenLayers">
+                  <span>Show Hidden</span>
+                  <input type="checkbox" id="toggleShowHiddenLayers" />
+                </label>
+              </div>
+              <div id="layerList" class="layer-list">
+                <div class="layer-item" data-layer-key="cardBleed" draggable="true">
+                  <label><input type="checkbox" id="toggleCardBleed" /> Card Bleed</label>
+                  <input type="checkbox" class="layer-hide-toggle" aria-label="Hide layer" />
+                  <span class="layer-handle" aria-hidden="true">≡</span>
+                </div>
+                <div class="layer-item" data-layer-key="backgroundLower" draggable="true">
+                  <label><input type="checkbox" id="toggleBackgroundLower" /> Background Lower</label>
+                  <input type="checkbox" class="layer-hide-toggle" aria-label="Hide layer" />
+                  <span class="layer-handle" aria-hidden="true">≡</span>
+                </div>
+                <div class="layer-item" data-layer-key="backgroundUpper" draggable="true">
+                  <label><input type="checkbox" id="toggleBackgroundUpper" /> Background Upper</label>
+                  <input type="checkbox" class="layer-hide-toggle" aria-label="Hide layer" />
+                  <span class="layer-handle" aria-hidden="true">≡</span>
+                </div>
+                <div class="layer-item" data-layer-key="imageFrame" draggable="true">
+                  <label><input type="checkbox" id="toggleImageFrame" /> Image Frame</label>
+                  <input type="checkbox" class="layer-hide-toggle" aria-label="Hide layer" />
+                  <span class="layer-handle" aria-hidden="true">≡</span>
+                </div>
+                <div class="layer-item" data-layer-key="frameShading" draggable="true">
+                  <label><input type="checkbox" id="toggleFrameShading" /> Frame Shading</label>
+                  <input type="checkbox" class="layer-hide-toggle" aria-label="Hide layer" />
+                  <span class="layer-handle" aria-hidden="true">≡</span>
+                </div>
+                <div class="layer-item" data-layer-key="border" draggable="true">
+                  <label><input type="checkbox" id="toggleBorder" /> Border</label>
+                  <input type="checkbox" class="layer-hide-toggle" aria-label="Hide layer" />
+                  <span class="layer-handle" aria-hidden="true">≡</span>
+                </div>
+                <div class="layer-item" data-layer-key="cardId" draggable="true">
+                  <label><input type="checkbox" id="toggleCardId" /> Card ID</label>
+                  <input type="checkbox" class="layer-hide-toggle" aria-label="Hide layer" />
+                  <span class="layer-handle" aria-hidden="true">≡</span>
+                </div>
+                <div class="layer-item" data-layer-key="panelUpper" draggable="true">
+                  <label><input type="checkbox" id="toggleTitleBar" /> Panel Upper</label>
+                  <input type="checkbox" class="layer-hide-toggle" aria-label="Hide layer" />
+                  <span class="layer-handle" aria-hidden="true">≡</span>
+                </div>
+                <div class="layer-item" data-layer-key="titleText" draggable="true">
+                  <label><input type="checkbox" id="toggleTitleText" /> Title</label>
+                  <input type="checkbox" class="layer-hide-toggle" aria-label="Hide layer" />
+                  <span class="layer-handle" aria-hidden="true">≡</span>
+                </div>
+                <div class="layer-item" data-layer-key="topNameGradient" draggable="true">
+                  <label><input type="checkbox" id="toggleTopNameGradient" /> Top Name Gradient</label>
+                  <input type="checkbox" class="layer-hide-toggle" aria-label="Hide layer" />
+                  <span class="layer-handle" aria-hidden="true">≡</span>
+                </div>
+                <div class="layer-item" data-layer-key="bottomNameGradient" draggable="true">
+                  <label><input type="checkbox" id="toggleBottomNameGradient" /> Bottom Name Gradient</label>
+                  <input type="checkbox" class="layer-hide-toggle" aria-label="Hide layer" />
+                  <span class="layer-handle" aria-hidden="true">≡</span>
+                </div>
+                <div class="layer-item" data-layer-key="artwork" draggable="true">
+                  <label><input type="checkbox" id="toggleArtwork" /> Artwork</label>
+                  <input type="checkbox" class="layer-hide-toggle" aria-label="Hide layer" />
+                  <span class="layer-handle" aria-hidden="true">≡</span>
+                </div>
+                <div class="layer-item" data-layer-key="panelBleed" draggable="true">
+                  <label><input type="checkbox" id="togglePanelBleed" /> Panel Bleed</label>
+                  <input type="checkbox" class="layer-hide-toggle" aria-label="Hide layer" />
+                  <span class="layer-handle" aria-hidden="true">≡</span>
+                </div>
+                <div class="layer-item" data-layer-key="panelLower" draggable="true">
+                  <label><input type="checkbox" id="toggleBottomText" /> Panel Lower</label>
+                  <input type="checkbox" class="layer-hide-toggle" aria-label="Hide layer" />
+                  <span class="layer-handle" aria-hidden="true">≡</span>
+                </div>
+                <div class="layer-item" data-layer-key="secondAbilityFrame" draggable="true">
+                  <label><input type="checkbox" id="toggleSecondAbilityFrame" /> Second Ability Frame</label>
+                  <input type="checkbox" class="layer-hide-toggle" aria-label="Hide layer" />
+                  <span class="layer-handle" aria-hidden="true">≡</span>
+                </div>
+                <div class="layer-item" data-layer-key="costBadge" draggable="true">
+                  <label><input type="checkbox" id="toggleCostBadge" /> Cost Badge</label>
+                  <input type="checkbox" class="layer-hide-toggle" aria-label="Hide layer" />
+                  <span class="layer-handle" aria-hidden="true">≡</span>
+                </div>
+                <div class="layer-item" data-layer-key="attackModifier" draggable="true">
+                  <label><input type="checkbox" id="toggleAttackModifier" /> Attack Modifier (Roll)</label>
+                  <input type="checkbox" class="layer-hide-toggle" aria-label="Hide layer" />
+                  <span class="layer-handle" aria-hidden="true">≡</span>
+                </div>
+                <div class="layer-item" data-layer-key="cardText" draggable="true">
+                  <label><input type="checkbox" id="toggleCardText" /> Card Text</label>
+                  <input type="checkbox" class="layer-hide-toggle" aria-label="Hide layer" />
+                  <span class="layer-handle" aria-hidden="true">≡</span>
+                </div>
+              </div>
             </div>
           </div>
         </details>
@@ -231,6 +357,8 @@
         </details>
       </aside>
 
+      <div id="sidebarResizer" class="sidebar-resizer" aria-label="Resize sidebar" role="separator"></div>
+
       <!-- Right Panel: Preview -->
       <main class="preview-panel">
         <div class="preview-container">
@@ -248,12 +376,23 @@
               <input type="range" id="referenceOpacity" min="0" max="1" step="0.05" value="0.7">
             </div>
           </div>
+          <div class="status-effects-toggle">
+            <label>
+              <input type="checkbox" id="toggleStatusEffects" />
+              Status Effects
+            </label>
+            <label>
+              <input type="checkbox" id="toggleOtherCommands" />
+              Other Commands
+            </label>
+          </div>
           <div class="card-preview" id="cardPreview">
-            <!-- Layer 1: Bleed (bottom) -->
-            <div id="bleedLayer" class="card-layer card-layer-bleed"></div>
-            
-            <!-- Layer 2: Artwork -->
+            <!-- Layer 0: Card Bleed -->
+            <div id="cardBleedLayer" class="card-layer card-layer-card-bleed"></div>
+
+            <!-- Layer 1: Artwork -->
             <div id="artworkLayer" class="card-layer card-layer-artwork">
+              <canvas id="artworkPreviewCanvas" class="card-art-canvas"></canvas>
               <img id="cardArtImage" class="card-art-image" alt="Card Art" />
               <div id="cardArtArea" class="art-placeholder"></div>
             </div>
@@ -286,9 +425,16 @@
             <div id="panelLowerLayer" class="card-layer card-layer-panel-lower">
             </div>
 
+            <!-- Layer 11.5: Second Ability Frame -->
+            <div id="secondAbilityFrameLayer" class="card-layer card-layer-second-ability-frame"></div>
+
             <!-- Layer 12: Panel Upper -->
             <div id="panelUpperLayer" class="card-layer card-layer-panel-upper">
             </div>
+
+            <!-- Layer 12.5: Name Gradients -->
+            <div id="topNameGradientLayer" class="card-layer card-layer-top-name-gradient"></div>
+            <div id="bottomNameGradientLayer" class="card-layer card-layer-bottom-name-gradient"></div>
             
             <!-- Layer 13: Cost Badge -->
             <div id="costBadgeLayer" class="card-layer card-layer-cost-badge"></div>
@@ -312,13 +458,6 @@
           <!-- Reference Side (for side-by-side view) -->
           <div id="referenceSide" class="reference-side" aria-hidden="true"></div>
         </div>
-        <!-- Zoom Controls at Bottom -->
-        <div class="preview-controls">
-          <label for="zoomSlider">Zoom: <span id="zoomValue">100</span>%</label>
-          <input type="range" id="zoomSlider" min="50" max="200" value="100" class="zoom-slider">
-          <label for="cardScaleSlider">Card Scale: <span id="cardScaleValue">100</span>%</label>
-          <input type="range" id="cardScaleSlider" min="80" max="120" value="100" class="zoom-slider">
-        </div>
       </main>
     </div>
   </div>
@@ -326,12 +465,173 @@
   <!-- File Input (hidden) -->
   <input type="file" id="fileInput" accept=".json" style="display: none;">
 
+  <!-- Cropper Modal -->
+  <div id="cropModal" class="crop-modal" aria-hidden="true">
+    <div class="crop-modal__backdrop"></div>
+    <div class="crop-modal__panel" role="dialog" aria-label="Crop Artwork">
+      <div class="crop-modal__header">
+        <h2>Crop Artwork</h2>
+        <button id="cropCloseBtn" class="btn btn-secondary btn-small" type="button">Close</button>
+      </div>
+      <div class="crop-modal__body">
+        <div id="cropArea" class="crop-area">
+          <img id="cropImage" alt="Crop Art" />
+          <img id="cropPreviewImage" alt="Cropped Preview" />
+          <div id="cropFrameOverlay" class="crop-frame-overlay"></div>
+        </div>
+      </div>
+      <div class="crop-modal__footer">
+        <label for="cropZoom">Zoom</label>
+        <input type="range" id="cropZoom" min="0.6" max="3" step="0.02" value="1">
+        <button id="cropPreviewBtn" class="btn btn-secondary btn-small" type="button">Preview Crop</button>
+        <button id="cropApplyBtn" class="btn btn-primary btn-small" type="button">Apply Crop</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Deck View Modal -->
+  <div id="deckViewModal" class="deck-modal" aria-hidden="true">
+    <div class="deck-modal__backdrop"></div>
+    <div class="deck-modal__panel" role="dialog" aria-label="Deck View">
+      <div class="deck-modal__header">
+        <h2>Deck View</h2>
+        <div class="deck-modal__actions">
+          <div id="deckViewSummary" class="deck-modal__summary"></div>
+          <label class="deck-view-scale" for="deckViewScale">
+            <span>Scale</span>
+            <input type="range" id="deckViewScale" min="0.8" max="1.4" step="0.01" value="1.18">
+            <span id="deckViewScaleValue">118%</span>
+          </label>
+          <button id="deckViewExportBtn" class="btn btn-secondary btn-small" type="button">Export</button>
+          <button id="deckViewRefreshBtn" class="btn btn-secondary btn-small" type="button">Refresh</button>
+          <button id="deckViewCloseBtn" class="btn btn-secondary btn-small" type="button">Close</button>
+        </div>
+      </div>
+      <div class="deck-modal__body">
+        <div id="deckViewStatus" class="deck-view-status"></div>
+        <div id="deckTemplate" class="deck-template">
+          <div class="deck-template__bg" aria-hidden="true"></div>
+          <div id="deckCardGrid" class="deck-card-grid"></div>
+          <div class="deck-template__overlay" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Print Sheet Modal -->
+  <div id="printSheetModal" class="print-modal" aria-hidden="true">
+    <div class="print-modal__backdrop"></div>
+    <div class="print-modal__panel" role="dialog" aria-label="Print Sheet Preview">
+      <div class="print-modal__header">
+        <h2>Print Sheet</h2>
+        <div class="print-modal__actions">
+          <label class="print-mode-select" for="printModeSelect">
+            <span>Mode</span>
+            <select id="printModeSelect">
+              <option value="standard" selected>Standard</option>
+              <option value="compact">Compact</option>
+            </select>
+          </label>
+          <label class="print-mode-select" for="printCardScale">
+            <span>Card Scale</span>
+            <input type="range" id="printCardScale" min="0.7" max="1.3" step="0.01" value="1">
+            <span id="printCardScaleValue">100%</span>
+          </label>
+          <div class="print-layer-toggles">
+            <label><input id="printLayerSafe" type="checkbox" checked> <span id="printLayerSafeLabel">Safe</span></label>
+            <label><input id="printLayerCut" type="checkbox" checked> <span id="printLayerCutLabel">Cut</span></label>
+          </div>
+          <div id="printSheetSummary" class="print-modal__summary"></div>
+          <button id="printSheetExportPngBtn" class="btn btn-secondary btn-small" type="button">Export PNG</button>
+          <button id="printSheetExportPdfBtn" class="btn btn-secondary btn-small" type="button">Export PDF</button>
+          <button id="printSheetPrintBtn" class="btn btn-secondary btn-small" type="button">Print</button>
+          <button id="printSheetRefreshBtn" class="btn btn-secondary btn-small" type="button">Refresh</button>
+          <button id="printSheetCloseBtn" class="btn btn-secondary btn-small" type="button">Close</button>
+        </div>
+      </div>
+      <div class="print-modal__body">
+        <div class="print-selection">
+          <div class="print-selection__header">
+            <div id="printSelectionSummary" class="print-selection__summary"></div>
+            <div class="print-selection__actions">
+              <button id="printSelectAllBtn" class="btn btn-secondary btn-small" type="button">Select All</button>
+              <button id="printClearSelectionBtn" class="btn btn-secondary btn-small" type="button">Clear</button>
+            </div>
+          </div>
+          <div id="printSelectionList" class="print-selection__list"></div>
+        </div>
+        <div id="printSheetStatus" class="print-view-status"></div>
+        <div id="printSheetPages" class="print-pages">
+          <div id="printSheetTemplate" class="print-template">
+            <div class="print-template__layer print-template__bg" aria-hidden="true"></div>
+            <div id="printSheetGrid" class="print-card-grid"></div>
+            <div class="print-template__layer print-template__safe" aria-hidden="true"></div>
+            <div class="print-template__layer print-template__cut" aria-hidden="true"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Effects Modal -->
+  <div id="statusEffectsModal" class="status-modal" aria-hidden="true">
+    <div class="status-modal__backdrop"></div>
+    <div class="status-modal__panel" role="dialog" aria-label="Status Effects">
+      <div class="status-modal__header">
+        <h2>Status Effects</h2>
+        <button id="statusEffectsCloseBtn" class="btn btn-secondary btn-small" type="button">Close</button>
+      </div>
+      <div class="status-modal__body">
+        <table class="status-table">
+          <thead>
+            <tr>
+              <th>Status Effect</th>
+              <th>Command</th>
+              <th>Preview</th>
+            </tr>
+          </thead>
+          <tbody id="statusEffectsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Other Commands Modal -->
+  <div id="otherCommandsModal" class="status-modal" aria-hidden="true">
+    <div class="status-modal__backdrop"></div>
+    <div class="status-modal__panel" role="dialog" aria-label="Other Commands">
+      <div class="status-modal__header">
+        <h2>Other Commands</h2>
+        <button id="otherCommandsCloseBtn" class="btn btn-secondary btn-small" type="button">Close</button>
+      </div>
+      <div class="status-modal__body">
+        <table class="status-table">
+          <thead>
+            <tr>
+              <th>Command</th>
+              <th>Example</th>
+              <th>Preview</th>
+            </tr>
+          </thead>
+          <tbody id="otherCommandsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+  <script src="js/common.js"></script>
   <script src="js/state.js"></script>
   <script src="js/cardRenderer.js"></script>
+  <script src="js/referenceOverlay.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
+
+
+
 

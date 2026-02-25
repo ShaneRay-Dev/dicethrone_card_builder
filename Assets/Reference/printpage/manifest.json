@@ -1,0 +1,5 @@
+{
+  "baseLayer": "printpage_base_layer.png",
+  "safeMargin": "printpage_safe_margin.png",
+  "cardTemplate": "printpage_card_template.png"
+}

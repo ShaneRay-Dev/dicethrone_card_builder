@@ -7,7 +7,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   overflow: auto;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
@@ -15,18 +15,24 @@
 .preview-container {
   --zoom-scale: 1;
   --card-scale: 1;
-  --card-scale-inverse: 1;
-  --card-width: 540px;
-  --card-height: 810px;
-  --card-bleed: 28px;
+  --card-width: 675px;
+  --asset-aspect: 1.555555556;
+  --bleed-ratio: 0.0517;
+  --bleed-small-ratio: 0.0369;
+  --card-height: calc(var(--card-width) * var(--asset-aspect));
+  --card-bleed: calc(var(--card-width) * var(--bleed-ratio));
+  --card-bleed-small: calc(var(--card-width) * var(--bleed-small-ratio));
+  --bleed-large-inset: calc(var(--card-bleed) * var(--zoom-scale) * var(--card-scale));
+  --bleed-small-inset: calc(var(--card-bleed-small) * var(--zoom-scale) * var(--card-scale));
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   width: 100%;
   flex: 1;
   gap: 24px;
-  /* Allow panels to stay side-by-side and scroll when zoomed large */
-  overflow-x: auto;
+  /* Allow full card height/width to remain visible via scrolling. */
+  overflow: auto;
+  padding-top: 18px;
   padding-bottom: 18px;
   position: relative;
 }
@@ -91,7 +97,7 @@
   position: relative;
   transition: width 0.18s ease-out, height 0.18s ease-out;
   /* Bleed area padding (2.49" x 3.74") approximated */
-  padding: calc(var(--card-bleed) * var(--zoom-scale) * var(--card-scale));
+  padding: var(--bleed-large-inset);
   box-sizing: border-box;
   background: linear-gradient(135deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.05) 100%);
   flex: 0 0 auto;
@@ -122,57 +128,36 @@
 }
 
 /* Layer z-index stack (bottom to top) */
-.card-layer-bleed { z-index: 1; }
-.card-layer-artwork { z-index: 2; }
+.card-layer-card-bleed { z-index: 1; }
 .card-layer-bg-lower { z-index: 3; }
 .card-layer-bg-upper { z-index: 4; }
-.card-layer-image-frame { z-index: 5; }
-.card-layer-frame-shading { z-index: 6; }
-.card-layer-frame { z-index: 7; }
-.card-layer-card-id { z-index: 8; }
-.card-layer-card-id-text { z-index: 9; }
-.card-layer-panel-bleed { z-index: 10; }
-.card-layer-panel-lower { z-index: 11; }
-.card-layer-panel-upper { z-index: 12; }
-.card-layer-cost-badge { z-index: 13; }
-.card-layer-attack-modifier { z-index: 14; }
-.card-layer-title { z-index: 15; }
-.card-layer-card-text { z-index: 16; }
+.card-layer-artwork { z-index: 5; }
+.card-layer-image-frame { z-index: 6; }
+.card-layer-top-name-gradient { z-index: 7; }
+.card-layer-bottom-name-gradient { z-index: 8; }
+.card-layer-frame-shading { z-index: 9; }
+.card-layer-frame { z-index: 10; }
+.card-layer-card-id { z-index: 11; }
+.card-layer-card-id-text { z-index: 12; }
+.card-layer-panel-bleed { z-index: 13; }
+.card-layer-panel-lower { z-index: 14; }
+.card-layer-second-ability-frame { z-index: 15; }
+.card-layer-panel-upper { z-index: 16; }
+.card-layer-cost-badge { z-index: 17; }
+.card-layer-attack-modifier { z-index: 18; }
+.card-layer-title { z-index: 19; }
+.card-layer-card-text { z-index: 20; }
 .card-layer-card-text {
   pointer-events: none;
 }
 
-/* Bleed area (extends to edges) */
-.card-preview::before {
-  content: '';
+/* Guides */
+.card-guide {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border: 1px dashed rgba(100, 150, 200, 0.3);
   pointer-events: none;
+  border: 1px dashed rgba(100, 150, 200, 0.35);
   border-radius: 2px;
-}
-
-/* Safe area guide (2.05" x 3.3") = 205x330px */
-.card-preview::after {
-  content: '';
-  position: absolute;
-  top: 22px;
-  left: 22px;
-  right: 22px;
-  bottom: 22px;
-  border: 1px dashed rgba(150, 200, 255, 0.2);
-  pointer-events: none;
-  border-radius: 1px;
-}
-
-/* Bleed layer styling */
-.card-layer-bleed {
-  background-color: var(--bleed-color, #ffffff);
-  pointer-events: none;
-  transition: background-color 0.12s linear;
+  z-index: 22;
 }
 
 .card-title-text.dragging {
@@ -185,7 +170,6 @@
 
 /* Card Artwork Layer */
 .card-layer-artwork {
-  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -215,6 +199,20 @@
   cursor: move;
   user-select: none;
   display: none;
+}
+
+.card-art-image.art-cropped {
+  object-fit: cover;
+  cursor: default;
+}
+
+.card-art-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
 }
 
 .card-layer-artwork.active .card-art-image {
@@ -290,8 +288,7 @@
   padding: 0;
 }
 
-.card-preview.export-no-bleed::before,
-.card-preview.export-no-bleed::after {
+.card-preview.export-no-bleed .card-guide {
   display: none;
 }
 
@@ -306,22 +303,20 @@
   z-index: 20;
   display: none;
   pointer-events: none;
-  background-size: 100% 100%;
+  background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
-  transform: scale(var(--card-scale-inverse));
-  transform-origin: center;
 }
 
 .reference-side {
   display: none;
-  width: calc(var(--card-width) * var(--zoom-scale));
-  height: calc(var(--card-height) * var(--zoom-scale));
-  background-size: 100% 100%;
+  width: calc(var(--card-width) * var(--zoom-scale) * var(--card-scale));
+  height: calc(var(--card-height) * var(--zoom-scale) * var(--card-scale));
+  background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
-  border: calc(4px * var(--zoom-scale)) solid #4a7ba7;
-  border-radius: calc(8px * var(--zoom-scale));
+  border: calc(4px * var(--zoom-scale) * var(--card-scale)) solid #4a7ba7;
+  border-radius: calc(8px * var(--zoom-scale) * var(--card-scale));
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
   flex: 0 0 auto;
   transition: width 0.18s ease-out, height 0.18s ease-out, border 0.18s ease-out;
@@ -338,14 +333,8 @@
     padding: 20px;
   }
 
-  .card-preview {
-    width: calc(240px * var(--zoom-scale) * var(--card-scale));
-    height: calc(340px * var(--zoom-scale) * var(--card-scale));
-  }
-
-  .reference-side {
-    width: 240px;
-    height: 340px;
+  .preview-container {
+    --card-width: 240px;
   }
 
   .card-header h3 {

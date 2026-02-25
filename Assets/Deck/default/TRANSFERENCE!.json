@@ -1,0 +1,143 @@
+{
+  "cardType": "Action Cards",
+  "cardSubType": "Main Phase",
+  "cardId": "TEST 01 v1",
+  "cardIdFont": "MYRIADPRO-REGULAR",
+  "cardIdFontSize": 15,
+  "cardIdOffset": 0,
+  "cardIdOffsetX": -3.5,
+  "name": "TRANSFERENCE!",
+  "titleBlocks": [
+    {
+      "id": "title-1",
+      "text": "TRANSFERENCE!",
+      "position": {
+        "x": 1.4874028450301893,
+        "y": -1.2779890290537477
+      }
+    }
+  ],
+  "activeTitleId": "title-1",
+  "description": "Transfer 1 status effect token \nfrom a chosen player to \nanother chosen player.",
+  "descriptionRich": [
+    {
+      "text": "Transfer 1 status effect token \nfrom a chosen player to \nanother chosen player.",
+      "font": "MYRIADPRO-BOLDCOND"
+    }
+  ],
+  "descriptionHtml": "<p>Transfer 1 status effect token </p><p>from a chosen player to </p><p>another chosen player.</p>",
+  "descriptionBlocks": [
+    {
+      "id": "desc-1",
+      "description": "Transfer 1 status effect token \nfrom a chosen player to \nanother chosen player.",
+      "descriptionRich": [
+        {
+          "text": "Transfer 1 status effect token \nfrom a chosen player to \nanother chosen player.",
+          "font": "MYRIADPRO-BOLDCOND"
+        }
+      ],
+      "descriptionHtml": "<p>Transfer 1 status effect token </p><p>from a chosen player to </p><p>another chosen player.</p>",
+      "position": {
+        "x": 2,
+        "y": 4
+      },
+      "scale": 1
+    }
+  ],
+  "activeDescriptionId": "desc-1",
+  "titleFont": "PHOSPHATE_FIXED_SOLID",
+  "descriptionFont": "MYRIADPRO-BOLDCOND",
+  "titleFontSize": 46,
+  "descriptionFontSize": 39,
+  "descriptionLineHeightScale": 1.4,
+  "titleLetterSpacing": 0.5,
+  "descriptionLetterSpacing": 0,
+  "descriptionBaselineOffset": 0,
+  "positionUnits": "base",
+  "artUrl": "Assets/images/Card Art/Transference.png",
+  "artData": null,
+  "artSourceUrl": null,
+  "artSourceData": null,
+  "artCropTransform": null,
+  "artTransform": {
+    "x": 0,
+    "y": 0,
+    "scale": 1
+  },
+  "artCropToFrame": false,
+  "artWasCropped": false,
+  "titlePosition": {
+    "x": 1.4874028450301893,
+    "y": -1.2779890290537477
+  },
+  "descriptionPosition": {
+    "x": 2,
+    "y": 4
+  },
+  "export": {
+    "includeBleed": true
+  },
+  "layers": {
+    "bleed": false,
+    "bleedLarge": false,
+    "bleedSmall": true,
+    "bleedGuide": false,
+    "safeCutGuide": true,
+    "backgroundLower": true,
+    "backgroundUpper": true,
+    "imageFrame": true,
+    "frameShading": true,
+    "border": true,
+    "cardId": true,
+    "titleBar": true,
+    "panelUpper": true,
+    "titleText": true,
+    "artwork": true,
+    "panelBleed": true,
+    "bottomText": true,
+    "panelLower": true,
+    "costBadge": true,
+    "attackModifier": false,
+    "cardText": true,
+    "secondAbilityFrame": true,
+    "topNameGradient": true,
+    "bottomNameGradient": true,
+    "cardBleed": false
+  },
+  "layerOrder": [
+    "cardBleed",
+    "backgroundLower",
+    "backgroundUpper",
+    "artwork",
+    "imageFrame",
+    "topNameGradient",
+    "bottomNameGradient",
+    "frameShading",
+    "border",
+    "cardId",
+    "panelBleed",
+    "panelLower",
+    "secondAbilityFrame",
+    "panelUpper",
+    "costBadge",
+    "attackModifier",
+    "titleText",
+    "cardText"
+  ],
+  "hiddenLayers": [],
+  "theme": "warrior",
+  "font": "Arial",
+  "costBadge": {
+    "value": "2",
+    "fontSize": 33
+  },
+  "costBadgePosition": {
+    "x": -1.5999755859375,
+    "y": 2.399993896484375
+  },
+  "bleed": {
+    "enabled": true,
+    "color": "#000000"
+  },
+  "artCroppedData": null
+}

@@ -54,6 +54,11 @@
       "label": "PhosphateSolid",
       "family": "PhosphateSolid",
       "file": "Assets/fonts/PhosphateSolid.ttf"
+    },
+    {
+      "label": "PHOSPHATE_FIXED_SOLID",
+      "family": "PHOSPHATE_FIXED_SOLID",
+      "file": "Assets/fonts/Phosphate_Fixed_Solid.ttf"
     }
   ]
 }

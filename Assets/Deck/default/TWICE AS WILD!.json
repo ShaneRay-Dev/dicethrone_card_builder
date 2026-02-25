@@ -1,0 +1,144 @@
+{
+  "cardType": "Action Cards",
+  "cardSubType": "Roll Phase",
+  "cardId": "",
+  "cardIdFont": "MYRIADPRO-REGULAR",
+  "cardIdFontSize": 15,
+  "cardIdOffset": 0,
+  "cardIdOffsetX": -3.5,
+  "name": "TWICE AS WILD!",
+  "titleBlocks": [
+    {
+      "id": "title-1",
+      "text": "TWICE AS WILD!",
+      "position": {
+        "x": 1.4874028450301893,
+        "y": -1.2779890290537477
+      }
+    }
+  ],
+  "activeTitleId": "title-1",
+  "description": "Change the values of any two dice.",
+  "descriptionRich": [
+    {
+      "text": "Change the values of any two dice.",
+      "font": "MYRIADPRO-BOLDCOND"
+    }
+  ],
+  "descriptionHtml": "<p>Change the values of any two dice.</p>",
+  "descriptionBlocks": [
+    {
+      "id": "desc-1",
+      "description": "Change the values of any two dice.",
+      "descriptionRich": [
+        {
+          "text": "Change the values of any two dice.",
+          "font": "MYRIADPRO-BOLDCOND"
+        }
+      ],
+      "descriptionHtml": "<p>Change the values of any two dice.</p>",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "scale": 1
+    }
+  ],
+  "activeDescriptionId": "desc-1",
+  "titleFont": "PHOSPHATE_FIXED_SOLID",
+  "descriptionFont": "MYRIADPRO-BOLDCOND",
+  "titleFontSize": 46,
+  "descriptionFontSize": 39,
+  "descriptionLineHeightScale": 1.4,
+  "titleLetterSpacing": 0.5,
+  "descriptionLetterSpacing": 0,
+  "descriptionBaselineOffset": 0,
+  "positionUnits": "base",
+  "artUrl": "Assets/images/Card Art/Twice As Wild.png",
+  "artData": null,
+  "artSourceUrl": null,
+  "artSourceData": null,
+  "artCropTransform": null,
+  "artTransform": {
+    "x": 0,
+    "y": 0,
+    "scale": 1
+  },
+  "artCropToFrame": false,
+  "artWasCropped": false,
+  "titlePosition": {
+    "x": 1.4874028450301893,
+    "y": -1.2779890290537477
+  },
+  "descriptionPosition": {
+    "x": 0,
+    "y": 0
+  },
+  "export": {
+    "includeBleed": true
+  },
+  "bleed": {
+    "enabled": false,
+    "color": "#000000"
+  },
+  "layers": {
+    "bleed": false,
+    "bleedLarge": false,
+    "bleedSmall": false,
+    "bleedGuide": true,
+    "safeCutGuide": true,
+    "backgroundLower": true,
+    "backgroundUpper": true,
+    "imageFrame": true,
+    "frameShading": true,
+    "border": true,
+    "cardId": true,
+    "titleBar": true,
+    "panelUpper": true,
+    "titleText": true,
+    "artwork": true,
+    "panelBleed": true,
+    "bottomText": true,
+    "secondAbilityFrame": true,
+    "panelLower": true,
+    "topNameGradient": true,
+    "bottomNameGradient": true,
+    "costBadge": true,
+    "attackModifier": false,
+    "cardText": true
+  },
+  "layerOrder": [
+    "bleedLarge",
+    "bleedSmall",
+    "backgroundLower",
+    "backgroundUpper",
+    "artwork",
+    "imageFrame",
+    "topNameGradient",
+    "bottomNameGradient",
+    "frameShading",
+    "border",
+    "cardId",
+    "panelBleed",
+    "panelLower",
+    "secondAbilityFrame",
+    "panelUpper",
+    "costBadge",
+    "attackModifier",
+    "titleText",
+    "cardText",
+    "bleedGuide",
+    "safeCutGuide"
+  ],
+  "hiddenLayers": [],
+  "theme": "warrior",
+  "font": "Arial",
+  "costBadge": {
+    "value": "3",
+    "fontSize": 33
+  },
+  "costBadgePosition": {
+    "x": -1.5999755859375,
+    "y": 2.399993896484375
+  }
+}

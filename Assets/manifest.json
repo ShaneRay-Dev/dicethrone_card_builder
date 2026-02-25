@@ -1,7 +1,28 @@
 {
   "CardArt": {
+    "Better D": "Assets/images/Card Art/Better D.png",
+    "Buh, Bye": "Assets/images/Card Art/Buh, Bye.png",
     "Common Loot": "Assets/images/Card Art/Common Loot.png",
-    "Vegas Baby": "Assets/images/Card Art/Vegas Baby.png"
+    "Double Up": "Assets/images/Card Art/Double Up.png",
+    "Get That Outta Here Marvel": "Assets/images/Card Art/Get That Outta Here_Marvel.png",
+    "Get That Outta Here": "Assets/images/Card Art/Get That Outta Here.png",
+    "Getting Paid": "Assets/images/Card Art/Getting Paid.png",
+    "Helping Hand": "Assets/images/Card Art/Helping Hand.png",
+    "Not This Time": "Assets/images/Card Art/Not This Time.png",
+    "One More Time": "Assets/images/Card Art/One More Time.png",
+    "Samesies": "Assets/images/Card Art/Samesies.png",
+    "Six It": "Assets/images/Card Art/Six It.png",
+    "So Wild": "Assets/images/Card Art/So Wild.png",
+    "Tip It": "Assets/images/Card Art/Tip It.png",
+    "Transference Marvel": "Assets/images/Card Art/Transference_Marvel.png",
+    "Transference": "Assets/images/Card Art/Transference.png",
+    "Triple Up": "Assets/images/Card Art/Triple Up.png",
+    "Try, Try Again": "Assets/images/Card Art/Try, Try Again.png",
+    "Twice As Wild": "Assets/images/Card Art/Twice As Wild.png",
+    "Vegas Baby Marvel": "Assets/images/Card Art/Vegas Baby_Marvel.png",
+    "Vegas Baby": "Assets/images/Card Art/Vegas Baby.png",
+    "What Status Effects Marvel": "Assets/images/Card Art/What Status Effects_Marvel.png",
+    "What Status Effects": "Assets/images/Card Art/What Status Effects.png"
   },
   "CostBadge": {
     "0": "Assets/CostBadge/cp_cost_0.png",
@@ -13,12 +34,17 @@
   },
   "Hero Upgrade": {
     "Ability Upgrade": {
-      "border": "Assets/Action Cards/Instant/Instant Action Frame.png",
-      "backgroundLower": "Assets/Action Cards/Instant/Instant Action background lower.png",
-      "backgroundUpper": "Assets/Action Cards/Instant/Instant Action background upper.png",
-      "imageFrame": "Assets/Action Cards/Instant/Instant Action Image Frame.png",
-      "panelLower": "Assets/Action Cards/Instant/Instant Action Panel Lower Interior.png",
-      "panelUpper": "Assets/Action Cards/Instant/Instant Action Panel Upper Interior.png"
+      "border": "Assets/Hero Upgrade/Ability Upgrade/hero_upgrade_Ability_frame.png",
+      "backgroundLower": "Assets/Hero Upgrade/Ability Upgrade/hero_upgrade_Ability_background_bottom.png",
+      "backgroundUpper": "Assets/Hero Upgrade/Ability Upgrade/hero_upgrade_Ability_background_upper.png",
+      "cardId": "Assets/Hero Upgrade/Ability Upgrade/hero_upgrade_ability_card_id.png",
+      "frameShading": "Assets/Hero Upgrade/Ability Upgrade/hero_upgrade_Ability_frame_shading.png",
+      "panelBleed": "Assets/Hero Upgrade/Ability Upgrade/hero_upgrade_Ability_action_panel_bleed.png",
+      "panelLower": "Assets/Hero Upgrade/Ability Upgrade/hero_upgrade_Ability_action_panel_lower.png",
+      "panelUpper": "Assets/Hero Upgrade/Ability Upgrade/hero_upgrade_Ability_action_panel_upper.png",
+      "secondAbilityFrame": "Assets/Hero Upgrade/Ability Upgrade/hero_upgrade_Ability_second_ability_frame.png",
+      "topNameGradient": "Assets/Hero Upgrade/Ability Upgrade/hero_upgrade_Ability_top_name_gradient.png",
+      "bottomNameGradient": "Assets/Hero Upgrade/Ability Upgrade/hero_upgrade_Ability_bottom_name_gradient.png"
     },
     "Defense Upgrade": {
       "border": "Assets/Action Cards/Instant/Instant Action Frame.png",
@@ -39,6 +65,7 @@
   },
   "Action Cards": {
     "Main Phase": {
+      "cardBleed": "Assets/Action Cards/card_bleed.png",
       "border": "Assets/Action Cards/Main Phase/Main Action Frame.png",
       "cardId": "Assets/Action Cards/Main Phase/card_id.png",
       "backgroundLower": "Assets/Action Cards/Main Phase/Main Action background lower.png",
@@ -50,6 +77,7 @@
       "panelUpper": "Assets/Action Cards/Main Phase/Main Action Panel Upper.png"
     },
     "Instant": {
+      "cardBleed": "Assets/Action Cards/card_bleed.png",
       "border": "Assets/Action Cards/Instant/Instant Action Frame.png",
       "cardId": "Assets/Action Cards/Instant/card_id.png",
       "backgroundLower": "Assets/Action Cards/Instant/Instant Action background lower.png",
@@ -61,6 +89,7 @@
       "panelUpper": "Assets/Action Cards/Instant/Instant Action Panel Upper Interior.png"
     },
     "Roll Phase": {
+      "cardBleed": "Assets/Action Cards/card_bleed.png",
       "border": "Assets/Action Cards/Roll Phase/Roll_Action_Frame.png",
       "cardId": "Assets/Action Cards/Roll Phase/card_id.png",
       "backgroundLower": "Assets/Action Cards/Roll Phase/Roll_Action_Background_lower.png",

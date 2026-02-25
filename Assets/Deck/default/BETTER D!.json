@@ -1,0 +1,179 @@
+{
+  "cardType": "Action Cards",
+  "cardSubType": "Roll Phase",
+  "cardId": "TEST 16 v1",
+  "cardIdFont": "MYRIADPRO-REGULAR",
+  "cardIdFontSize": 15,
+  "cardIdOffset": 0,
+  "cardIdOffsetX": -3.5,
+  "name": "BETTER D!",
+  "titleBlocks": [
+    {
+      "id": "title-1",
+      "text": "BETTER D!",
+      "position": {
+        "x": 1.4874028450301893,
+        "y": -1.2779890290537477
+      }
+    }
+  ],
+  "activeTitleId": "title-1",
+  "description": "A chosen player may perform an additional Roll Attempt of up to five dice during their Defensive Rolle Phase.",
+  "descriptionRich": [
+    {
+      "text": "A chosen player may perform an additional ",
+      "font": "MYRIADPRO-BOLDCOND"
+    },
+    {
+      "text": "Roll Attempt",
+      "font": "MYRIADPRO-CONDIT"
+    },
+    {
+      "text": " of up to five dice during their ",
+      "font": "MYRIADPRO-BOLDCOND"
+    },
+    {
+      "text": "Defensive Rolle Phase.",
+      "font": "MYRIADPRO-CONDIT"
+    }
+  ],
+  "descriptionHtml": "<p>A chosen player may perform an additional <span class=\"ql-font-myriadpro-condit\">Roll Attempt</span> of up to five dice during their <span class=\"ql-font-myriadpro-condit\">Defensive Rolle Phase.</span></p>",
+  "descriptionBlocks": [
+    {
+      "id": "desc-mljseypu-1-ikiq",
+      "description": "",
+      "descriptionRich": [],
+      "descriptionHtml": "",
+      "position": {
+        "x": 2,
+        "y": -38
+      },
+      "scale": 1
+    },
+    {
+      "id": "desc-mljslu1i-3-kfk3",
+      "description": "A chosen player may perform an additional Roll Attempt of up to five dice during their Defensive Rolle Phase.",
+      "descriptionRich": [
+        {
+          "text": "A chosen player may perform an additional ",
+          "font": "MYRIADPRO-BOLDCOND"
+        },
+        {
+          "text": "Roll Attempt",
+          "font": "MYRIADPRO-CONDIT"
+        },
+        {
+          "text": " of up to five dice during their ",
+          "font": "MYRIADPRO-BOLDCOND"
+        },
+        {
+          "text": "Defensive Rolle Phase.",
+          "font": "MYRIADPRO-CONDIT"
+        }
+      ],
+      "descriptionHtml": "<p>A chosen player may perform an additional <span class=\"ql-font-myriadpro-condit\">Roll Attempt</span> of up to five dice during their <span class=\"ql-font-myriadpro-condit\">Defensive Rolle Phase.</span></p>",
+      "position": {
+        "x": -2,
+        "y": 18
+      },
+      "scale": 1
+    }
+  ],
+  "activeDescriptionId": "desc-mljslu1i-3-kfk3",
+  "titleFont": "PHOSPHATE_FIXED_SOLID",
+  "descriptionFont": "MYRIADPRO-BOLDCOND",
+  "titleFontSize": 46,
+  "descriptionFontSize": 39,
+  "descriptionLineHeightScale": 1.4,
+  "titleLetterSpacing": 0.5,
+  "descriptionLetterSpacing": 0,
+  "descriptionBaselineOffset": 0,
+  "positionUnits": "base",
+  "artUrl": "Assets/images/Card Art/Better D.png",
+  "artData": null,
+  "artSourceUrl": null,
+  "artSourceData": null,
+  "artCropTransform": null,
+  "artTransform": {
+    "x": 0,
+    "y": 0,
+    "scale": 1
+  },
+  "artCropToFrame": false,
+  "artWasCropped": false,
+  "titlePosition": {
+    "x": 1.4874028450301893,
+    "y": -1.2779890290537477
+  },
+  "descriptionPosition": {
+    "x": -2,
+    "y": 18
+  },
+  "export": {
+    "includeBleed": true
+  },
+  "bleed": {
+    "enabled": false,
+    "color": "#000000"
+  },
+  "layers": {
+    "bleed": false,
+    "bleedLarge": false,
+    "bleedSmall": false,
+    "bleedGuide": true,
+    "safeCutGuide": true,
+    "backgroundLower": true,
+    "backgroundUpper": true,
+    "imageFrame": true,
+    "frameShading": true,
+    "border": true,
+    "cardId": true,
+    "titleBar": true,
+    "panelUpper": true,
+    "titleText": true,
+    "artwork": true,
+    "panelBleed": true,
+    "bottomText": true,
+    "panelLower": true,
+    "costBadge": true,
+    "attackModifier": false,
+    "cardText": true,
+    "secondAbilityFrame": true,
+    "topNameGradient": true,
+    "bottomNameGradient": true
+  },
+  "layerOrder": [
+    "bleedLarge",
+    "bleedSmall",
+    "backgroundLower",
+    "backgroundUpper",
+    "artwork",
+    "imageFrame",
+    "topNameGradient",
+    "bottomNameGradient",
+    "frameShading",
+    "border",
+    "cardId",
+    "panelBleed",
+    "panelLower",
+    "secondAbilityFrame",
+    "panelUpper",
+    "costBadge",
+    "attackModifier",
+    "titleText",
+    "cardText",
+    "bleedGuide",
+    "safeCutGuide"
+  ],
+  "hiddenLayers": [],
+  "theme": "warrior",
+  "font": "Arial",
+  "costBadge": {
+    "value": "0",
+    "fontSize": 33
+  },
+  "costBadgePosition": {
+    "x": -1.5999755859375,
+    "y": 2.399993896484375
+  }
+}

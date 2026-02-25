@@ -1,0 +1,176 @@
+{
+  "cardType": "Action Cards",
+  "cardSubType": "Roll Phase",
+  "cardId": "",
+  "cardIdFont": "MYRIADPRO-REGULAR",
+  "cardIdFontSize": 15,
+  "cardIdOffset": 0,
+  "cardIdOffsetX": -3.5,
+  "name": "TRY, TRY AGIAN!",
+  "titleBlocks": [
+    {
+      "id": "title-1",
+      "text": "TRY, TRY AGAIN!",
+      "position": {
+        "x": 1.4874028450301893,
+        "y": -1.2779890290537477
+      }
+    }
+  ],
+  "activeTitleId": "title-1",
+  "description": "(can be the same die twice in a\nrow or two different dice).",
+  "descriptionRich": [
+    {
+      "text": "(can be the same die twice in a",
+      "font": "MYRIADPRO-CONDIT"
+    },
+    {
+      "text": "\n",
+      "font": "MYRIADPRO-BOLDCOND"
+    },
+    {
+      "text": "row or two different dice).",
+      "font": "MYRIADPRO-CONDIT"
+    }
+  ],
+  "descriptionHtml": "<p><span class=\"ql-font-myriadpro-condit\">(can be the same die twice in a</span></p><p><span class=\"ql-font-myriadpro-condit\">row or two different dice).</span></p>",
+  "descriptionBlocks": [
+    {
+      "id": "desc-mljseypu-1-ikiq",
+      "description": "You or a chosen teammate may re-roll up to two dice",
+      "descriptionRich": [
+        {
+          "text": "You or a chosen teammate may re-roll up to two dice",
+          "font": "MYRIADPRO-BOLDCOND"
+        }
+      ],
+      "descriptionHtml": "<p><span class=\"ql-font-myriadpro-boldcond\">You or a chosen teammate may re-roll up to two dice</span></p>",
+      "position": {
+        "x": 2,
+        "y": -38
+      },
+      "scale": 1
+    },
+    {
+      "id": "desc-mljsjqdr-2-hubu",
+      "description": "(can be the same die twice in a\nrow or two different dice).",
+      "descriptionRich": [
+        {
+          "text": "(can be the same die twice in a",
+          "font": "MYRIADPRO-CONDIT"
+        },
+        {
+          "text": "\n",
+          "font": "MYRIADPRO-BOLDCOND"
+        },
+        {
+          "text": "row or two different dice).",
+          "font": "MYRIADPRO-CONDIT"
+        }
+      ],
+      "descriptionHtml": "<p><span class=\"ql-font-myriadpro-condit\">(can be the same die twice in a</span></p><p><span class=\"ql-font-myriadpro-condit\">row or two different dice).</span></p>",
+      "position": {
+        "x": 2,
+        "y": 46
+      },
+      "scale": 1
+    }
+  ],
+  "activeDescriptionId": "desc-mljsjqdr-2-hubu",
+  "titleFont": "PHOSPHATE_FIXED_SOLID",
+  "descriptionFont": "MYRIADPRO-BOLDCOND",
+  "titleFontSize": 46,
+  "descriptionFontSize": 39,
+  "descriptionLineHeightScale": 1.4,
+  "titleLetterSpacing": 0.5,
+  "descriptionLetterSpacing": 0,
+  "descriptionBaselineOffset": 0,
+  "positionUnits": "base",
+  "artUrl": "Assets/images/Card Art/Twice As Wild.png",
+  "artData": null,
+  "artSourceUrl": null,
+  "artSourceData": null,
+  "artCropTransform": null,
+  "artTransform": {
+    "x": 0,
+    "y": 0,
+    "scale": 1
+  },
+  "artCropToFrame": false,
+  "artWasCropped": false,
+  "titlePosition": {
+    "x": 1.4874028450301893,
+    "y": -1.2779890290537477
+  },
+  "descriptionPosition": {
+    "x": 2,
+    "y": 46
+  },
+  "export": {
+    "includeBleed": true
+  },
+  "bleed": {
+    "enabled": false,
+    "color": "#000000"
+  },
+  "layers": {
+    "bleed": false,
+    "bleedLarge": false,
+    "bleedSmall": false,
+    "bleedGuide": true,
+    "safeCutGuide": true,
+    "backgroundLower": true,
+    "backgroundUpper": true,
+    "imageFrame": true,
+    "frameShading": true,
+    "border": true,
+    "cardId": true,
+    "titleBar": true,
+    "panelUpper": true,
+    "titleText": true,
+    "artwork": true,
+    "panelBleed": true,
+    "bottomText": true,
+    "panelLower": true,
+    "costBadge": true,
+    "attackModifier": false,
+    "cardText": true,
+    "secondAbilityFrame": true,
+    "topNameGradient": true,
+    "bottomNameGradient": true
+  },
+  "layerOrder": [
+    "bleedLarge",
+    "bleedSmall",
+    "backgroundLower",
+    "backgroundUpper",
+    "artwork",
+    "imageFrame",
+    "topNameGradient",
+    "bottomNameGradient",
+    "frameShading",
+    "border",
+    "cardId",
+    "panelBleed",
+    "panelLower",
+    "secondAbilityFrame",
+    "panelUpper",
+    "costBadge",
+    "attackModifier",
+    "titleText",
+    "cardText",
+    "bleedGuide",
+    "safeCutGuide"
+  ],
+  "hiddenLayers": [],
+  "theme": "warrior",
+  "font": "Arial",
+  "costBadge": {
+    "value": "1",
+    "fontSize": 33
+  },
+  "costBadgePosition": {
+    "x": -1.5999755859375,
+    "y": 2.399993896484375
+  }
+}
