@@ -28,6 +28,9 @@ const DTC_RENDER_EXPORT_SIZE = DTC_RENDER_COMMON.EXPORT_CARD_SIZE || { width: 67
 class CardRenderer {
   constructor() {
     this.previewElement = document.getElementById('cardPreview');
+    this.previewContainer = document.querySelector('.preview-container');
+    this.boardPreviewElement = document.getElementById('boardPreview');
+    this.boardAbilityLocationLayer = document.getElementById('boardAbilityLocationLayer');
     
     // 8-layer architecture references
     this.cardBleedLayer = document.getElementById('cardBleedLayer');
@@ -37,6 +40,7 @@ class CardRenderer {
     this.defaultArtPath = '';
     this.bgLowerLayer = document.getElementById('backgroundLowerLayer');
     this.bgUpperLayer = document.getElementById('backgroundUpperLayer');
+    this.leafletBreakLayer = document.getElementById('leafletBreakLayer');
     this.imageFrameLayer = document.getElementById('imageFrameLayer');
     this.frameShadingLayer = document.getElementById('frameShadingLayer');
     this.frameLayer = document.getElementById('frameLayer');
@@ -56,6 +60,7 @@ class CardRenderer {
     this.imageFrameUrl = '';
     this.artMaskUrl = '';
     this.artMaskCache = {};
+    this.artOpaqueBoundsCache = {};
     this.bgLowerBoundsCache = {};
     this.cardIdBoundsCache = {};
     this.costBadgeBoundsCache = {};
@@ -75,11 +80,24 @@ class CardRenderer {
       description: { color: 'rgba(0,0,0,0.5)', blur: 4, offsetX: 0, offsetY: 2 }
     };
     this.previewRenderNonce = 0;
+    this.leafletBreakRenderNonce = 0;
     this.tokenIconCardContext = null;
     this.renderBleedOverridePath = 'Assets/Action Cards/card_bleed.png';
     this.renderCardIdOverridePath = 'Assets/Action Cards/card_id_trimmed.png';
     this.finalExportCropMaskPath = 'Assets/Action Cards/crop_mask.png';
     this.defaultLayerOrder = [...DTC_RENDER_DEFAULT_LAYER_ORDER];
+    this.workspaceMode = 'card';
+    this.leafletSide = 'front';
+    this.leafletFrontAsset = encodeURI('Assets/Leaflet/Front/Leaflet_front_background.png');
+    this.leafletBackAsset = encodeURI('Assets/Leaflet/Back/Leaflet_Back_Boarder.png');
+    this.cardBaseAspect = (Number(DTC_RENDER_EXPORT_SIZE.height) || 1050) / (Number(DTC_RENDER_EXPORT_SIZE.width) || 675);
+    this.leafletBaseAspect = 1203 / 640;
+    this.boardAbilityLocationAsset = encodeURI('Assets/Board/Bord Template_Ability_location_guide.png');
+    this.boardBaseSize = { width: 2020, height: 1227 };
+    this.applyCardPreviewAspect(this.cardBaseAspect);
+    this.applyBoardBaseSize(this.boardBaseSize.width, this.boardBaseSize.height);
+    this.leafletSizePromise = this.loadLeafletBaseSize();
+    this.boardSizePromise = this.loadBoardBaseSize();
 
     this.assetManifest = null;
     this.loadAssetManifest();
@@ -267,6 +285,248 @@ class CardRenderer {
     return Array.isArray(this.defaultLayerOrder)
       ? [...this.defaultLayerOrder]
       : [];
+  }
+
+  setWorkspaceMode(mode) {
+    this.workspaceMode = (mode === 'leaflet' || mode === 'board') ? mode : 'card';
+    this.applyCardPreviewAspect(this.workspaceMode === 'leaflet' ? this.leafletBaseAspect : this.cardBaseAspect);
+  }
+
+  applyCardPreviewAspect(aspect) {
+    const safeAspect = Number(aspect);
+    if (!this.previewContainer || !Number.isFinite(safeAspect) || safeAspect <= 0) return;
+    this.previewContainer.style.setProperty('--asset-aspect', String(safeAspect));
+  }
+
+  async loadLeafletBaseSize() {
+    try {
+      const img = await this.loadImage(this.leafletFrontAsset);
+      const width = Number(img.naturalWidth || img.width);
+      const height = Number(img.naturalHeight || img.height);
+      if (width > 0 && height > 0) {
+        this.leafletBaseAspect = height / width;
+        if (this.workspaceMode === 'leaflet') {
+          this.applyCardPreviewAspect(this.leafletBaseAspect);
+        }
+      }
+    } catch (error) {
+      console.warn('Could not load leaflet base size:', error);
+    }
+  }
+
+  applyBoardBaseSize(width, height) {
+    const safeWidth = Number(width);
+    const safeHeight = Number(height);
+    if (!this.previewContainer || !Number.isFinite(safeWidth) || !Number.isFinite(safeHeight) || safeWidth <= 0 || safeHeight <= 0) {
+      return;
+    }
+
+    this.boardBaseSize = { width: safeWidth, height: safeHeight };
+    this.previewContainer.style.setProperty('--board-width', `${safeWidth}px`);
+    this.previewContainer.style.setProperty('--board-height', `${safeHeight}px`);
+  }
+
+  async loadBoardBaseSize() {
+    try {
+      const img = await this.loadImage(this.boardAbilityLocationAsset);
+      const width = Number(img.naturalWidth || img.width);
+      const height = Number(img.naturalHeight || img.height);
+      if (width > 0 && height > 0) {
+        this.applyBoardBaseSize(width, height);
+      }
+    } catch (error) {
+      console.warn('Could not load board base size:', error);
+    }
+  }
+
+  setLeafletSide(side) {
+    this.leafletSide = String(side || '').toLowerCase() === 'back' ? 'back' : 'front';
+  }
+
+  setLayerBackground(layer, src) {
+    if (!layer) return;
+    layer.style.backgroundImage = src ? `url('${src}')` : '';
+  }
+
+  applyLeafletAssets(side = 'front') {
+    const leafletSide = String(side || '').toLowerCase() === 'back' ? 'back' : 'front';
+    const background = leafletSide === 'back' ? this.leafletBackAsset : this.leafletFrontAsset;
+    this.setLayerBackground(this.bgLowerLayer, background);
+
+    // Clear card-only frame assets so leaflet renderer starts clean.
+    [
+      this.cardBleedLayer,
+      this.bgUpperLayer,
+      this.imageFrameLayer,
+      this.frameShadingLayer,
+      this.frameLayer,
+      this.cardIdLayer,
+      this.panelBleedLayer,
+      this.panelLowerLayer,
+      this.secondAbilityFrameLayer,
+      this.panelUpperLayer,
+      this.topNameGradientLayer,
+      this.bottomNameGradientLayer,
+      this.costBadgeLayer,
+      this.attackModifierLayer
+    ].forEach((layer) => this.setLayerBackground(layer, ''));
+  }
+
+  clearLeafletBreaks() {
+    this.leafletBreakRenderNonce += 1;
+    if (!this.leafletBreakLayer) return;
+    this.leafletBreakLayer.replaceChildren();
+    this.leafletBreakLayer.style.display = 'none';
+    this.leafletBreakLayer.setAttribute('aria-hidden', 'true');
+  }
+
+  async updateLeafletBreaks(card) {
+    if (!this.leafletBreakLayer) return;
+    const side = String(card?.leafletSide || this.leafletSide || 'front').toLowerCase() === 'back' ? 'back' : 'front';
+    const rawEntries = Array.isArray(card?.leafletBreaks) ? card.leafletBreaks : [];
+    const entries = rawEntries
+      .map((entry, index) => {
+        if (entry && typeof entry === 'object' && !Array.isArray(entry)) {
+          return {
+            index,
+            src: String(entry.path || '').trim(),
+            x: Number(entry.x),
+            y: Number(entry.y)
+          };
+        }
+        return {
+          index,
+          src: String(entry || '').trim(),
+          x: Number.NaN,
+          y: Number.NaN
+        };
+      })
+      .filter((entry) => entry.src);
+
+    if (side === 'back' || !entries.length) {
+      this.clearLeafletBreaks();
+      return;
+    }
+
+    const renderNonce = ++this.leafletBreakRenderNonce;
+    const baseWidth = 640;
+    const baseHeight = 1203;
+    const gapPx = 12;
+    const bottomInsetPx = 36;
+    const loadedBreaks = [];
+
+    for (const entry of entries) {
+      try {
+        const img = await this.loadImage(entry.src);
+        const width = Number(img.naturalWidth || img.width);
+        const height = Number(img.naturalHeight || img.height);
+        if (width > 0 && height > 0) {
+          loadedBreaks.push({
+            index: entry.index,
+            src: entry.src,
+            width,
+            height,
+            x: entry.x,
+            y: entry.y
+          });
+        }
+      } catch (error) {
+        console.warn('Failed to load leaflet break asset:', entry.src, error);
+      }
+    }
+
+    if (renderNonce !== this.leafletBreakRenderNonce) return;
+    this.leafletBreakLayer.replaceChildren();
+
+    if (!loadedBreaks.length) {
+      this.leafletBreakLayer.style.display = 'none';
+      this.leafletBreakLayer.setAttribute('aria-hidden', 'true');
+      return;
+    }
+
+    const totalHeight = loadedBreaks.reduce((sum, entry) => sum + entry.height, 0) + (Math.max(0, loadedBreaks.length - 1) * gapPx);
+    let currentTop = Math.max(0, baseHeight - bottomInsetPx - totalHeight);
+
+    loadedBreaks.forEach((entry) => {
+      const fallbackX = 50;
+      const fallbackY = (currentTop / baseHeight) * 100;
+      const safeX = Number.isFinite(entry.x) ? Math.max(-25, Math.min(125, entry.x)) : fallbackX;
+      const safeY = Number.isFinite(entry.y) ? Math.max(-25, Math.min(125, entry.y)) : Math.max(-25, Math.min(125, fallbackY));
+      const img = document.createElement('img');
+      img.className = 'leaflet-break-item';
+      img.src = entry.src;
+      img.alt = '';
+      img.draggable = false;
+      img.dataset.breakIndex = String(entry.index);
+      img.setAttribute('aria-hidden', 'true');
+      img.style.left = `${safeX}%`;
+      img.style.width = `${(entry.width / baseWidth) * 100}%`;
+      img.style.aspectRatio = `${entry.width} / ${entry.height}`;
+      img.style.top = `${safeY}%`;
+      this.leafletBreakLayer.appendChild(img);
+      currentTop += entry.height + gapPx;
+    });
+
+    this.leafletBreakLayer.style.display = 'block';
+    this.leafletBreakLayer.setAttribute('aria-hidden', 'false');
+  }
+
+  applyBoardAssets() {
+    this.setLayerBackground(this.boardAbilityLocationLayer, this.boardAbilityLocationAsset);
+  }
+
+  renderBoard() {
+    if (!this.boardPreviewElement) return;
+    this.applyBoardBaseSize(this.boardBaseSize.width, this.boardBaseSize.height);
+    this.applyBoardAssets();
+  }
+
+  updateLeafletVisibility(card) {
+    const leafletLayers = (card && card.leafletLayers) || {};
+    const showBackground = leafletLayers.background !== false;
+    const showArt = leafletLayers.art !== false;
+    const showTitle = leafletLayers.title !== false;
+    const showDescription = leafletLayers.text !== false;
+
+    const forceHidden = [
+      this.cardBleedLayer,
+      this.bgUpperLayer,
+      this.imageFrameLayer,
+      this.frameShadingLayer,
+      this.frameLayer,
+      this.cardIdLayer,
+      this.cardIdTextLayer,
+      this.panelBleedLayer,
+      this.panelLowerLayer,
+      this.secondAbilityFrameLayer,
+      this.panelUpperLayer,
+      this.topNameGradientLayer,
+      this.bottomNameGradientLayer,
+      this.costBadgeLayer,
+      this.attackModifierLayer
+    ];
+    forceHidden.forEach((layer) => {
+      if (!layer) return;
+      layer.style.opacity = '0';
+      layer.style.pointerEvents = 'none';
+    });
+
+    if (this.bgLowerLayer) {
+      this.bgLowerLayer.style.opacity = showBackground ? '1' : '0';
+      this.bgLowerLayer.style.pointerEvents = showBackground ? 'auto' : 'none';
+    }
+    if (this.artworkLayer) {
+      this.artworkLayer.style.opacity = showArt ? '1' : '0';
+      this.artworkLayer.style.pointerEvents = showArt ? 'auto' : 'none';
+    }
+    if (this.titleLayer) {
+      this.titleLayer.style.opacity = showTitle ? '1' : '0';
+      this.titleLayer.style.pointerEvents = showTitle ? 'auto' : 'none';
+    }
+    if (this.cardTextLayer) {
+      this.cardTextLayer.style.opacity = showDescription ? '1' : '0';
+      this.cardTextLayer.style.pointerEvents = 'none';
+    }
   }
 
   normalizeLayerOrder(order) {
@@ -471,8 +731,9 @@ class CardRenderer {
     return canvas;
   }
 
-  tintAbilityTriggerIcon(base, colorInfo) {
+  tintAbilityTriggerIcon(base, colorInfo, strength = 1) {
     if (!base || !colorInfo) return null;
+    const mix = Math.max(0, Math.min(1, Number(strength)));
     const canvas = document.createElement('canvas');
     canvas.width = base.width;
     canvas.height = base.height;
@@ -488,12 +749,49 @@ class CardRenderer {
       const g = data[i + 1];
       const b = data[i + 2];
       const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-      data[i] = Math.round(colorInfo.r * luminance);
-      data[i + 1] = Math.round(colorInfo.g * luminance);
-      data[i + 2] = Math.round(colorInfo.b * luminance);
+      const tintR = colorInfo.r * luminance;
+      const tintG = colorInfo.g * luminance;
+      const tintB = colorInfo.b * luminance;
+      data[i] = Math.round((r * (1 - mix)) + (tintR * mix));
+      data[i + 1] = Math.round((g * (1 - mix)) + (tintG * mix));
+      data[i + 2] = Math.round((b * (1 - mix)) + (tintB * mix));
     }
     ctx.putImageData(imageData, 0, 0);
     return canvas;
+  }
+
+  normalizeIconAssetPath(path) {
+    if (!path) return '';
+    let raw = String(path);
+    try {
+      raw = decodeURIComponent(raw);
+    } catch (error) {
+      // Keep raw path if decoding fails on non-URI strings.
+    }
+    return raw
+      .replace(/\\/g, '/')
+      .toLowerCase();
+  }
+
+  isAbilityDiceBaseIconPath(path) {
+    const normalized = this.normalizeIconAssetPath(path);
+    return normalized.endsWith('assets/icons/ability dice/ability_dice.png');
+  }
+
+  getAbilityDiceShadingImageForAtom(atom) {
+    const shadingPath = encodeURI('Assets/Icons/Ability Dice/ability_dice_shading_layer.png');
+    const shadingBase = this.iconCache[shadingPath];
+    if (!shadingBase) return null;
+    const colorInfo = this.parseIconColor(atom?.color || '');
+    if (!colorInfo) return shadingBase;
+    const cacheKey = `tint:${shadingPath}:${colorInfo.key}:mix0.5`;
+    if (this.iconCache[cacheKey]) return this.iconCache[cacheKey];
+    const tinted = this.tintAbilityTriggerIcon(shadingBase, colorInfo, 0.5);
+    if (tinted) {
+      this.iconCache[cacheKey] = tinted;
+      return tinted;
+    }
+    return shadingBase;
   }
 
   getIconImageForAtom(atom, path) {
@@ -501,26 +799,56 @@ class CardRenderer {
     const base = this.iconCache[path];
     if (!base) return null;
     const name = (atom?.name || '').toLowerCase();
-    if (name !== 'straight' && name !== 'at' && name !== 'abilitydice') return base;
+    if (name !== 'straight' && name !== 'at' && name !== 'abilitydice' && name !== 'basicdice' && name !== 'textdice' && name !== 'defensivedice') return base;
     const colorInfo = this.parseIconColor(atom?.color || '');
-    if (!colorInfo) return base;
-    const cacheKey = `tint:${path}:${colorInfo.key}`;
-    if (this.iconCache[cacheKey]) return this.iconCache[cacheKey];
-    const tinted = (name === 'at' || name === 'abilitydice')
-      ? this.tintAbilityTriggerIcon(base, colorInfo)
-      : this.tintStraightIcon(base, colorInfo);
-    if (tinted) {
-      this.iconCache[cacheKey] = tinted;
-      return tinted;
+    let icon = base;
+    if (colorInfo) {
+      const cacheKey = `tint:${path}:${colorInfo.key}`;
+      if (this.iconCache[cacheKey]) {
+        icon = this.iconCache[cacheKey];
+      } else {
+        const tinted = (name === 'at' || name === 'abilitydice' || name === 'basicdice' || name === 'textdice' || name === 'defensivedice')
+          ? this.tintAbilityTriggerIcon(base, colorInfo)
+          : this.tintStraightIcon(base, colorInfo);
+        if (tinted) {
+          this.iconCache[cacheKey] = tinted;
+          icon = tinted;
+        }
+      }
     }
-    return base;
+
+    const shouldApplyAbilityDiceShading = (
+      (name === 'abilitydice' || name === 'basicdice' || name === 'textdice')
+      && this.isAbilityDiceBaseIconPath(path)
+    );
+    if (!shouldApplyAbilityDiceShading) return icon;
+
+    const shading = this.getAbilityDiceShadingImageForAtom(atom);
+    if (!shading) return icon;
+
+    const colorKey = colorInfo ? colorInfo.key : 'none';
+    const shadedKey = `abilitydice:shaded:${path}:${colorKey}`;
+    if (this.iconCache[shadedKey]) return this.iconCache[shadedKey];
+
+    const canvas = document.createElement('canvas');
+    canvas.width = icon.width;
+    canvas.height = icon.height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return icon;
+    ctx.drawImage(icon, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(shading, 0, 0, canvas.width, canvas.height);
+    this.iconCache[shadedKey] = canvas;
+    return canvas;
   }
 
   getTokenRepeatCount(token) {
     const name = (token?.name || '').toLowerCase();
-    if (name !== 'abilitydice') return 1;
-    const seq = this.getAbilityDiceSequence(token);
-    if (seq.length) return seq.length;
+    if (name === 'abilitydice' || name === 'basicdice' || name === 'textdice') {
+      const seq = this.getAbilityDiceSequence(token);
+      if (seq.length) return seq.length;
+    } else if (name !== 'defensivedice') {
+      return 1;
+    }
     const raw = Number.parseInt(String(token?.value || '').trim(), 10);
     if (!Number.isFinite(raw)) return 1;
     return Math.max(1, Math.min(12, raw));
@@ -531,6 +859,20 @@ class CardRenderer {
     // use a negative gap so visible faces touch.
     void iconSizeForAtom;
     return -12;
+  }
+
+  getDiceTokenGap(atom, iconSizeForAtom) {
+    const name = (atom?.name || '').toLowerCase();
+    if (name === 'abilitydice' || name === 'defensivedice') {
+      return this.getAbilityDiceGapPx(iconSizeForAtom);
+    }
+    if (name === 'basicdice') {
+      return Math.round(this.getAbilityDiceGapPx(iconSizeForAtom) * 0.6);
+    }
+    if (name === 'textdice') {
+      return Math.round(this.getAbilityDiceGapPx(iconSizeForAtom) * 0.5);
+    }
+    return Math.max(1, (Number(iconSizeForAtom) || 0) * 0.1);
   }
 
   getAbilityDiceVariant(token) {
@@ -627,6 +969,57 @@ class CardRenderer {
     return canvas;
   }
 
+  getImageOpaqueBounds(img) {
+    if (!img) return null;
+    if (img.__opaqueBounds !== undefined) return img.__opaqueBounds;
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    ctx.drawImage(img, 0, 0);
+    const data = ctx.getImageData(0, 0, img.width, img.height).data;
+    let minX = img.width;
+    let minY = img.height;
+    let maxX = -1;
+    let maxY = -1;
+    for (let y = 0; y < img.height; y += 1) {
+      for (let x = 0; x < img.width; x += 1) {
+        const alpha = data[(y * img.width + x) * 4 + 3];
+        if (alpha <= 8) continue;
+        if (x < minX) minX = x;
+        if (y < minY) minY = y;
+        if (x > maxX) maxX = x;
+        if (y > maxY) maxY = y;
+      }
+    }
+    if (maxX < minX || maxY < minY) {
+      img.__opaqueBounds = null;
+      return null;
+    }
+    const bounds = { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
+    img.__opaqueBounds = bounds;
+    return bounds;
+  }
+
+  drawIconToBox(ctx, img, x, y, size) {
+    if (!ctx || !img) return;
+    const bounds = this.getImageOpaqueBounds(img);
+    const srcX = bounds ? bounds.x : 0;
+    const srcY = bounds ? bounds.y : 0;
+    const srcW = bounds ? bounds.w : img.width;
+    const srcH = bounds ? bounds.h : img.height;
+    const scale = size / Math.max(srcW, srcH);
+    const drawW = srcW * scale;
+    const drawH = srcH * scale;
+    const drawX = x + (size - drawW) / 2;
+    const drawY = y + (size - drawH) / 2;
+    const smoothing = ctx.imageSmoothingEnabled;
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(img, srcX, srcY, srcW, srcH, drawX, drawY, drawW, drawH);
+    ctx.imageSmoothingEnabled = smoothing;
+  }
+
   normalizeStatusEffectKey(value) {
     return String(value || '')
       .toLowerCase()
@@ -634,6 +1027,19 @@ class CardRenderer {
       .replace(/[\s-]+/g, '_')
       .replace(/[^a-z0-9_]/g, '')
       .trim();
+  }
+
+  getCustomStatusEffectMap(card = null) {
+    const sourceCard = card || this.tokenIconCardContext || null;
+    const entries = Array.isArray(sourceCard?.customStatusEffects) ? sourceCard.customStatusEffects : [];
+    const map = {};
+    entries.forEach((entry) => {
+      const key = this.normalizeStatusEffectKey(entry?.key || entry?.name || '');
+      const src = String(entry?.iconData || entry?.iconUrl || '').trim();
+      if (!key || !src) return;
+      map[key] = src;
+    });
+    return map;
   }
 
   async ensureFontLoaded(family, weight = 700) {
@@ -766,6 +1172,12 @@ class CardRenderer {
     this.clearPreviewOutputMask();
     this.updatePreviewViewportScale();
 
+    if (this.workspaceMode === 'board') {
+      this.clearLeafletBreaks();
+      this.renderBoard();
+      return;
+    }
+
     // Update card inner background color/gradient
     this.updateCardStyle(card);
 
@@ -773,11 +1185,17 @@ class CardRenderer {
     this.updateCardContent(card);
     this.updateArtTransform(card);
 
-    // Apply assets based on card type/subtype
-    this.applyAssetsForCardType(card.cardType, card.cardSubType);
-
-    // Apply element visibility toggles
-    this.updateVisibility(card);
+    if (this.workspaceMode === 'leaflet') {
+      this.applyLeafletAssets(card.leafletSide || this.leafletSide);
+      this.updateLeafletVisibility(card);
+      this.updateLeafletBreaks(card);
+    } else {
+      this.clearLeafletBreaks();
+      // Apply assets based on card type/subtype
+      this.applyAssetsForCardType(card.cardType, card.cardSubType);
+      // Apply element visibility toggles
+      this.updateVisibility(card);
+    }
     // Apply layer stacking order
     this.applyLayerOrder(card);
 
@@ -860,8 +1278,9 @@ class CardRenderer {
     const paths = [];
     atoms.forEach((atom) => {
       if (atom.type !== 'icon') return;
-      if ((atom.name || '').toLowerCase() === 'abilitydice') {
+      if (['abilitydice', 'basicdice', 'textdice'].includes((atom.name || '').toLowerCase())) {
         paths.push(encodeURI('Assets/Icons/Ability Dice/ability_dice.png'));
+        paths.push(encodeURI('Assets/Icons/Ability Dice/ability_dice_shading_layer.png'));
         const seq = this.getAbilityDiceSequence(atom);
         seq.forEach((slot) => {
           const slotSrc = this.getAbilityDiceIconForSlot(slot);
@@ -896,6 +1315,12 @@ class CardRenderer {
     return Array.from(fonts);
   }
 
+  normalizeDescriptionColor(value, fallback = '#ffffff') {
+    const raw = String(value || '').trim();
+    if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(raw)) return raw;
+    return fallback;
+  }
+
   normalizeDescriptionBlock(block, fallback, fallbackId) {
     const safeBlock = (block && typeof block === 'object') ? block : {};
     const safeFallback = (fallback && typeof fallback === 'object') ? fallback : {};
@@ -916,13 +1341,21 @@ class CardRenderer {
     };
     const rawScale = safeBlock.scale !== undefined ? safeBlock.scale : safeFallback.scale;
     const scale = Number.isFinite(Number(rawScale)) ? Number(rawScale) : 1;
+    const rawFontSize = safeBlock.fontSize !== undefined ? safeBlock.fontSize : safeFallback.fontSize;
+    const fontSize = Number.isFinite(Number(rawFontSize)) ? Number(rawFontSize) : (Number(safeFallback.fontSize) || 39);
+    const color = this.normalizeDescriptionColor(
+      safeBlock.color !== undefined ? safeBlock.color : safeFallback.color,
+      '#ffffff'
+    );
     return {
       id,
       description,
       descriptionRich,
       descriptionHtml,
       position,
-      scale
+      scale,
+      fontSize,
+      color
     };
   }
 
@@ -946,19 +1379,27 @@ class CardRenderer {
   }
 
   getDescriptionBlocks(card) {
-    if (Array.isArray(card.descriptionBlocks) && card.descriptionBlocks.length) {
-      return card.descriptionBlocks.map((block, idx) => (
-        this.normalizeDescriptionBlock(block, null, `desc-${idx + 1}`)
-      ));
-    }
+    const isLeafletMode = this.workspaceMode === 'leaflet';
+    const sourceBlocks = isLeafletMode
+      ? card?.leafletDescriptionBlocks
+      : card?.descriptionBlocks;
+    const defaultFontSize = isLeafletMode ? 20 : (Number(card.descriptionFontSize) || 39);
     const fallback = {
       description: card.description || '',
       descriptionRich: Array.isArray(card.descriptionRich) ? card.descriptionRich : [],
       descriptionHtml: card.descriptionHtml || '',
       position: card.descriptionPosition || { x: 0, y: 0 },
-      scale: 1
+      scale: 1,
+      fontSize: defaultFontSize,
+      color: this.normalizeDescriptionColor(card.descriptionColor, '#ffffff')
     };
-    return [this.normalizeDescriptionBlock({}, fallback, 'desc-1')];
+    if (Array.isArray(sourceBlocks) && sourceBlocks.length) {
+      return sourceBlocks.map((block, idx) => (
+        this.normalizeDescriptionBlock(block, fallback, `desc-${idx + 1}`)
+      ));
+    }
+    const fallbackId = isLeafletMode ? 'leaflet-desc-1' : 'desc-1';
+    return [this.normalizeDescriptionBlock({}, fallback, fallbackId)];
   }
 
   getTitleBlocks(card) {
@@ -1119,6 +1560,42 @@ class CardRenderer {
     return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1, iw: img.width, ih: img.height };
   }
 
+  computeOpaqueBoundsFromImage(img, alphaThreshold = 1) {
+    if (!img || !img.width || !img.height) return null;
+    const threshold = Number.isFinite(Number(alphaThreshold)) ? Number(alphaThreshold) : 1;
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    ctx.drawImage(img, 0, 0);
+    const data = ctx.getImageData(0, 0, img.width, img.height).data;
+    let minX = img.width;
+    let minY = img.height;
+    let maxX = -1;
+    let maxY = -1;
+    for (let y = 0; y < img.height; y += 1) {
+      for (let x = 0; x < img.width; x += 1) {
+        const idx = (y * img.width + x) * 4 + 3;
+        if (data[idx] >= threshold) {
+          if (x < minX) minX = x;
+          if (y < minY) minY = y;
+          if (x > maxX) maxX = x;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+    if (maxX < minX || maxY < minY) return null;
+    return {
+      x: minX,
+      y: minY,
+      w: maxX - minX + 1,
+      h: maxY - minY + 1,
+      iw: img.width,
+      ih: img.height
+    };
+  }
+
   trimTransparentCanvas(canvas, alphaThreshold = 1) {
     const threshold = Number.isFinite(Number(alphaThreshold)) ? Number(alphaThreshold) : 1;
     if (!canvas) return canvas;
@@ -1151,96 +1628,6 @@ class CardRenderer {
     if (!trimmedCtx) return canvas;
     trimmedCtx.drawImage(canvas, minX, minY, w, h, 0, 0, w, h);
     return trimmed;
-  }
-
-  scaleCanvas(canvas, targetWidth, targetHeight) {
-    if (!canvas) return canvas;
-    const width = Math.max(1, Math.round(Number(targetWidth) || 0));
-    const height = Math.max(1, Math.round(Number(targetHeight) || 0));
-    if (!width || !height) return canvas;
-    const output = document.createElement('canvas');
-    output.width = width;
-    output.height = height;
-    const ctx = output.getContext('2d');
-    if (!ctx) return canvas;
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(canvas, 0, 0, width, height);
-    return output;
-  }
-
-  forceOpaqueBorder(canvas, thicknessPx = 2) {
-    if (!canvas) return canvas;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return canvas;
-    const width = canvas.width;
-    const height = canvas.height;
-    if (width < 3 || height < 3) return canvas;
-
-    const thickness = Math.max(1, Math.min(4, Math.round(Number(thicknessPx) || 1)));
-    const imageData = ctx.getImageData(0, 0, width, height);
-    const data = imageData.data;
-    const idx = (x, y) => (y * width + x) * 4;
-
-    const copyPixel = (sx, sy, tx, ty) => {
-      const s = idx(sx, sy);
-      const t = idx(tx, ty);
-      data[t] = data[s];
-      data[t + 1] = data[s + 1];
-      data[t + 2] = data[s + 2];
-      data[t + 3] = 255;
-    };
-
-    const innerLeft = Math.min(width - 1, thickness);
-    const innerRight = Math.max(0, width - 1 - thickness);
-    const innerTop = Math.min(height - 1, thickness);
-    const innerBottom = Math.max(0, height - 1 - thickness);
-
-    // Left and right borders
-    for (let y = 0; y < height; y += 1) {
-      for (let x = 0; x < thickness; x += 1) {
-        copyPixel(innerLeft, y, x, y);
-      }
-      for (let x = width - thickness; x < width; x += 1) {
-        copyPixel(innerRight, y, x, y);
-      }
-    }
-
-    // Top and bottom borders
-    for (let x = 0; x < width; x += 1) {
-      for (let y = 0; y < thickness; y += 1) {
-        copyPixel(x, innerTop, x, y);
-      }
-      for (let y = height - thickness; y < height; y += 1) {
-        copyPixel(x, innerBottom, x, y);
-      }
-    }
-
-    ctx.putImageData(imageData, 0, 0);
-    return canvas;
-  }
-
-  async applyAlphaMaskToCanvas(canvas, maskSrc) {
-    if (!canvas || !maskSrc) return canvas;
-    let maskImg;
-    try {
-      maskImg = await this.loadImage(encodeURI(maskSrc));
-    } catch (error) {
-      console.warn('Failed to load export crop mask:', maskSrc, error);
-      return canvas;
-    }
-    if (!maskImg) return canvas;
-
-    const output = document.createElement('canvas');
-    output.width = canvas.width;
-    output.height = canvas.height;
-    const ctx = output.getContext('2d');
-    if (!ctx) return canvas;
-    ctx.clearRect(0, 0, output.width, output.height);
-    ctx.drawImage(canvas, 0, 0, output.width, output.height);
-    ctx.globalCompositeOperation = 'destination-in';
-    ctx.drawImage(maskImg, 0, 0, output.width, output.height);
-    return output;
   }
 
   async applyOuterBoundsMaskToCanvas(canvas, maskSrc, options = {}) {
@@ -1332,6 +1719,26 @@ class CardRenderer {
       srcW = maskBounds.w;
       srcH = maskBounds.h;
     }
+    if (!maskBounds && card.artWasCropped) {
+      const cacheKey = String(artSrc);
+      let croppedBounds = null;
+      if (Object.prototype.hasOwnProperty.call(this.artOpaqueBoundsCache, cacheKey)) {
+        croppedBounds = this.artOpaqueBoundsCache[cacheKey];
+      } else {
+        croppedBounds = this.computeOpaqueBoundsFromImage(img);
+        this.artOpaqueBoundsCache[cacheKey] = croppedBounds || null;
+      }
+      if (
+        croppedBounds
+        && img.width === croppedBounds.iw
+        && img.height === croppedBounds.ih
+      ) {
+        srcX = croppedBounds.x;
+        srcY = croppedBounds.y;
+        srcW = croppedBounds.w;
+        srcH = croppedBounds.h;
+      }
+    }
     const cardW = rect.width * scale;
     const cardH = rect.height * scale;
     if (ignoreTransform) {
@@ -1402,13 +1809,6 @@ class CardRenderer {
     if (costMap['0']) return costMap['0'];
     const first = Object.values(costMap)[0];
     return first || '';
-  }
-
-  getLayerBackgroundUrl(el) {
-    if (!el) return '';
-    const raw = el.style.backgroundImage || '';
-    const match = raw.match(/url\\(["']?(.*?)["']?\\)/);
-    return match ? match[1] : '';
   }
 
   getArtMaskPath() {
@@ -1599,34 +1999,6 @@ class CardRenderer {
       parts.push(`v${digits.slice(2, 4)}`);
     }
     return parts.join(' ').slice(0, 11);
-  }
-
-  getCardIdSegments(text) {
-    const safe = String(text || '').replace(/\s+/g, '');
-    const letters = safe.slice(0, 4);
-    const nums = safe.slice(4, 6);
-    const tail = safe.slice(6);
-    return [letters, nums, tail].filter(Boolean);
-  }
-
-  measureCardIdSegments(ctx, segments, segmentSpacing, letterSpacing) {
-    const parts = segments.filter(Boolean);
-    let width = 0;
-    parts.forEach((part, idx) => {
-      width += this.measureTextWithSpacing(ctx, part, letterSpacing);
-      if (idx < parts.length - 1) width += segmentSpacing;
-    });
-    return width;
-  }
-
-  drawCardIdSegments(ctx, segments, x, y, segmentSpacing, letterSpacing) {
-    const parts = segments.filter(Boolean);
-    let cursorX = x;
-    parts.forEach((part, idx) => {
-      cursorX += this.drawTextWithSpacing(ctx, part, cursorX, y, letterSpacing);
-      if (idx < parts.length - 1) cursorX += segmentSpacing;
-    });
-    return cursorX - x;
   }
 
   syncTitleLayers(blocks) {
@@ -1963,12 +2335,12 @@ class CardRenderer {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const fontSize = Number(card.descriptionFontSize) || 18;
+    const fontSize = Number(block.fontSize) || Number(card.descriptionFontSize) || 18;
     const descFont = card.descriptionFont || 'Arial';
     const fontsToLoad = this.collectFontsFromRuns(runs, descFont);
     await Promise.all(fontsToLoad.map((font) => this.ensureFontLoaded(font, 700)));
     ctx.font = `700 ${fontSize}px ${this.getFontFamily(descFont)}`;
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = this.normalizeDescriptionColor(block.color, this.normalizeDescriptionColor(card.descriptionColor, '#ffffff'));
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     this.applyTextShadow(ctx, 'description', 1, 'description');
@@ -2040,7 +2412,8 @@ class CardRenderer {
         'center',
         letterSpacing,
         fontSize,
-        descFont
+        descFont,
+        this.normalizeDescriptionColor(block.color, this.normalizeDescriptionColor(card.descriptionColor, '#ffffff'))
       );
     }
 
@@ -2596,7 +2969,8 @@ class CardRenderer {
         lineHeightOffsetPx = 0,
         shadowStyle = null,
         iconScale = 0.9,
-        renderScale = 1
+        renderScale = 1,
+        textColor = '#ffffff'
       ) => {
         if (!include) return;
         const resolvedRuns = Array.isArray(runs) && runs.length ? runs : null;
@@ -2608,7 +2982,7 @@ class CardRenderer {
         const fontsToLoad = resolvedRuns ? this.collectFontsFromRuns(resolvedRuns, fontFamily) : [fontFamily];
         await Promise.all(fontsToLoad.map((font) => this.ensureFontLoaded(font, 700)));
         ctx.font = `700 ${fontSize}px ${this.getFontFamily(fontFamily)}`;
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = this.normalizeDescriptionColor(textColor, '#ffffff');
         ctx.textBaseline = 'top';
         ctx.textAlign = 'left';
         this.applyTextShadow(ctx, shadowStyle, scale, 'description');
@@ -2726,7 +3100,8 @@ class CardRenderer {
             align,
             scaledSpacing,
             fontSize,
-            fontFamily
+            fontFamily,
+            this.normalizeDescriptionColor(textColor, '#ffffff')
           );
         } else {
           this.drawLaidOutTextWithIcons(
@@ -2784,7 +3159,7 @@ class CardRenderer {
             assets.backgroundLower,
             0.8,
             card.descriptionFont || 'Arial',
-            Number(card.descriptionFontSize) || 18,
+            Number(block.fontSize) || Number(card.descriptionFontSize) || 18,
             Number(card.descriptionLineHeightScale) || 1.0,
             Number(card.descriptionLetterSpacing) || 0,
             1.0,
@@ -2792,7 +3167,8 @@ class CardRenderer {
             -1,
             'description',
             descriptionIconScale,
-            block.scale
+            block.scale,
+            block.color || card.descriptionColor || '#ffffff'
           );
         }
       };
@@ -3040,6 +3416,8 @@ class CardRenderer {
   resolveIconPath(token) {
     const name = (token?.name || '').toLowerCase();
     const rawValue = (token?.value || '').toLowerCase();
+    const isStatusModifierLeaflet = this.isStatusEffectToken(token) && rawValue === 'leaflet';
+    const statusLookupValue = isStatusModifierLeaflet ? '' : rawValue;
 
     const normalizeValue = (value, allowed, fallback = 'blank') => {
       if (!value) return fallback;
@@ -3091,18 +3469,24 @@ class CardRenderer {
       return encodeURI(`Assets/Ability Trigger/${safe}.png`);
     }
 
-    if (name === 'abilitydice') {
+    if (name === 'abilitydice' || name === 'basicdice' || name === 'textdice') {
       const slotValue = String(rawValue || '').trim().toUpperCase();
       const custom = this.getAbilityDiceIconForSlot(slotValue);
       if (custom) return custom;
-      const variant = this.getAbilityDiceVariant(token);
-      if (variant === 'small') {
-        return encodeURI('Assets/Icons/Ability Dice/straight/small_straight.png');
-      }
-      if (variant === 'large') {
-        return encodeURI('Assets/Icons/Ability Dice/straight/large_straight.png');
+      if (name === 'abilitydice') {
+        const variant = this.getAbilityDiceVariant(token);
+        if (variant === 'small') {
+          return encodeURI('Assets/Icons/Ability Dice/straight/small_straight.png');
+        }
+        if (variant === 'large') {
+          return encodeURI('Assets/Icons/Ability Dice/straight/large_straight.png');
+        }
       }
       return encodeURI('Assets/Icons/Ability Dice/ability_dice.png');
+    }
+
+    if (name === 'defensivedice') {
+      return encodeURI('Assets/Icons/Defensive Dice/ability_dice_w.png');
     }
 
     if (name === 'straight') {
@@ -3120,17 +3504,27 @@ class CardRenderer {
     }
 
     if (name) {
-      const suffix = rawValue ? `_${rawValue}` : '';
+      const suffix = statusLookupValue ? `_${statusLookupValue}` : '';
       const key = this.normalizeStatusEffectKey(`${name}${suffix}`);
+      const customMap = this.getCustomStatusEffectMap();
+      if (key && customMap[key]) {
+        return customMap[key];
+      }
       if (key && this.statusEffectMap && this.statusEffectMap[key]) {
         return this.statusEffectMap[key];
       }
       const baseKey = this.normalizeStatusEffectKey(name);
-      if (rawValue && baseKey) {
-        const combined = this.normalizeStatusEffectKey(`${baseKey}_${rawValue}`);
+      if (statusLookupValue && baseKey) {
+        const combined = this.normalizeStatusEffectKey(`${baseKey}_${statusLookupValue}`);
+        if (combined && customMap[combined]) {
+          return customMap[combined];
+        }
         if (combined && this.statusEffectMap && this.statusEffectMap[combined]) {
           return this.statusEffectMap[combined];
         }
+      }
+      if (baseKey && customMap[baseKey]) {
+        return customMap[baseKey];
       }
       if (baseKey && this.statusEffectMap && this.statusEffectMap[baseKey]) {
         return this.statusEffectMap[baseKey];
@@ -3154,6 +3548,9 @@ class CardRenderer {
     if (name === 'draw') return 6;
     if (name === 'at') return 7;
     if (name === 'abilitydice') return 7;
+    if (name === 'basicdice') return 7;
+    if (name === 'textdice') return 7;
+    if (name === 'defensivedice') return 7;
     if (name === 'straight') return 7;
     if (name === 'dice') return 7;
     if (name === 'half') return 5;
@@ -3174,10 +3571,22 @@ class CardRenderer {
       if (variant === 'large') return 7.85;
       return 1.85;
     }
+    if (name === 'basicdice') {
+      return 1.85 * 0.6;
+    }
+    if (name === 'textdice') {
+      return 1.85 * 0.5;
+    }
+    if (name === 'defensivedice') return 1.85;
     if (name === 'straight') return 4.55175;
     if (name === 'dice') return 0.588;
     if (name === 'half') return 0.6;
-    if (this.isStatusEffectToken(token)) return this.statusEffectIconScale;
+    if (this.isStatusEffectToken(token)) {
+      const modifier = String(token?.value || '').trim().toLowerCase();
+      // Leaflet status icon variant: reduced 30% from prior setting.
+      if (modifier === 'leaflet') return this.statusEffectIconScale * 5.05;
+      return this.statusEffectIconScale;
+    }
     return 1.0;
   }
 
@@ -3194,6 +3603,9 @@ class CardRenderer {
       'draw',
       'at',
       'abilitydice',
+      'basicdice',
+      'textdice',
+      'defensivedice',
       'straight',
       'dice',
       'half'
@@ -3204,9 +3616,9 @@ class CardRenderer {
     const name = (atom?.name || '').toLowerCase();
     const scale = this.getIconScale(atom);
     const repeat = this.getTokenRepeatCount(atom);
-    if (name === 'abilitydice') {
+    if (name === 'abilitydice' || name === 'basicdice' || name === 'textdice' || name === 'defensivedice') {
       const minSizeOnly = (Number(iconSize) || 0) * scale;
-      const gap = this.getAbilityDiceGapPx(minSizeOnly);
+      const gap = this.getDiceTokenGap(atom, minSizeOnly);
       return Math.max(1, minSizeOnly * repeat + gap * Math.max(0, repeat - 1));
     }
     const base = Math.max(0, spaceWidth) * this.getIconSpaceCount(atom) * scale * repeat;
@@ -3220,7 +3632,20 @@ class CardRenderer {
     if (name === 'prevent') return -Math.round(iconSize * 0.1);
     if (name === 'cp') return -Math.round(iconSize * 0.1);
     if (name === 'damage' || name === 'dmg' || name === 'rdmg') return -Math.round(iconSize * 0.15);
+    if (this.isStatusEffectToken(token)) {
+      const modifier = String(token?.value || '').trim().toLowerCase();
+      if (modifier === 'leaflet') return 0;
+      return -Math.round(iconSize * 0.08);
+    }
     return 0;
+  }
+
+  getIconLineYOffset(token, textHeight, iconSizeForAtom) {
+    const name = (token?.name || '').toLowerCase();
+    if (name === 'textdice') {
+      return ((textHeight - iconSizeForAtom) / 2) + (iconSizeForAtom * 0.04);
+    }
+    return Math.max(0, (textHeight - iconSizeForAtom) / 2);
   }
 
   tokenizeForLayout(text) {
@@ -3284,14 +3709,14 @@ class CardRenderer {
       .replace(/&#123;|&lcub;|&lbrace;/gi, '{')
       .replace(/&#125;|&rcub;|&rbrace;/gi, '}');
 
-    const pushWhitespaceSensitive = (segment, font) => {
+    const pushWhitespaceSensitive = (segment, font, textColor) => {
       if (!segment) return;
       for (let i = 0; i < segment.length; i += 1) {
         const ch = segment[i];
         if (ch === '\n') {
           atoms.push({ type: 'newline' });
         } else if (ch === ' ' || ch === '\t') {
-          atoms.push({ type: 'space', font });
+          atoms.push({ type: 'space', font, textColor });
         } else {
           let j = i;
           let word = '';
@@ -3301,7 +3726,7 @@ class CardRenderer {
             word += c;
             j += 1;
           }
-          atoms.push({ type: 'text', value: word, font });
+          atoms.push({ type: 'text', value: word, font, textColor });
           i = j - 1;
         }
       }
@@ -3310,12 +3735,13 @@ class CardRenderer {
     (runs || []).forEach((run) => {
       const font = (run && run.font) ? String(run.font).trim() : '';
       const safeFont = font || defaultFont || 'Arial';
+      const textColor = this.normalizeDescriptionColor(run && run.color, '');
       const normalized = normalize(run && run.text ? run.text : '');
       let lastIndex = 0;
       let match;
 
       while ((match = tokenRegex.exec(normalized)) !== null) {
-        pushWhitespaceSensitive(normalized.slice(lastIndex, match.index), safeFont);
+        pushWhitespaceSensitive(normalized.slice(lastIndex, match.index), safeFont, textColor);
         const raw = match[1] || '';
         const token = this.parseTokenString(raw);
         if (token) {
@@ -3327,11 +3753,11 @@ class CardRenderer {
             font: safeFont
           });
         } else {
-          pushWhitespaceSensitive(match[0], safeFont);
+          pushWhitespaceSensitive(match[0], safeFont, textColor);
         }
         lastIndex = tokenRegex.lastIndex;
       }
-      pushWhitespaceSensitive(normalized.slice(lastIndex), safeFont);
+      pushWhitespaceSensitive(normalized.slice(lastIndex), safeFont, textColor);
     });
 
     return atoms;
@@ -3551,58 +3977,6 @@ class CardRenderer {
     const metrics = ctx.measureText('Mg');
     const textHeight = (metrics.actualBoundingBoxAscent || 0) + (metrics.actualBoundingBoxDescent || 0);
 
-    const getOpaqueBounds = (img) => {
-      if (img.__opaqueBounds !== undefined) {
-        return img.__opaqueBounds;
-      }
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const octx = canvas.getContext('2d');
-      if (!octx) return null;
-      octx.drawImage(img, 0, 0);
-      const data = octx.getImageData(0, 0, img.width, img.height).data;
-      let minX = img.width;
-      let minY = img.height;
-      let maxX = -1;
-      let maxY = -1;
-      for (let y = 0; y < img.height; y += 1) {
-        for (let x = 0; x < img.width; x += 1) {
-          const idx = (y * img.width + x) * 4 + 3;
-          if (data[idx] > 8) {
-            if (x < minX) minX = x;
-            if (y < minY) minY = y;
-            if (x > maxX) maxX = x;
-            if (y > maxY) maxY = y;
-          }
-        }
-      }
-      if (maxX < minX || maxY < minY) {
-        img.__opaqueBounds = null;
-        return null;
-      }
-      const bounds = { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
-      img.__opaqueBounds = bounds;
-      return bounds;
-    };
-
-    const drawIconToBox = (img, x, y, size) => {
-      const bounds = getOpaqueBounds(img);
-      const srcX = bounds ? bounds.x : 0;
-      const srcY = bounds ? bounds.y : 0;
-      const srcW = bounds ? bounds.w : img.width;
-      const srcH = bounds ? bounds.h : img.height;
-      const scale = size / Math.max(srcW, srcH);
-      const drawW = srcW * scale;
-      const drawH = srcH * scale;
-      const drawX = x + (size - drawW) / 2;
-      const drawY = y + (size - drawH) / 2;
-      const smoothing = ctx.imageSmoothingEnabled;
-      ctx.imageSmoothingEnabled = true;
-      ctx.drawImage(img, srcX, srcY, srcW, srcH, drawX, drawY, drawW, drawH);
-      ctx.imageSmoothingEnabled = smoothing;
-    };
-
     layout.lines.forEach((line, row) => {
       let x = originX;
       if (align === 'center') {
@@ -3627,18 +4001,17 @@ class CardRenderer {
         }
         if (atom.type === 'icon') {
           const path = this.resolveIconPath(atom);
-          const isAbilityDice = (atom.name || '').toLowerCase() === 'abilitydice';
-          const abilitySeq = isAbilityDice ? this.getAbilityDiceSequence(atom) : [];
+          const iconName = (atom.name || '').toLowerCase();
+          const usesAbilityDiceSequence = iconName === 'abilitydice' || iconName === 'basicdice' || iconName === 'textdice';
+          const abilitySeq = usesAbilityDiceSequence ? this.getAbilityDiceSequence(atom) : [];
           const scale = this.getIconScale(atom);
           const repeatCount = this.getTokenRepeatCount(atom);
           const iconSizeForAtom = iconSize * scale;
           const iconAdvance = this.getIconAdvanceWidth(spaceWidth, iconSize, atom);
-          const iconGap = isAbilityDice
-            ? this.getAbilityDiceGapPx(iconSizeForAtom)
-            : Math.max(1, iconSizeForAtom * 0.1);
+          const iconGap = this.getDiceTokenGap(atom, iconSizeForAtom);
           const totalIconWidth = (iconSizeForAtom * repeatCount) + (iconGap * Math.max(0, repeatCount - 1));
           const iconX = x + (iconAdvance - totalIconWidth) / 2;
-          const iconYOffset = Math.max(0, (textHeight - iconSizeForAtom) / 2)
+          const iconYOffset = this.getIconLineYOffset(atom, textHeight, iconSizeForAtom)
             + this.getIconYOffsetAdjust(atom, iconSizeForAtom);
           const overlayText = this.getIconOverlayText(atom);
           const drawOverlay = () => {
@@ -3664,10 +4037,11 @@ class CardRenderer {
             const icon = this.getIconImageForAtom(atom, path);
             if (icon) {
               for (let i = 0; i < repeatCount; i += 1) {
-                const renderIcon = (isAbilityDice && abilitySeq.length)
+                const renderIcon = (usesAbilityDiceSequence && abilitySeq.length)
                   ? (this.getAbilityDiceCompositeIcon(atom, abilitySeq[i]) || icon)
                   : icon;
-                drawIconToBox(
+                this.drawIconToBox(
+                  ctx,
                   renderIcon,
                   iconX + i * (iconSizeForAtom + iconGap),
                   y + iconYOffset,
@@ -3703,7 +4077,8 @@ class CardRenderer {
     align = 'left',
     letterSpacing = 0,
     fontSize = 18,
-    defaultFont = 'Arial'
+    defaultFont = 'Arial',
+    defaultTextColor = '#ffffff'
   ) {
     ctx.font = `700 ${fontSize}px ${this.getFontFamily(defaultFont)}`;
     const metrics = ctx.measureText('Mg');
@@ -3717,58 +4092,6 @@ class CardRenderer {
     const measureSpace = (font) => {
       setFont(font);
       return Math.max(0, ctx.measureText(' ').width);
-    };
-
-    const getOpaqueBounds = (img) => {
-      if (img.__opaqueBounds !== undefined) {
-        return img.__opaqueBounds;
-      }
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const octx = canvas.getContext('2d');
-      if (!octx) return null;
-      octx.drawImage(img, 0, 0);
-      const data = octx.getImageData(0, 0, img.width, img.height).data;
-      let minX = img.width;
-      let minY = img.height;
-      let maxX = -1;
-      let maxY = -1;
-      for (let y = 0; y < img.height; y += 1) {
-        for (let x = 0; x < img.width; x += 1) {
-          const idx = (y * img.width + x) * 4 + 3;
-          if (data[idx] > 8) {
-            if (x < minX) minX = x;
-            if (y < minY) minY = y;
-            if (x > maxX) maxX = x;
-            if (y > maxY) maxY = y;
-          }
-        }
-      }
-      if (maxX < minX || maxY < minY) {
-        img.__opaqueBounds = null;
-        return null;
-      }
-      const bounds = { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
-      img.__opaqueBounds = bounds;
-      return bounds;
-    };
-
-    const drawIconToBox = (img, x, y, size) => {
-      const bounds = getOpaqueBounds(img);
-      const srcX = bounds ? bounds.x : 0;
-      const srcY = bounds ? bounds.y : 0;
-      const srcW = bounds ? bounds.w : img.width;
-      const srcH = bounds ? bounds.h : img.height;
-      const scale = size / Math.max(srcW, srcH);
-      const drawW = srcW * scale;
-      const drawH = srcH * scale;
-      const drawX = x + (size - drawW) / 2;
-      const drawY = y + (size - drawH) / 2;
-      const smoothing = ctx.imageSmoothingEnabled;
-      ctx.imageSmoothingEnabled = true;
-      ctx.drawImage(img, srcX, srcY, srcW, srcH, drawX, drawY, drawW, drawH);
-      ctx.imageSmoothingEnabled = smoothing;
     };
 
     layout.lines.forEach((line, row) => {
@@ -3789,6 +4112,7 @@ class CardRenderer {
         }
         if (atom.type === 'text') {
           setFont(atom.font);
+          ctx.fillStyle = this.normalizeDescriptionColor(atom.textColor, defaultTextColor);
           ctx.textBaseline = 'top';
           const textWidth = this.drawTextWithSpacing(ctx, atom.value, x, y, letterSpacing);
           x += textWidth;
@@ -3796,18 +4120,17 @@ class CardRenderer {
         }
         if (atom.type === 'icon') {
           const path = this.resolveIconPath(atom);
-          const isAbilityDice = (atom.name || '').toLowerCase() === 'abilitydice';
-          const abilitySeq = isAbilityDice ? this.getAbilityDiceSequence(atom) : [];
+          const iconName = (atom.name || '').toLowerCase();
+          const usesAbilityDiceSequence = iconName === 'abilitydice' || iconName === 'basicdice' || iconName === 'textdice';
+          const abilitySeq = usesAbilityDiceSequence ? this.getAbilityDiceSequence(atom) : [];
           const scale = this.getIconScale(atom);
           const repeatCount = this.getTokenRepeatCount(atom);
           const iconSizeForAtom = iconSize * scale;
           const iconAdvance = this.getIconAdvanceWidth(measureSpace(atom.font), iconSize, atom);
-          const iconGap = isAbilityDice
-            ? this.getAbilityDiceGapPx(iconSizeForAtom)
-            : Math.max(1, iconSizeForAtom * 0.1);
+          const iconGap = this.getDiceTokenGap(atom, iconSizeForAtom);
           const totalIconWidth = (iconSizeForAtom * repeatCount) + (iconGap * Math.max(0, repeatCount - 1));
           const iconX = x + (iconAdvance - totalIconWidth) / 2;
-          const iconYOffset = Math.max(0, (textHeight - iconSizeForAtom) / 2)
+          const iconYOffset = this.getIconLineYOffset(atom, textHeight, iconSizeForAtom)
             + this.getIconYOffsetAdjust(atom, iconSizeForAtom);
           const overlayText = this.getIconOverlayText(atom);
           const drawOverlay = () => {
@@ -3821,6 +4144,7 @@ class CardRenderer {
             ctx.font = overlayFont;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
+            ctx.fillStyle = this.normalizeDescriptionColor(defaultTextColor, '#ffffff');
             ctx.fillText(
               overlayText,
               iconX + iconSizeForAtom / 2,
@@ -3833,10 +4157,11 @@ class CardRenderer {
             const icon = this.getIconImageForAtom(atom, path);
             if (icon) {
               for (let i = 0; i < repeatCount; i += 1) {
-                const renderIcon = (isAbilityDice && abilitySeq.length)
+                const renderIcon = (usesAbilityDiceSequence && abilitySeq.length)
                   ? (this.getAbilityDiceCompositeIcon(atom, abilitySeq[i]) || icon)
                   : icon;
-                drawIconToBox(
+                this.drawIconToBox(
+                  ctx,
                   renderIcon,
                   iconX + i * (iconSizeForAtom + iconGap),
                   y + iconYOffset,

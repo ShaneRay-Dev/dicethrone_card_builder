@@ -36,6 +36,11 @@ temp/
 tmp/
 *.tmp
 
+# Test output
+coverage/
+playwright-report/
+test-results/
+
 # IDE
 *.iml
 *.iws

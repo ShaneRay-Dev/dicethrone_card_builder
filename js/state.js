@@ -1,5 +1,6 @@
 // State Management
-const DTC_STATE_COMMON = window.DTC_COMMON || {};
+const DTC_STATE_ROOT = typeof window !== 'undefined' ? window : globalThis;
+const DTC_STATE_COMMON = DTC_STATE_ROOT.DTC_COMMON || {};
 const deepCloneState = DTC_STATE_COMMON.deepClone || ((value) => JSON.parse(JSON.stringify(value)));
 const DTC_STATE_DEFAULT_LAYER_ORDER = Array.isArray(DTC_STATE_COMMON.DEFAULT_LAYER_ORDER)
   ? [...DTC_STATE_COMMON.DEFAULT_LAYER_ORDER]
@@ -82,14 +83,30 @@ class CardState {
           descriptionRich: [],
           descriptionHtml: '',
           position: { x: 0, y: 0 },
-          scale: 1
+          scale: 1,
+          fontSize: 39,
+          color: '#ffffff'
         }
       ],
       activeDescriptionId: 'desc-1',
+      leafletDescriptionBlocks: [
+        {
+          id: 'leaflet-desc-1',
+          description: 'place holder',
+          descriptionRich: [],
+          descriptionHtml: '',
+          position: { x: 0, y: 0 },
+          scale: 1,
+          fontSize: 20,
+          color: '#ffffff'
+        }
+      ],
+      leafletActiveDescriptionId: 'leaflet-desc-1',
       titleFont: 'PHOSPHATE_FIXED_SOLID',
       descriptionFont: 'MYRIADPRO-BOLDCOND',
       titleFontSize: 46,
       descriptionFontSize: 39,
+      descriptionColor: '#ffffff',
       descriptionLineHeightScale: 1.2,
       titleLetterSpacing: 0.5,
       descriptionLetterSpacing: 0,
@@ -139,7 +156,16 @@ class CardState {
         fontSize: 33
       },
       costBadgePosition: { x: -1.5999755859375, y: 2.399993896484375 },
-      abilityDiceEntries: []
+      abilityDiceEntries: [],
+      customStatusEffects: [],
+      leafletSide: 'front',
+      leafletBreaks: [],
+      leafletLayers: {
+        background: true,
+        art: true,
+        title: true,
+        text: true
+      }
     };
   }
 
@@ -228,10 +254,27 @@ class CardState {
             descriptionRich: Array.isArray(data.descriptionRich) ? data.descriptionRich : [],
             descriptionHtml: data.descriptionHtml ?? '',
             position: data.descriptionPosition ?? { x: 0, y: 0 },
-            scale: 1
+            scale: 1,
+            fontSize: data.descriptionFontSize ?? this.card.descriptionFontSize,
+            color: data.descriptionColor ?? this.card.descriptionColor ?? '#ffffff'
           }
         ];
         this.card.activeDescriptionId = data.activeDescriptionId || 'desc-1';
+      }
+      if (!Array.isArray(data.leafletDescriptionBlocks) || !data.leafletDescriptionBlocks.length) {
+        this.card.leafletDescriptionBlocks = [
+          {
+            id: 'leaflet-desc-1',
+            description: data.description ?? this.card.description,
+            descriptionRich: Array.isArray(data.descriptionRich) ? data.descriptionRich : [],
+            descriptionHtml: data.descriptionHtml ?? '',
+            position: { x: 0, y: 0 },
+            scale: 1,
+            fontSize: 20,
+            color: '#ffffff'
+          }
+        ];
+        this.card.leafletActiveDescriptionId = data.leafletActiveDescriptionId || 'leaflet-desc-1';
       }
       this.addToHistory();
       return true;
@@ -251,4 +294,13 @@ class CardState {
 
 // Export for use in other files
 const gameState = new CardState();
+
+if (typeof window !== 'undefined') {
+  window.CardState = CardState;
+  window.gameState = gameState;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { CardState, gameState };
+}
 

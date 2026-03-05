@@ -41,22 +41,30 @@
       </div>
     </header>
 
+    <div class="workspace-nav" role="tablist" aria-label="Creator Mode">
+      <button id="workspaceCardBtn" class="workspace-tab is-active" type="button" role="tab" data-workspace="card" aria-selected="true">Card Creator</button>
+      <button id="workspaceLeafletBtn" class="workspace-tab" type="button" role="tab" data-workspace="leaflet" aria-selected="false">Leaflet Creator</button>
+      <button id="workspaceBoardBtn" class="workspace-tab" type="button" role="tab" data-workspace="board" aria-selected="false">Board Creator</button>
+    </div>
+
     <!-- Main Content -->
     <div class="container">
       <!-- Left Panel: Editor -->
       <aside class="editor-panel">
+        <div class="tool-panel is-active" data-tool-panel="card-settings">
         <details class="panel-section" open>
-          <summary>Card Properties</summary>
+          <summary id="cardPropertiesSummary">Card Properties</summary>
           <div class="panel-content">
-            <div class="form-group">
+            <div class="form-group" id="cardTypeGroup">
               <label for="cardType">Card Type</label>
               <select id="cardType">
                 <option>Hero Upgrade</option>
                 <option selected>Action Cards</option>
+                <option>Board Abilities</option>
               </select>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" id="cardSubTypeGroup">
               <label for="cardSubType" id="cardSubTypeLabel">Card Phase</label>
               <select id="cardSubType">
                 <option>Main Phase</option>
@@ -65,33 +73,18 @@
               </select>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" id="costBadgeGroup">
               <label for="costInput">Cost Badge</label>
               <input type="text" id="costInput" maxlength="6">
               <small class="help-text">Type any value (e.g. 0, 3, 10).</small>
             </div>
-            <details class="panel-subsection" open>
+            <details class="panel-subsection" id="cardIdSection" open>
               <summary>Card ID</summary>
               <div class="panel-subcontent">
                 <div class="form-group">
                   <label for="cardIdInput">Card ID</label>
                   <input type="text" id="cardIdInput" placeholder="ABCD 00 v00" maxlength="11">
                   <small class="help-text">Format: 4 caps, 2 numbers, v, 2 numbers (ex: ABCD 00 v00)</small>
-                </div>
-                <div class="form-group">
-                  <label for="cardIdFontSize">Card ID Size (px)</label>
-                  <input type="range" id="cardIdFontSize" min="8" max="48" step="1" value="16">
-                  <small class="help-text">Size: <span id="cardIdFontSizeValue">16</span>px</small>
-                </div>
-                <div class="form-group">
-                  <label for="cardIdPositionX">Card ID Horizontal (px)</label>
-                  <input type="range" id="cardIdPositionX" min="-10" max="10" step="0.5" value="-3.5">
-                  <small class="help-text">X Offset: <span id="cardIdPositionXValue">-3.5</span>px</small>
-                </div>
-                <div class="form-group">
-                  <label for="cardIdPositionY">Card ID Vertical (px)</label>
-                  <input type="range" id="cardIdPositionY" min="-10" max="10" step="0.5" value="0">
-                  <small class="help-text">Y Offset: <span id="cardIdPositionYValue">0.0</span>px</small>
                 </div>
               </div>
             </details>
@@ -145,25 +138,25 @@
               <input type="number" id="descriptionFontSize" min="8" max="96" step="1" value="30">
             </div>
 
-            <div class="form-group">
+            <div class="form-group" id="descriptionLineHeightGroup">
               <label for="descriptionLineHeight">Description Line Spacing</label>
               <input type="range" id="descriptionLineHeight" min="0.8" max="1.6" step="0.02" value="1.2">
               <small class="help-text">Line spacing: <span id="descriptionLineHeightValue">1.2</span></small>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" id="descriptionLetterSpacingGroup">
               <label for="descriptionLetterSpacing">Description Spacing (px)</label>
               <input type="range" id="descriptionLetterSpacing" min="-10" max="10" step="0.5" value="0">
               <small class="help-text">Spacing: <span id="descriptionLetterSpacingValue">0</span>px</small>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" id="descriptionBaselineOffsetGroup">
               <label for="descriptionBaselineOffset">Description Baseline (px)</label>
               <input type="range" id="descriptionBaselineOffset" min="-5" max="5" step="0.5" value="-1">
               <small class="help-text">Baseline: <span id="descriptionBaselineOffsetValue">-1</span>px</small>
             </div>
 
-            <details class="panel-subsection" open>
+            <details class="panel-subsection" id="abilityDiceSection" open>
               <summary>Ability Dice</summary>
               <div class="panel-subcontent">
                 <div class="title-input-row">
@@ -181,15 +174,12 @@
 
         <!-- Image Upload Section -->
         <details class="panel-section" open>
-          <summary>Card Art</summary>
+          <summary id="artSectionTitle">Card Art</summary>
           <div class="panel-content">
             <div class="form-group">
-              <label for="imageUpload">Upload Image</label>
-              <input type="file" id="imageUpload" accept="image/*" class="file-input">
-              <label for="imageUpload" class="upload-label" style="margin: 0; cursor: pointer;">
-                Click to upload or drag and drop
-              </label>
-              <small class="help-text">Recommended: 600x800px (JPG, PNG, WebP)</small>
+              <label>Upload Image</label>
+              <input type="file" id="imageUpload" accept="image/*" class="upload-input">
+              <small id="artUploadHelpText" class="help-text">Recommended: 600x800px (JPG, PNG, WebP)</small>
             </div>
             <div class="form-group">
               <label>
@@ -202,6 +192,8 @@
               <select id="cropMaskSelect">
                 <option value="Assets/images/Card Art/Common Loot.png">Common Loot (Default)</option>
                 <option value="Assets/Hero Upgrade/Ability Upgrade/hero_upgrade_Ability_background_upper.png">Ability Upgrade Upper</option>
+                <option value="Assets/Board/offensive Ability/Standard_ability_background.png">Offensive Ability Background</option>
+                <option value="Assets/Leaflet/Front/Leaflet_front_background.png">Leaflet Front</option>
               </select>
             </div>
             <div class="form-group">
@@ -216,7 +208,7 @@
         </details>
 
         <!-- Layers -->
-        <details class="panel-section" open>
+        <details class="panel-section" id="cardLayersSection" open>
           <summary>Layers</summary>
           <div class="panel-content">
             <div class="form-group layers-group">
@@ -332,11 +324,8 @@
             <select id="referenceSelect"></select>
           </div>
           <div class="form-group">
-            <label for="referenceImage">Reference Image</label>
-            <input type="file" id="referenceImage" accept="image/*" class="file-input">
-              <label for="referenceImage" class="upload-label" style="margin: 0; cursor: pointer;">
-                Upload Reference Image
-              </label>
+            <label>Reference Image</label>
+            <input type="file" id="referenceImage" accept="image/*" class="upload-input">
             </div>
             <div id="referencePreview" class="image-preview-small"></div>
           </div>
@@ -355,6 +344,120 @@
             <small class="help-text">600 DPI bridge size export. Toggle bleed for print-safe margins.</small>
           </div>
         </details>
+        </div>
+
+        <div class="tool-panel" data-tool-panel="leaflet-settings" aria-hidden="true">
+          <details class="panel-section" open>
+            <summary>Leaflet Layout</summary>
+            <div class="panel-content">
+              <div class="form-group">
+                <label for="leafletSide">Side</label>
+                <select id="leafletSide">
+                  <option value="front">Front</option>
+                  <option value="back">Back</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <div class="title-input-row">
+                  <span class="ability-dice-label">Front Breaks</span>
+                  <div class="title-box-controls">
+                    <button type="button" id="leafletBreakAddBtn" class="title-box-add">+ Add Break</button>
+                  </div>
+                </div>
+                <small class="help-text">Add break overlays for the front leaflet side.</small>
+                <div id="leafletBreakList" class="leaflet-break-list"></div>
+              </div>
+            </div>
+          </details>
+
+          <details class="panel-section" open>
+            <summary>Custom Status Effects</summary>
+            <div class="panel-content">
+              <div class="title-input-row">
+                <input type="text" id="customStatusNameInput" placeholder="e.g. Power Punch" maxlength="40">
+                <div class="title-box-controls">
+                  <button type="button" id="customStatusAddBtn" class="title-box-add">+ Add Effect</button>
+                </div>
+              </div>
+              <small class="help-text">Creates command like <code>{{power_punch}}</code>.</small>
+              <div id="customStatusList" class="ability-dice-list"></div>
+            </div>
+          </details>
+
+          <details class="panel-section" open>
+            <summary>Leaflet Layers</summary>
+            <div class="panel-content">
+              <div class="form-group">
+                <label><input type="checkbox" id="leafletLayerBackground" checked> Background</label>
+              </div>
+              <div class="form-group">
+                <label><input type="checkbox" id="leafletLayerArt" checked> Art</label>
+              </div>
+              <div class="form-group">
+                <label><input type="checkbox" id="leafletLayerTitle" checked> Title</label>
+              </div>
+              <div class="form-group">
+                <label><input type="checkbox" id="leafletLayerText" checked> Text</label>
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <div class="tool-panel" data-tool-panel="board-settings" aria-hidden="true">
+          <details class="panel-section" open>
+            <summary>Ability Slots</summary>
+            <div class="panel-content">
+              <div class="form-group">
+                <label for="boardSlot1">Slot 1</label>
+                <select id="boardSlot1" class="board-slot-select">
+                  <option value="">Unassigned</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="boardSlot2">Slot 2</label>
+                <select id="boardSlot2" class="board-slot-select">
+                  <option value="">Unassigned</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="boardSlot3">Slot 3</label>
+                <select id="boardSlot3" class="board-slot-select">
+                  <option value="">Unassigned</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="boardSlot4">Slot 4</label>
+                <select id="boardSlot4" class="board-slot-select">
+                  <option value="">Unassigned</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="boardSlot5">Slot 5</label>
+                <select id="boardSlot5" class="board-slot-select">
+                  <option value="">Unassigned</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="boardSlot6">Slot 6</label>
+                <select id="boardSlot6" class="board-slot-select">
+                  <option value="">Unassigned</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="boardSlot7">Slot 7</label>
+                <select id="boardSlot7" class="board-slot-select">
+                  <option value="">Unassigned</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="boardSlot8">Slot 8</label>
+                <select id="boardSlot8" class="board-slot-select">
+                  <option value="">Unassigned</option>
+                </select>
+              </div>
+            </div>
+          </details>
+        </div>
       </aside>
 
       <div id="sidebarResizer" class="sidebar-resizer" aria-label="Resize sidebar" role="separator"></div>
@@ -362,7 +465,7 @@
       <!-- Right Panel: Preview -->
       <main class="preview-panel">
         <div class="preview-container">
-          <div class="reference-toggle">
+          <div class="reference-toggle tool-panel is-active" data-tool-panel="card-render-controls">
             <label>
               <input type="checkbox" id="showReference" />
               Show Reference
@@ -376,7 +479,7 @@
               <input type="range" id="referenceOpacity" min="0" max="1" step="0.05" value="0.7">
             </div>
           </div>
-          <div class="status-effects-toggle">
+          <div class="status-effects-toggle tool-panel is-active" data-tool-panel="card-render-controls">
             <label>
               <input type="checkbox" id="toggleStatusEffects" />
               Status Effects
@@ -386,7 +489,7 @@
               Other Commands
             </label>
           </div>
-          <div class="card-preview" id="cardPreview">
+          <div class="card-preview tool-panel is-active" data-tool-panel="card-render" id="cardPreview">
             <!-- Layer 0: Card Bleed -->
             <div id="cardBleedLayer" class="card-layer card-layer-card-bleed"></div>
 
@@ -402,6 +505,9 @@
             
             <!-- Layer 4: Background Upper -->
             <div id="backgroundUpperLayer" class="card-layer card-layer-bg-upper"></div>
+
+            <!-- Layer 4.5: Leaflet Break Overlays -->
+            <div id="leafletBreakLayer" class="card-layer card-layer-leaflet-breaks" aria-hidden="true"></div>
             
             <!-- Layer 5: Image Frame -->
             <div id="imageFrameLayer" class="card-layer card-layer-image-frame"></div>
@@ -455,6 +561,26 @@
             <!-- Reference Overlay -->
             <div id="referenceOverlay" class="reference-overlay"></div>
           </div>
+          <div class="tool-panel tool-preview-placeholder" data-tool-panel="leaflet-render" aria-hidden="true">
+            <div class="workspace-placeholder__card">
+              <h2>Leaflet Renderer</h2>
+              <p>Leaflet preview area will render here.</p>
+            </div>
+          </div>
+          <div class="board-preview tool-panel" data-tool-panel="board-render" id="boardPreview" aria-hidden="true">
+            <!-- Board Layer 1: Ability Location Guide -->
+            <div id="boardAbilityLocationLayer" class="board-layer board-layer-ability-location"></div>
+            <div id="boardSlotsLayer" class="board-layer board-layer-slot-grid" aria-hidden="true">
+              <div class="board-slot-card board-slot-card--1" data-slot-id="1"></div>
+              <div class="board-slot-card board-slot-card--2" data-slot-id="2"></div>
+              <div class="board-slot-card board-slot-card--3" data-slot-id="3"></div>
+              <div class="board-slot-card board-slot-card--4" data-slot-id="4"></div>
+              <div class="board-slot-card board-slot-card--5" data-slot-id="5"></div>
+              <div class="board-slot-card board-slot-card--6" data-slot-id="6"></div>
+              <div class="board-slot-card board-slot-card--7" data-slot-id="7"></div>
+              <div class="board-slot-card board-slot-card--8" data-slot-id="8"></div>
+            </div>
+          </div>
           <!-- Reference Side (for side-by-side view) -->
           <div id="referenceSide" class="reference-side" aria-hidden="true"></div>
         </div>
@@ -463,7 +589,7 @@
   </div>
 
   <!-- File Input (hidden) -->
-  <input type="file" id="fileInput" accept=".json" style="display: none;">
+  <input type="file" id="fileInput" accept=".json" class="file-input" tabindex="-1" aria-hidden="true">
 
   <!-- Cropper Modal -->
   <div id="cropModal" class="crop-modal" aria-hidden="true">

@@ -1,3 +1,5 @@
+const DTC_REFERENCE_ROOT = typeof window !== 'undefined' ? window : globalThis;
+
 class ReferenceOverlayManager {
   constructor(options = {}) {
     this.referenceImageInput = options.referenceImageInput || null;
@@ -16,8 +18,8 @@ class ReferenceOverlayManager {
     this.maxUploadBytes = Number(options.maxUploadBytes) || (5 * 1024 * 1024);
     this.isBound = false;
 
-    if (!window.defaultReferencePath) {
-      window.defaultReferencePath = this.defaultReferencePath;
+    if (!DTC_REFERENCE_ROOT.defaultReferencePath) {
+      DTC_REFERENCE_ROOT.defaultReferencePath = this.defaultReferencePath;
     }
   }
 
@@ -102,7 +104,7 @@ class ReferenceOverlayManager {
     }
 
     document.documentElement.style.setProperty('--reference-image', cssUrl);
-    window.defaultReferencePath = source;
+    DTC_REFERENCE_ROOT.defaultReferencePath = source;
   }
 
   applyImage(source, label = 'Reference') {
@@ -135,29 +137,46 @@ class ReferenceOverlayManager {
       this.referenceSide.style.display = 'none';
     }
     document.documentElement.style.setProperty('--reference-image', '');
-    window.defaultReferencePath = '';
+    DTC_REFERENCE_ROOT.defaultReferencePath = '';
   }
 
-  handleUpload(event) {
-    const file = event?.target?.files?.[0];
-    if (!file) return;
+  async handleFile(file, inputEl = null) {
+    if (!file) return false;
     if (!file.type.startsWith('image/')) {
       alert('Please select a valid image file');
-      return;
+      if (inputEl) inputEl.value = '';
+      return false;
     }
     if (file.size > this.maxUploadBytes) {
       alert('Image file is too large. Maximum size is 5MB');
-      return;
+      if (inputEl) inputEl.value = '';
+      return false;
     }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const imageData = e?.target?.result;
-      if (!imageData) return;
+    try {
+      const imageData = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(String(e?.target?.result || ''));
+        reader.onerror = () => reject(new Error('Failed to read the selected reference image.'));
+        reader.readAsDataURL(file);
+      });
+      if (!imageData) return false;
       this.applyImage(imageData, 'Uploaded Reference');
       if (this.referenceSelect) this.referenceSelect.value = '__upload__';
-    };
-    reader.readAsDataURL(file);
+      if (inputEl) inputEl.value = '';
+      return true;
+    } catch (error) {
+      alert('Failed to read the selected reference image.');
+      if (inputEl) inputEl.value = '';
+      return false;
+    }
+  }
+
+  handleUpload(event) {
+    const inputEl = event?.target || null;
+    const file = inputEl?.files?.[0];
+    if (!file) return;
+    this.handleFile(file, inputEl);
   }
 
   handleSelect(event) {
@@ -187,8 +206,8 @@ class ReferenceOverlayManager {
         bg = cssVar;
       }
     }
-    if ((!bg || bg === 'none') && window.defaultReferencePath) {
-      this.referenceOverlay.style.backgroundImage = this.buildCssUrl(window.defaultReferencePath);
+    if ((!bg || bg === 'none') && DTC_REFERENCE_ROOT.defaultReferencePath) {
+      this.referenceOverlay.style.backgroundImage = this.buildCssUrl(DTC_REFERENCE_ROOT.defaultReferencePath);
     }
     this.referenceOverlay.style.backgroundSize = this.getBackgroundSize();
     this.referenceOverlay.style.backgroundRepeat = 'no-repeat';
@@ -268,4 +287,10 @@ class ReferenceOverlayManager {
   }
 }
 
-window.ReferenceOverlayManager = ReferenceOverlayManager;
+if (typeof window !== 'undefined') {
+  window.ReferenceOverlayManager = ReferenceOverlayManager;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { ReferenceOverlayManager };
+}

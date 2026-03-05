@@ -47,12 +47,16 @@
       "bottomNameGradient": "Assets/Hero Upgrade/Ability Upgrade/hero_upgrade_Ability_bottom_name_gradient.png"
     },
     "Defense Upgrade": {
-      "border": "Assets/Action Cards/Instant/Instant Action Frame.png",
-      "backgroundLower": "Assets/Action Cards/Instant/Instant Action background lower.png",
-      "backgroundUpper": "Assets/Action Cards/Instant/Instant Action background upper.png",
-      "imageFrame": "Assets/Action Cards/Instant/Instant Action Image Frame.png",
-      "panelLower": "Assets/Action Cards/Instant/Instant Action Panel Lower Interior.png",
-      "panelUpper": "Assets/Action Cards/Instant/Instant Action Panel Upper Interior.png"
+      "border": "Assets/Hero Upgrade/Defense Upgrade/Hero_Upgrade_Defensive_Frame.png",
+      "backgroundLower": "Assets/Hero Upgrade/Defense Upgrade/Hero_Upgrade_Defensive_Background.png",
+      "backgroundUpper": "",
+      "cardId": "Assets/Hero Upgrade/Ability Upgrade/hero_upgrade_ability_card_id.png",
+      "frameShading": "Assets/Hero Upgrade/Defense Upgrade/Hero_Upgrade_Defensive_Frame_Shadow.png",
+      "panelBleed": "Assets/Hero Upgrade/Defense Upgrade/Hero_Upgrade_Defensive_Panel_bleed.png",
+      "panelLower": "Assets/Hero Upgrade/Defense Upgrade/Hero_Upgrade_Defensive_Panel_lower.png",
+      "panelUpper": "Assets/Hero Upgrade/Defense Upgrade/Hero_Upgrade_Defensive_Panel_Upper.png",
+      "topNameGradient": "Assets/Hero Upgrade/Ability Upgrade/hero_upgrade_Ability_top_name_gradient.png",
+      "bottomNameGradient": "Assets/Hero Upgrade/Ability Upgrade/hero_upgrade_Ability_bottom_name_gradient.png"
     },
     "Passive Upgrade": {
       "border": "Assets/Action Cards/Instant/Instant Action Frame.png",
@@ -100,6 +104,48 @@
       "panelLower": "Assets/Action Cards/Roll Phase/Roll_Action_Panel_lower.png",
       "panelUpper": "Assets/Action Cards/Roll Phase/Roll_Action_Panel_upper.png",
       "attackModifier": "Assets/Action Cards/Roll Phase/Roll_Action_Attack_Modifier.png"
+    }
+  },
+  "Board Abilities": {
+    "Offensive ability": {
+      "cardBleed": "",
+      "border": "Assets/Board/offensive Ability/Standard_ability_border.png",
+      "cardId": "",
+      "backgroundLower": "Assets/Board/offensive Ability/Standard_ability_background.png",
+      "backgroundUpper": "Assets/Board/offensive Ability/Standard_ability_corner.png",
+      "imageFrame": "",
+      "frameShading": "",
+      "panelBleed": "",
+      "panelLower": "",
+      "secondAbilityFrame": "",
+      "panelUpper": "",
+      "topNameGradient": "Assets/Board/offensive Ability/Standard_ability_graident.png",
+      "bottomNameGradient": "",
+      "attackModifier": ""
+    },
+    "Passive Ability": {
+      "cardBleed": "Assets/Action Cards/card_bleed.png",
+      "border": "Assets/Action Cards/Main Phase/Main Action Frame.png",
+      "cardId": "Assets/Action Cards/Main Phase/card_id.png",
+      "backgroundLower": "Assets/Action Cards/Main Phase/Main Action background lower.png",
+      "backgroundUpper": "Assets/Action Cards/Main Phase/Main Action background upper.png",
+      "imageFrame": "Assets/Action Cards/Main Phase/Main Action Image Frame.png",
+      "frameShading": "Assets/Action Cards/Main Phase/Main Action Frame Shading.png",
+      "panelBleed": "Assets/Action Cards/Main Phase/Main Action Panel Bleed.png",
+      "panelLower": "Assets/Action Cards/Main Phase/Main Action Panel Lower.png",
+      "panelUpper": "Assets/Action Cards/Main Phase/Main Action Panel Upper.png"
+    },
+    "Defensive ability": {
+      "cardBleed": "Assets/Action Cards/card_bleed.png",
+      "border": "Assets/Action Cards/Main Phase/Main Action Frame.png",
+      "cardId": "Assets/Action Cards/Main Phase/card_id.png",
+      "backgroundLower": "Assets/Action Cards/Main Phase/Main Action background lower.png",
+      "backgroundUpper": "Assets/Action Cards/Main Phase/Main Action background upper.png",
+      "imageFrame": "Assets/Action Cards/Main Phase/Main Action Image Frame.png",
+      "frameShading": "Assets/Action Cards/Main Phase/Main Action Frame Shading.png",
+      "panelBleed": "Assets/Action Cards/Main Phase/Main Action Panel Bleed.png",
+      "panelLower": "Assets/Action Cards/Main Phase/Main Action Panel Lower.png",
+      "panelUpper": "Assets/Action Cards/Main Phase/Main Action Panel Upper.png"
     }
   }
 }

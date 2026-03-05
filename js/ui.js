@@ -36,6 +36,9 @@ class UI {
     this.abilityDiceSelect = document.getElementById('abilityDiceSelect');
     this.abilityDiceAddBtn = document.getElementById('abilityDiceAddBtn');
     this.abilityDiceList = document.getElementById('abilityDiceList');
+    this.customStatusNameInput = document.getElementById('customStatusNameInput');
+    this.customStatusAddBtn = document.getElementById('customStatusAddBtn');
+    this.customStatusList = document.getElementById('customStatusList');
     this.descriptionBoxScaleInput = document.getElementById('descriptionBoxScale');
     this.descriptionBoxScaleValue = document.getElementById('descriptionBoxScaleValue');
     this.titleLetterSpacingInput = document.getElementById('titleLetterSpacing');
@@ -44,15 +47,21 @@ class UI {
     this.descriptionLetterSpacingValue = document.getElementById('descriptionLetterSpacingValue');
     this.titleBoxAddBtn = document.getElementById('titleBoxAdd');
     this.titleBoxRemoveBtn = document.getElementById('titleBoxRemove');
+    this.abilityDiceSection = document.getElementById('abilityDiceSection');
     this.defaultTitleFont = 'PHOSPHATE_FIXED_SOLID';
     this.defaultDescriptionFont = 'MYRIADPRO-BOLDCOND';
     this.defaultTitleFontSize = 46;
     this.defaultDescriptionFontSize = 39;
+    this.defaultLeafletDescriptionFontSize = 20;
     this.defaultDescriptionLineHeight = 1.2;
     this.defaultDescriptionBaselineOffset = -1;
     this.defaultTitleLetterSpacing = 0.5;
     this.defaultDescriptionLetterSpacing = 0;
     this.defaultDescriptionBoxScale = 1;
+    this.defaultDescriptionColor = '#ffffff';
+    this.descriptionColorPicker = null;
+    this.descriptionColorHexInput = null;
+    this.descriptionColorCopyButton = null;
     this.defaultCardIdFont = 'MYRIADPRO-REGULAR';
     this.defaultCardIdFontSize = 15;
     this.defaultCardIdOffset = 0;
@@ -60,8 +69,30 @@ class UI {
     this.cardTypeSelect = document.getElementById('cardType');
     this.cardSubTypeSelect = document.getElementById('cardSubType');
     this.costInput = document.getElementById('costInput');
+    this.cardTypeGroup = document.getElementById('cardTypeGroup');
+    this.cardSubTypeGroup = document.getElementById('cardSubTypeGroup');
+    this.costBadgeGroup = document.getElementById('costBadgeGroup');
+    this.cardIdSection = document.getElementById('cardIdSection');
+    this.cardPropertiesSummary = document.getElementById('cardPropertiesSummary');
+    this.cardLayersSection = document.getElementById('cardLayersSection');
+    this.descriptionLineHeightGroup = document.getElementById('descriptionLineHeightGroup');
+    this.descriptionLetterSpacingGroup = document.getElementById('descriptionLetterSpacingGroup');
+    this.descriptionBaselineOffsetGroup = document.getElementById('descriptionBaselineOffsetGroup');
+    this.leafletLayerBackground = document.getElementById('leafletLayerBackground');
+    this.leafletLayerArt = document.getElementById('leafletLayerArt');
+    this.leafletLayerTitle = document.getElementById('leafletLayerTitle');
+    this.leafletLayerText = document.getElementById('leafletLayerText');
+    this.leafletBreakAddBtn = document.getElementById('leafletBreakAddBtn');
+    this.leafletBreakList = document.getElementById('leafletBreakList');
+    this.leafletBreakOptions = this.buildLeafletBreakOptions();
+    this.boardSlotSelects = Array.from({ length: 8 }, (_, index) => document.getElementById(`boardSlot${index + 1}`));
+    this.boardSlotCards = Array.from(document.querySelectorAll('.board-slot-card'));
+    this.boardSlotRenderToken = 0;
 
     this.imageUploadInput = document.getElementById('imageUpload');
+    this.artSectionTitle = document.getElementById('artSectionTitle');
+    this.imageUploadLabel = document.getElementById('imageUploadLabel');
+    this.artUploadHelpText = document.getElementById('artUploadHelpText');
     this.imagePreview = document.getElementById('imagePreview');
     this.btnClearImage = document.getElementById('btn-clear-image');
     this.artSelect = document.getElementById('artSelect');
@@ -79,6 +110,8 @@ class UI {
     this.cropMaskSelect = document.getElementById('cropMaskSelect');
     this.cropMaskKey = 'dtc_crop_mask_v1';
     this.defaultCropMask = 'Assets/images/Card Art/Common Loot.png';
+    this.leafletCropMask = 'Assets/Leaflet/Front/Leaflet_front_background.png';
+    this.cardModeCropMask = null;
     this.cropState = {
       x: 0,
       y: 0,
@@ -89,6 +122,7 @@ class UI {
     this.cropPreviewActive = false;
 
     this.referenceImageInput = document.getElementById('referenceImage');
+    this.referenceImageLabel = document.getElementById('referenceImageLabel');
     this.referencePreview = document.getElementById('referencePreview');
     this.referenceSelect = document.getElementById('referenceSelect');
     this.showReferenceCheckbox = document.getElementById('showReference');
@@ -131,8 +165,19 @@ class UI {
     this.previewElement = document.getElementById('cardPreview');
     this.panelLowerLayer = document.getElementById('panelLowerLayer');
     this.containerEl = document.querySelector('.container');
+    this.workspaceTabs = [...document.querySelectorAll('.workspace-tab')];
+    this.workspacePanels = {
+      shared: [...document.querySelectorAll('[data-tool-panel="card-settings"], [data-tool-panel="card-render"], [data-tool-panel="card-render-controls"]')],
+      leaflet: [...document.querySelectorAll('[data-tool-panel="leaflet-settings"]')],
+      board: [...document.querySelectorAll('[data-tool-panel="board-settings"], [data-tool-panel="board-render"]')]
+    };
+    this.workspaceModeStorageKey = 'dtc_workspace_mode_v1';
+    this.workspaceMode = this.getStoredWorkspaceMode();
     this.sidebarResizer = document.getElementById('sidebarResizer');
     this.sidebarWidthKey = 'dtc_sidebar_width_v1';
+    this.leafletSideSelect = document.getElementById('leafletSide');
+    this.cardModeReferencePath = 'Assets/Reference/Transference_basic.png';
+    this.leafletModeReferencePath = 'Assets/Reference/spiderman_leaflet.png';
 
     const ReferenceManagerCtor = window.ReferenceOverlayManager;
     this.referenceManager = ReferenceManagerCtor ? new ReferenceManagerCtor({
@@ -146,9 +191,12 @@ class UI {
       referenceOpacity: this.referenceOpacity,
       previewContainer: this.previewContainer,
       manifestPath: 'Assets/Reference/manifest.json',
-      defaultReferencePath: 'Assets/Reference/Transference_basic.png',
+      defaultReferencePath: this.cardModeReferencePath,
       fitSize: 'cover'
     }) : null;
+    this.sharedImagePicker = null;
+    this.sharedImagePickerHandler = null;
+    this.sharedImagePickerLabel = 'image';
 
     this.btnNew = document.getElementById('btn-new');
     this.btnSave = document.getElementById('btn-save');
@@ -167,6 +215,8 @@ class UI {
     this.deckDeleteCardBtn = document.getElementById('deckDeleteCardBtn');
     this.deckDeleteBtn = document.getElementById('deckDeleteBtn');
     this.deckStorageKey = 'dtc_decks_v1';
+    this.boardAbilityStorageKey = 'dtc_board_abilities_v1';
+    this.boardSlotStorageKey = 'dtc_board_slots_v1';
     this.btnDeckView = document.getElementById('btn-deck-view');
     this.btnPrintSheet = document.getElementById('btn-print-sheet');
     this.deckViewModal = document.getElementById('deckViewModal');
@@ -302,21 +352,185 @@ class UI {
     this.printLayerAssets = { ...this.printModes.standard.layerDefaults };
     const savedPrintMode = this.getStoredPrintMode();
     this.setPrintMode(savedPrintMode, { persist: false, rerender: false, refreshAssets: true });
+    this.applyWorkspaceMode(this.workspaceMode, { persist: false });
 
     this.initEventListeners();
     this.initLayerListDragAndDrop();
     this.loadCardArtOptions();
     this.loadFontOptions();
     if (this.referenceManager) {
-      this.referenceManager.init();
+      this.referenceManager.init()
+        .then(() => {
+          this.applyWorkspaceReferenceDefault(this.workspaceMode, { force: true });
+        })
+        .catch((error) => {
+          console.warn('Failed to initialize reference manager:', error);
+        });
     }
     this.refreshDeckUI();
+    this.refreshBoardAbilityOptions();
+    this.updateDeckSaveAvailability(gameState.getCard());
   }
 
   getStoredPrintMode() {
     if (typeof localStorage === 'undefined') return 'standard';
     const raw = String(localStorage.getItem(this.printModeStorageKey) || '').trim().toLowerCase();
     return this.printModes?.[raw] ? raw : 'standard';
+  }
+
+  getStoredWorkspaceMode() {
+    if (typeof localStorage === 'undefined') return 'card';
+    const raw = String(localStorage.getItem(this.workspaceModeStorageKey) || '').trim().toLowerCase();
+    if (raw === 'leaflet' || raw === 'board') return raw;
+    return 'card';
+  }
+
+  getDescriptionContext(mode = this.workspaceMode) {
+    const isLeaflet = String(mode || '').toLowerCase() === 'leaflet';
+    return {
+      isLeaflet,
+      blocksKey: isLeaflet ? 'leafletDescriptionBlocks' : 'descriptionBlocks',
+      activeIdKey: isLeaflet ? 'leafletActiveDescriptionId' : 'activeDescriptionId',
+      defaultFontSize: isLeaflet ? this.defaultLeafletDescriptionFontSize : this.defaultDescriptionFontSize
+    };
+  }
+
+  getDefaultReferencePathForMode(mode = this.workspaceMode) {
+    const normalized = String(mode || '').toLowerCase();
+    if (normalized === 'leaflet') return 'Assets/Reference/spiderman_leaflet.png';
+    return 'Assets/Reference/Transference_basic.png';
+  }
+
+  applyWorkspaceReferenceDefault(mode = this.workspaceMode, options = {}) {
+    if (!this.referenceManager || !this.referenceSelect) return;
+    const normalized = String(mode || '').toLowerCase();
+    const isLeaflet = normalized === 'leaflet';
+    const currentValue = String(this.referenceSelect.value || '').trim();
+    if (isLeaflet) {
+      if (currentValue && currentValue !== '__upload__') {
+        this.cardModeReferencePath = currentValue;
+      }
+    } else if (currentValue && currentValue !== '__upload__') {
+      this.leafletModeReferencePath = currentValue;
+    }
+
+    const desiredValue = isLeaflet
+      ? (this.leafletModeReferencePath || this.getDefaultReferencePathForMode('leaflet'))
+      : (this.cardModeReferencePath || this.getDefaultReferencePathForMode('card'));
+    if (!desiredValue) return;
+
+    const force = options.force === true;
+    if (!force && currentValue === desiredValue) return;
+
+    const hasOption = Array.from(this.referenceSelect.options || []).some((opt) => opt.value === desiredValue);
+    if (!hasOption) return;
+
+    this.referenceSelect.value = desiredValue;
+    const label = typeof this.referenceManager.formatLabel === 'function'
+      ? this.referenceManager.formatLabel(desiredValue)
+      : 'Reference';
+    if (typeof this.referenceManager.applyImage === 'function') {
+      this.referenceManager.applyImage(desiredValue, label);
+    }
+    if (isLeaflet) {
+      this.leafletModeReferencePath = desiredValue;
+    } else {
+      this.cardModeReferencePath = desiredValue;
+    }
+  }
+
+  applyWorkspaceMode(mode, options = {}) {
+    const previousMode = this.workspaceMode;
+    const nextMode = ['card', 'leaflet', 'board'].includes(mode) ? mode : 'card';
+    this.workspaceMode = nextMode;
+
+    this.workspaceTabs.forEach((tab) => {
+      const isActive = tab.dataset.workspace === nextMode;
+      tab.classList.toggle('is-active', isActive);
+      tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+
+    const showShared = nextMode === 'card' || nextMode === 'leaflet';
+    (this.workspacePanels.shared || []).forEach((panel) => {
+      panel.classList.toggle('is-active', showShared);
+      panel.setAttribute('aria-hidden', showShared ? 'false' : 'true');
+    });
+    const showLeaflet = nextMode === 'leaflet';
+    (this.workspacePanels.leaflet || []).forEach((panel) => {
+      panel.classList.toggle('is-active', showLeaflet);
+      panel.setAttribute('aria-hidden', showLeaflet ? 'false' : 'true');
+    });
+    const showBoard = nextMode === 'board';
+    (this.workspacePanels.board || []).forEach((panel) => {
+      panel.classList.toggle('is-active', showBoard);
+      panel.setAttribute('aria-hidden', showBoard ? 'false' : 'true');
+    });
+
+    // Leaflet mode reuses title/description controls but hides card-only fields.
+    const hideForLeaflet = showLeaflet;
+    [
+      this.cardTypeGroup,
+      this.cardSubTypeGroup,
+      this.costBadgeGroup,
+      this.cardIdSection,
+      this.cardLayersSection,
+      this.descriptionLineHeightGroup,
+      this.descriptionLetterSpacingGroup,
+      this.descriptionBaselineOffsetGroup
+    ].forEach((el) => {
+      if (!el) return;
+      el.style.display = hideForLeaflet ? 'none' : '';
+    });
+    if (this.abilityDiceSection) {
+      this.abilityDiceSection.style.display = hideForLeaflet ? 'none' : '';
+    }
+
+    if (this.artSectionTitle) {
+      this.artSectionTitle.textContent = hideForLeaflet ? 'Leaflet Art' : 'Card Art';
+    }
+    if (this.cardPropertiesSummary) {
+      this.cardPropertiesSummary.textContent = hideForLeaflet ? 'Leaflet Properties' : 'Card Properties';
+    }
+    if (this.imageUploadLabel) {
+      this.imageUploadLabel.textContent = hideForLeaflet
+        ? 'Click to upload leaflet art'
+        : 'Click to upload or drag and drop';
+    }
+    if (this.artUploadHelpText) {
+      this.artUploadHelpText.textContent = hideForLeaflet
+        ? 'Recommended: match leaflet layout dimensions (JPG, PNG, WebP)'
+        : 'Recommended: 600x800px (JPG, PNG, WebP)';
+    }
+    if (this.cropMaskSelect) {
+      if (hideForLeaflet) {
+        this.cardModeCropMask = this.cropMaskSelect.value || this.defaultCropMask;
+        this.cropMaskSelect.value = this.leafletCropMask;
+      } else if (this.cardModeCropMask) {
+        this.cropMaskSelect.value = this.cardModeCropMask;
+      }
+      if (this.cropModal && this.cropModal.classList.contains('is-open')) {
+        this.applyCropMask(this.getSelectedCropMaskPath(), null, false);
+      }
+    }
+    if (this.referenceManager && this.referenceSelect && previousMode !== nextMode) {
+      this.applyWorkspaceReferenceDefault(nextMode, { force: true });
+    }
+
+    if (options.persist !== false && typeof localStorage !== 'undefined') {
+      localStorage.setItem(this.workspaceModeStorageKey, nextMode);
+    }
+
+    if (typeof renderer?.setWorkspaceMode === 'function') {
+      try {
+        renderer.setWorkspaceMode(nextMode);
+        const normalizedCard = this.ensureDescriptionBlocks(gameState.getCard());
+        renderer.render(normalizedCard);
+        const activeId = this.getActiveDescriptionId(normalizedCard, this.getDescriptionBlocks(normalizedCard));
+        if (activeId) this.setActiveDescriptionBlock(activeId, { syncEditor: true });
+      } catch (error) {
+        console.warn('Failed to re-render while applying workspace mode:', error);
+      }
+    }
   }
 
   async setPrintMode(mode, options = {}) {
@@ -369,7 +583,232 @@ class UI {
     if (this.printCardScaleValue) this.printCardScaleValue.textContent = `${Math.round(scale * 100)}%`;
   }
 
+  openFilePicker(inputEl) {
+    if (!inputEl) return;
+    try {
+      inputEl.value = '';
+    } catch (error) {
+      // Ignore browsers that block direct value resets here.
+    }
+    inputEl.click();
+  }
+
+  validateImageFile(file, options = {}) {
+    const safeLabel = String(options.label || 'image').trim() || 'image';
+    const maxBytes = Number.isFinite(Number(options.maxBytes)) ? Number(options.maxBytes) : (5 * 1024 * 1024);
+    const title = safeLabel.charAt(0).toUpperCase() + safeLabel.slice(1);
+    if (!file) return false;
+    if (!String(file.type || '').startsWith('image/')) {
+      alert(`Please select a valid ${safeLabel} file.`);
+      return false;
+    }
+    if (file.size > maxBytes) {
+      const maxMb = Math.max(1, Math.round(maxBytes / (1024 * 1024)));
+      alert(`${title} file is too large. Maximum size is ${maxMb}MB.`);
+      return false;
+    }
+    return true;
+  }
+
+  readFileAsDataUrl(file, errorMessage = 'Failed to read image file.') {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(new Error(errorMessage));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  ensureSharedImagePicker() {
+    if (this.sharedImagePicker && this.sharedImagePicker.isConnected) {
+      return this.sharedImagePicker;
+    }
+    if (typeof document === 'undefined' || !document.body) {
+      return null;
+    }
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.tabIndex = -1;
+    input.setAttribute('aria-hidden', 'true');
+    input.style.position = 'fixed';
+    input.style.left = '0';
+    input.style.top = '0';
+    input.style.width = '1px';
+    input.style.height = '1px';
+    input.style.opacity = '0';
+    input.style.pointerEvents = 'none';
+    input.style.zIndex = '-1';
+
+    input.addEventListener('change', () => {
+      const file = input.files?.[0] || null;
+      const handler = this.sharedImagePickerHandler;
+      const label = this.sharedImagePickerLabel || 'image';
+      this.sharedImagePickerHandler = null;
+      this.sharedImagePickerLabel = 'image';
+      input.value = '';
+      if (!file || typeof handler !== 'function') return;
+      if (!this.validateImageFile(file, { label })) return;
+      try {
+        const result = handler(file);
+        if (result && typeof result.catch === 'function') {
+          result.catch((error) => {
+            console.warn('Shared image picker handler failed:', error);
+          });
+        }
+      } catch (error) {
+        console.warn('Shared image picker handler failed:', error);
+      }
+    });
+    input.addEventListener('cancel', () => {
+      this.sharedImagePickerHandler = null;
+      this.sharedImagePickerLabel = 'image';
+      input.value = '';
+    });
+
+    document.body.appendChild(input);
+    this.sharedImagePicker = input;
+    return input;
+  }
+
+  startSharedImagePick(label, onSelect) {
+    if (typeof onSelect !== 'function') return;
+    const input = this.ensureSharedImagePicker();
+    if (!input) return;
+    this.sharedImagePickerLabel = String(label || 'image');
+    this.sharedImagePickerHandler = onSelect;
+    input.value = '';
+    this.openFilePicker(input);
+  }
+
+  openTransientFilePicker(options = {}) {
+    return new Promise((resolve) => {
+      if (typeof document === 'undefined' || !document.body) {
+        resolve(null);
+        return;
+      }
+
+      const input = document.createElement('input');
+      input.type = 'file';
+      if (options.accept) input.accept = String(options.accept);
+      if (options.multiple) input.multiple = true;
+      input.tabIndex = -1;
+      input.setAttribute('aria-hidden', 'true');
+      input.style.position = 'fixed';
+      input.style.left = '0';
+      input.style.top = '0';
+      input.style.width = '1px';
+      input.style.height = '1px';
+      input.style.opacity = '0';
+      input.style.pointerEvents = 'none';
+      input.style.zIndex = '-1';
+
+      let settled = false;
+      let focusTimer = null;
+
+      const cleanup = (file = null) => {
+        if (settled) return;
+        settled = true;
+        if (focusTimer) {
+          clearTimeout(focusTimer);
+          focusTimer = null;
+        }
+        input.removeEventListener('change', onChange);
+        input.removeEventListener('cancel', onCancel);
+        window.removeEventListener('focus', onWindowFocus, true);
+        if (input.parentNode) {
+          input.parentNode.removeChild(input);
+        }
+        resolve(file);
+      };
+
+      const onChange = () => {
+        const file = options.multiple ? Array.from(input.files || []) : (input.files?.[0] || null);
+        cleanup(file);
+      };
+
+      const onWindowFocus = () => {
+        focusTimer = window.setTimeout(() => {
+          const file = options.multiple ? Array.from(input.files || []) : (input.files?.[0] || null);
+          cleanup(file);
+        }, 300);
+      };
+
+      const onCancel = () => {
+        cleanup(null);
+      };
+
+      input.addEventListener('change', onChange, { once: true });
+      input.addEventListener('cancel', onCancel, { once: true });
+      window.addEventListener('focus', onWindowFocus, true);
+      document.body.appendChild(input);
+      this.openFilePicker(input);
+    });
+  }
+
+  async promptForImageFile(label = 'image') {
+    const file = await this.openTransientFilePicker({ accept: 'image/*' });
+    if (!file) return null;
+    if (!this.validateImageFile(file, { label })) return null;
+    return file;
+  }
+
+  createActionButton(text, className = 'btn btn-secondary btn-small') {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = text;
+    if (className) button.className = className;
+    return button;
+  }
+
+  createInlineImageUploadInput(ariaLabel, onSelect) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.className = 'upload-input upload-input-inline';
+    input.setAttribute('aria-label', String(ariaLabel || 'Upload image'));
+    input.addEventListener('change', (e) => {
+      const file = e?.target?.files?.[0];
+      if (!file) return;
+      try {
+        const result = typeof onSelect === 'function' ? onSelect(file) : null;
+        if (result && typeof result.catch === 'function') {
+          result.catch((error) => {
+            console.warn('Inline image upload handler failed:', error);
+          });
+        }
+      } catch (error) {
+        console.warn('Inline image upload handler failed:', error);
+      } finally {
+        if (e?.target) e.target.value = '';
+      }
+    });
+    return input;
+  }
+
   initEventListeners() {
+    if (this.workspaceTabs.length) {
+      this.workspaceTabs.forEach((tab) => {
+        tab.addEventListener('click', () => {
+          const mode = tab.dataset.workspace || 'card';
+          this.applyWorkspaceMode(mode);
+        });
+      });
+    }
+
+    if (this.referenceSelect) {
+      this.referenceSelect.addEventListener('change', (e) => {
+        const value = String(e?.target?.value || '').trim();
+        if (!value || value === '__upload__') return;
+        if (this.workspaceMode === 'leaflet') {
+          this.leafletModeReferencePath = value;
+        } else {
+          this.cardModeReferencePath = value;
+        }
+      });
+    }
+
     // Card properties
 
     if (this.cardNameInput) {
@@ -395,6 +834,50 @@ class UI {
       });
     }
 
+    if (this.leafletSideSelect) {
+      this.leafletSideSelect.addEventListener('change', (e) => {
+        const side = String(e.target.value || 'front').toLowerCase() === 'back' ? 'back' : 'front';
+        gameState.updateProperty('leafletSide', side);
+        if (typeof renderer?.setLeafletSide === 'function') {
+          renderer.setLeafletSide(side);
+        }
+        this.renderLeafletBreakControls(gameState.getCard());
+        renderer.render(gameState.getCard());
+      });
+    }
+
+    if (this.leafletLayerBackground) {
+      this.leafletLayerBackground.addEventListener('change', (e) => {
+        gameState.updateProperty('leafletLayers.background', !!e.target.checked);
+        renderer.render(gameState.getCard());
+      });
+    }
+    if (this.leafletLayerTitle) {
+      this.leafletLayerTitle.addEventListener('change', (e) => {
+        gameState.updateProperty('leafletLayers.title', !!e.target.checked);
+        renderer.render(gameState.getCard());
+      });
+    }
+    if (this.leafletLayerArt) {
+      this.leafletLayerArt.addEventListener('change', (e) => {
+        gameState.updateProperty('leafletLayers.art', !!e.target.checked);
+        renderer.render(gameState.getCard());
+      });
+    }
+    if (this.leafletLayerText) {
+      this.leafletLayerText.addEventListener('change', (e) => {
+        gameState.updateProperty('leafletLayers.text', !!e.target.checked);
+        renderer.render(gameState.getCard());
+      });
+    }
+    this.boardSlotSelects.forEach((selectEl) => {
+      if (!selectEl) return;
+      selectEl.addEventListener('change', () => {
+        this.saveBoardSlotAssignments(this.boardSlotSelects.map((node) => (node ? node.value : '')));
+        this.renderBoardSlotAssignments();
+      });
+    });
+
     if (this.titleBoxAddBtn) {
       this.titleBoxAddBtn.addEventListener('click', () => this.addTitleBox());
     }
@@ -403,6 +886,13 @@ class UI {
     }
     if (this.abilityDiceAddBtn) {
       this.abilityDiceAddBtn.addEventListener('click', () => this.addAbilityDiceEntry());
+    }
+
+    if (this.customStatusAddBtn) {
+      this.customStatusAddBtn.addEventListener('click', () => this.addCustomStatusEffectEntry());
+    }
+    if (this.leafletBreakAddBtn) {
+      this.leafletBreakAddBtn.addEventListener('click', () => this.addLeafletBreakEntry());
     }
 
     if (this.cardIdInput) {
@@ -483,10 +973,24 @@ class UI {
 
     if (this.descriptionFontSizeInput) {
       this.descriptionFontSizeInput.addEventListener('change', (e) => {
-        const value = Number(e.target.value);
-        const size = Number.isFinite(value) ? Math.max(8, Math.min(96, value)) : this.defaultDescriptionFontSize;
+        const context = this.getDescriptionContext();
+        const size = this.clampDescriptionFontSize(e.target.value, context.defaultFontSize);
         e.target.value = size;
-        gameState.updateProperty('descriptionFontSize', size);
+        let card = gameState.getCard();
+        card = this.ensureDescriptionBlocks(card);
+        const blocks = this.getDescriptionBlocks(card);
+        const activeId = this.getActiveDescriptionId(card, blocks);
+        const updatedBlocks = blocks.map((block) => {
+          if (block.id !== activeId) return block;
+          return { ...block, fontSize: size };
+        });
+        const updates = {
+          [context.blocksKey]: updatedBlocks
+        };
+        if (!context.isLeaflet) {
+          updates.descriptionFontSize = size;
+        }
+        gameState.updateProperties(updates);
         renderer.updateDescriptionImage(gameState.getCard());
         this.updateStatusEffectsIconSize();
       });
@@ -526,6 +1030,7 @@ class UI {
 
     if (this.descriptionBoxScaleInput) {
       this.descriptionBoxScaleInput.addEventListener('input', (e) => {
+        const context = this.getDescriptionContext();
         const scale = this.clampDescriptionBoxScale(e.target.value);
         e.target.value = scale;
         if (this.descriptionBoxScaleValue) this.descriptionBoxScaleValue.textContent = scale.toFixed(2);
@@ -538,7 +1043,7 @@ class UI {
           return { ...block, scale };
         });
         gameState.updateProperties({
-          descriptionBlocks: updatedBlocks
+          [context.blocksKey]: updatedBlocks
         });
         renderer.updateDescriptionImage(gameState.getCard());
         this.updateStatusEffectsIconSize();
@@ -551,6 +1056,7 @@ class UI {
       this.updateSubTypeLabel(e.target.value);
       renderer.applyAssetsForCardType(e.target.value, this.cardSubTypeSelect.value);
       this.applyLayerPresetForCard(e.target.value, this.cardSubTypeSelect.value);
+      this.updateDeckSaveAvailability(gameState.getCard());
       renderer.updateCardIdText(gameState.getCard());
     });
 
@@ -1031,6 +1537,10 @@ class UI {
       let activeTarget = null;
       let activeTitleDragId = null;
       let activeDescriptionDragId = null;
+      let activeLeafletBreakIndex = null;
+      let activeLeafletBreakEl = null;
+      let pendingLeafletBreakPosition = null;
+      let dragBounds = null;
       let dragScale = 1;
 
       const setActiveTarget = (target, descriptionId = null, titleId = null) => {
@@ -1062,6 +1572,7 @@ class UI {
         const newY = startPos.y + dy / scale;
         if (activeTarget === 'description') {
           if (!activeDescriptionDragId) return;
+          const context = this.getDescriptionContext();
           const card = gameState.getCard();
           const blocks = this.getDescriptionBlocks(card);
           const updatedBlocks = blocks.map((block) => {
@@ -1071,8 +1582,8 @@ class UI {
               position: { x: newX, y: newY }
             };
           });
-          const updates = { descriptionBlocks: updatedBlocks };
-          if (card.activeDescriptionId === activeDescriptionDragId) {
+          const updates = { [context.blocksKey]: updatedBlocks };
+          if (!context.isLeaflet && card[context.activeIdKey] === activeDescriptionDragId) {
             updates.descriptionPosition = { x: newX, y: newY };
           }
           gameState.updateProperties(updates);
@@ -1098,14 +1609,33 @@ class UI {
           gameState.updateProperty('costBadgePosition', { x: newX, y: newY });
           renderer.updateCostBadge(gameState.getCard());
           renderer.updateCostBadgePosition(gameState.getCard());
+        } else if (activeTarget === 'leafletBreak') {
+          if (activeLeafletBreakIndex === null || !activeLeafletBreakEl || !dragBounds) return;
+          const width = dragBounds.width || 1;
+          const height = dragBounds.height || 1;
+          const nextX = this.clampLeafletBreakPercent(startPos.x + (dx / width) * 100, startPos.x);
+          const nextY = this.clampLeafletBreakPercent(startPos.y + (dy / height) * 100, startPos.y);
+          pendingLeafletBreakPosition = { x: nextX, y: nextY };
+          activeLeafletBreakEl.style.left = `${nextX}%`;
+          activeLeafletBreakEl.style.top = `${nextY}%`;
         }
       };
 
       const onUp = () => {
         if (!isDragging) return;
+        if (activeTarget === 'leafletBreak' && activeLeafletBreakIndex !== null && pendingLeafletBreakPosition) {
+          this.setLeafletBreakPosition(activeLeafletBreakIndex, pendingLeafletBreakPosition);
+        }
         isDragging = false;
         activeTitleDragId = null;
         activeDescriptionDragId = null;
+        activeLeafletBreakIndex = null;
+        pendingLeafletBreakPosition = null;
+        dragBounds = null;
+        if (activeLeafletBreakEl) {
+          activeLeafletBreakEl.classList.remove('is-dragging');
+          activeLeafletBreakEl = null;
+        }
         window.removeEventListener('pointermove', onMove);
         window.removeEventListener('pointerup', onUp);
         window.removeEventListener('pointercancel', onUp);
@@ -1132,6 +1662,36 @@ class UI {
         startY = e.clientY;
         const current = gameState.getCard()[positionKey] || { x: 0, y: 0 };
         startPos = { x: current.x || 0, y: current.y || 0 };
+        pointerId = e.pointerId;
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+        window.addEventListener('pointercancel', onUp);
+        if (this.previewElement && Number.isFinite(pointerId)) {
+          this.previewElement.setPointerCapture(pointerId);
+        }
+        return true;
+      };
+
+      const startLeafletBreakDrag = (breakIndex, breakEl, e) => {
+        const safeIndex = Number(breakIndex);
+        if (!Number.isInteger(safeIndex) || safeIndex < 0 || !breakEl) return false;
+        const card = gameState.getCard();
+        if (String(card?.leafletSide || 'front').toLowerCase() === 'back') return false;
+        const entries = this.getLeafletBreakEntries(card);
+        const entry = entries[safeIndex];
+        if (!entry || !entry.path) return false;
+        e.preventDefault();
+        e.stopPropagation();
+        setActiveTarget('leafletBreak');
+        isDragging = true;
+        activeLeafletBreakIndex = safeIndex;
+        activeLeafletBreakEl = breakEl;
+        activeLeafletBreakEl.classList.add('is-dragging');
+        pendingLeafletBreakPosition = { x: entry.x, y: entry.y };
+        dragBounds = this.previewElement ? this.previewElement.getBoundingClientRect() : null;
+        startX = e.clientX;
+        startY = e.clientY;
+        startPos = { x: entry.x, y: entry.y };
         pointerId = e.pointerId;
         window.addEventListener('pointermove', onMove);
         window.addEventListener('pointerup', onUp);
@@ -1213,6 +1773,16 @@ class UI {
       if (this.previewElement) {
         this.previewElement.style.touchAction = 'none';
         this.previewElement.addEventListener('pointerdown', (e) => {
+          const breakItems = Array.from(this.previewElement.querySelectorAll('.leaflet-break-item'));
+          for (let i = breakItems.length - 1; i >= 0; i -= 1) {
+            const breakItem = breakItems[i];
+            if (!hitTest(breakItem, e)) continue;
+            const breakIndex = breakItem.dataset.breakIndex;
+            if (breakIndex !== undefined && startLeafletBreakDrag(breakIndex, breakItem, e)) {
+              return;
+            }
+          }
+
           if (this.artworkLayer && this.artworkLayer.contains(e.target)) return;
 
           const titleLayers = this.getTitleLayerElements();
@@ -1263,8 +1833,7 @@ class UI {
       this.imagePreview.classList.remove('dragover');
       const files = e.dataTransfer.files;
       if (files.length > 0) {
-        this.imageUploadInput.files = files;
-        this.handleImageUpload({ target: { files } });
+        this.applyCardArtFile(files[0]);
       }
     });
 
@@ -1390,7 +1959,7 @@ class UI {
   }
 
   loadCard() {
-    this.fileInput.click();
+    this.openFilePicker(this.fileInput);
   }
 
   exportCard(type = 'png') {
@@ -1748,59 +2317,55 @@ class UI {
     this.fileInput.value = '';
   }
 
-  handleImageUpload(event) {
-    const file = event.target.files[0];
+  async applyCardArtFile(file) {
+    if (!file) return false;
+    if (!this.validateImageFile(file, { label: 'image' })) return false;
+
+    let imageData = '';
+    try {
+      imageData = await this.readFileAsDataUrl(file, 'Failed to read card art.');
+    } catch (error) {
+      console.warn('Failed to upload card art:', error);
+      alert('Failed to read the selected image.');
+      return false;
+    }
+
+    if (!imageData) return false;
+
+    const openCropperOnUpload = !!(this.toggleCropperOnUpload && this.toggleCropperOnUpload.checked);
+    const defaultTransform = { x: 0, y: 0, scale: 1 };
+
+    gameState.updateProperties({
+      artData: openCropperOnUpload ? null : imageData,
+      artUrl: null,
+      artSourceData: openCropperOnUpload ? imageData : null,
+      artSourceUrl: null,
+      artCropTransform: null,
+      artTransform: defaultTransform,
+      artCropToFrame: false,
+      artWasCropped: false
+    });
+
+    this.imagePreview.innerHTML = `<img src="${imageData}" alt="Card Art">`;
+    this.btnClearImage.style.display = 'inline-block';
+    renderer.setCardArt(openCropperOnUpload ? null : imageData);
+
+    if (openCropperOnUpload) {
+      this.openCropper(imageData, defaultTransform);
+    }
+
+    return true;
+  }
+
+  async handleImageUpload(event) {
+    const inputEl = event?.target || null;
+    const file = inputEl?.files?.[0];
     if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      alert('Please select a valid image file');
-      return;
+    try {
+      await this.applyCardArtFile(file);
+    } finally {
+      if (inputEl) inputEl.value = '';
     }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Image file is too large. Maximum size is 5MB');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const imageData = e.target.result;
-
-      if (this.toggleCropperOnUpload && this.toggleCropperOnUpload.checked) {
-        // Defer all image application until crop is confirmed.
-        gameState.updateProperty('artSourceData', imageData);
-        gameState.updateProperty('artSourceUrl', null);
-        gameState.updateProperty('artCropTransform', null);
-        gameState.updateProperty('artData', null);
-        gameState.updateProperty('artUrl', null);
-        gameState.updateProperty('artTransform', { x: 0, y: 0, scale: 1 });
-        gameState.updateProperty('artCropToFrame', false);
-        gameState.updateProperty('artWasCropped', false);
-        this.imagePreview.innerHTML = `<img src="${imageData}" alt="Card Art">`;
-        this.btnClearImage.style.display = 'inline-block';
-        renderer.setCardArt(null);
-        this.openCropper(imageData, { x: 0, y: 0, scale: 1 });
-        return;
-      }
-
-      gameState.updateProperty('artData', imageData);
-      gameState.updateProperty('artSourceData', null);
-      gameState.updateProperty('artSourceUrl', null);
-      gameState.updateProperty('artCropTransform', null);
-      gameState.updateProperty('artTransform', { x: 0, y: 0, scale: 1 });
-      gameState.updateProperty('artCropToFrame', false);
-      gameState.updateProperty('artWasCropped', false);
-
-      // Display preview
-      this.imagePreview.innerHTML = `<img src="${imageData}" alt="Card Art">`;
-      this.btnClearImage.style.display = 'inline-block';
-      
-      // Update card preview
-      renderer.setCardArt(imageData);
-    };
-    reader.readAsDataURL(file);
   }
 
   clearImage() {
@@ -1941,10 +2506,6 @@ class UI {
     this.closeCropper();
   }
 
-  getCropScaleFactor() {
-    return 1;
-  }
-
   updateCropperTransform() {
     if (!this.cropImage) return;
     this.cropImage.style.transform = `translate(calc(-50% + ${this.cropState.x}px), calc(-50% + ${this.cropState.y}px)) scale(${this.cropState.scale})`;
@@ -1992,18 +2553,6 @@ class UI {
     });
   }
 
-  getCardDimensions() {
-    let cardWidth = 540;
-    let cardHeight = 810;
-    if (this.previewContainer) {
-      const widthValue = parseFloat(getComputedStyle(this.previewContainer).getPropertyValue('--card-width'));
-      const heightValue = parseFloat(getComputedStyle(this.previewContainer).getPropertyValue('--card-height'));
-      if (Number.isFinite(widthValue) && widthValue > 0) cardWidth = widthValue;
-      if (Number.isFinite(heightValue) && heightValue > 0) cardHeight = heightValue;
-    }
-    return { cardWidth, cardHeight };
-  }
-
   async renderCroppedArt(source, transform) {
     try {
       const img = await this.loadImageLocal(source);
@@ -2043,9 +2592,11 @@ class UI {
       ctx.drawImage(img, 0, 0);
       ctx.restore();
 
-      ctx.globalCompositeOperation = 'destination-in';
-      ctx.drawImage(maskImg, 0, 0, frameW, frameH);
-      ctx.globalCompositeOperation = 'source-over';
+      if (this.workspaceMode !== 'leaflet') {
+        ctx.globalCompositeOperation = 'destination-in';
+        ctx.drawImage(maskImg, 0, 0, frameW, frameH);
+        ctx.globalCompositeOperation = 'source-over';
+      }
 
       return canvas.toDataURL('image/png');
     } catch (error) {
@@ -2063,36 +2614,6 @@ class UI {
     });
   }
 
-  handleReferenceUpload(event) {
-    if (!this.referenceManager) return;
-    this.referenceManager.handleUpload(event);
-  }
-
-  handleReferenceSelect(event) {
-    if (!this.referenceManager) return;
-    this.referenceManager.handleSelect(event);
-  }
-
-  applyReferenceImage(imageData, label = 'Reference') {
-    if (!this.referenceManager) return;
-    this.referenceManager.applyImage(imageData, label);
-  }
-
-  clearReferenceImage() {
-    if (!this.referenceManager) return;
-    this.referenceManager.clearImage();
-  }
-
-  toggleReferenceOverlay(show) {
-    if (!this.referenceManager) return;
-    this.referenceManager.toggleOverlay(show);
-  }
-
-  toggleReferenceSideBySide(show) {
-    if (!this.referenceManager) return;
-    this.referenceManager.toggleSideBySide(show);
-  }
-
   getPreviewScale() {
     const baseRaw = this.previewContainer
       ? getComputedStyle(this.previewContainer).getPropertyValue('--card-width')
@@ -2103,15 +2624,37 @@ class UI {
     return currentWidth / baseWidth;
   }
 
-  getReferenceBackgroundSize() {
-    if (!this.referenceManager) return '100% 100%';
-    return this.referenceManager.getBackgroundSize();
-  }
-
   clampLetterSpacing(value) {
     const spacing = Number(value);
     if (!Number.isFinite(spacing)) return 0;
     return Math.max(-10, Math.min(10, spacing));
+  }
+
+  clampDescriptionFontSize(value, fallback = this.defaultDescriptionFontSize) {
+    const size = Number(value);
+    if (!Number.isFinite(size)) return fallback;
+    return Math.max(8, Math.min(96, size));
+  }
+
+  normalizeDescriptionColor(value, fallback = this.defaultDescriptionColor) {
+    const raw = String(value || '').trim();
+    if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(raw)) return raw;
+    return fallback;
+  }
+
+  syncDescriptionColorControls(value) {
+    const color = this.normalizeDescriptionColor(value, this.defaultDescriptionColor).toUpperCase();
+    if (this.descriptionColorPicker) this.descriptionColorPicker.value = color;
+    if (this.descriptionColorHexInput) this.descriptionColorHexInput.value = color;
+    return color;
+  }
+
+  normalizeDescriptionHexInput(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    const withHash = raw.startsWith('#') ? raw : `#${raw}`;
+    if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(withHash)) return withHash;
+    return '';
   }
 
   clampLineHeightScale(value) {
@@ -2131,6 +2674,26 @@ class UI {
     if (cardType === 'Hero Upgrade' && cardSubType === 'Ability Upgrade') {
       updates['layers.imageFrame'] = false;
       updates['layers.attackModifier'] = false;
+      updates['layers.secondAbilityFrame'] = true;
+      updates['layers.topNameGradient'] = true;
+      updates['layers.bottomNameGradient'] = true;
+      updates['layers.cardId'] = true;
+    }
+    if (cardType === 'Hero Upgrade' && cardSubType === 'Defense Upgrade') {
+      updates['layers.imageFrame'] = false;
+      updates['layers.attackModifier'] = false;
+      updates['layers.secondAbilityFrame'] = false;
+      updates['layers.topNameGradient'] = true;
+      updates['layers.bottomNameGradient'] = true;
+      updates['layers.cardId'] = true;
+    }
+    if (cardType === 'Board Abilities' && cardSubType === 'Offensive ability') {
+      updates['layers.imageFrame'] = false;
+      updates['layers.attackModifier'] = false;
+      updates['layers.secondAbilityFrame'] = false;
+      updates['layers.topNameGradient'] = true;
+      updates['layers.bottomNameGradient'] = false;
+      updates['layers.cardId'] = false;
     }
     if (!Object.keys(updates).length) return;
     gameState.updateProperties(updates);
@@ -2138,6 +2701,10 @@ class UI {
     renderer.updateVisibility(card);
     if (this.toggleImageFrame) this.toggleImageFrame.checked = !!(card.layers && card.layers.imageFrame);
     if (this.toggleAttackModifier) this.toggleAttackModifier.checked = !!(card.layers && card.layers.attackModifier);
+    if (this.toggleSecondAbilityFrame) this.toggleSecondAbilityFrame.checked = !!(card.layers && card.layers.secondAbilityFrame);
+    if (this.toggleTopNameGradient) this.toggleTopNameGradient.checked = !!(card.layers && card.layers.topNameGradient);
+    if (this.toggleBottomNameGradient) this.toggleBottomNameGradient.checked = !!(card.layers && card.layers.bottomNameGradient);
+    if (this.toggleCardId) this.toggleCardId.checked = !!(card.layers && card.layers.cardId);
   }
 
   async copyTextToClipboard(text) {
@@ -2179,6 +2746,36 @@ class UI {
     const offset = Number(value);
     if (!Number.isFinite(offset)) return this.defaultCardIdOffset;
     return Math.max(-10, Math.min(10, offset));
+  }
+
+  isBoardAbilityCard(card = null) {
+    const target = card && typeof card === 'object' ? card : gameState.getCard();
+    return String(target?.cardType || '') === 'Board Abilities';
+  }
+
+  isDeckEligibleCard(card = null) {
+    return !this.isBoardAbilityCard(card);
+  }
+
+  updateDeckSaveAvailability(card = null) {
+    const isBoardAbility = this.isBoardAbilityCard(card);
+    if (this.deckSaveBtn) {
+      this.deckSaveBtn.disabled = false;
+      this.deckSaveBtn.textContent = isBoardAbility ? 'Save Ability' : 'Save Card';
+      this.deckSaveBtn.title = isBoardAbility ? 'Save this Board Ability to the board ability library.' : '';
+    }
+    if (this.deckLoadBtn) {
+      this.deckLoadBtn.disabled = isBoardAbility;
+      this.deckLoadBtn.title = isBoardAbility ? 'Board Abilities are loaded from the board ability library later.' : '';
+    }
+    if (this.deckDeleteCardBtn) {
+      this.deckDeleteCardBtn.disabled = isBoardAbility;
+      this.deckDeleteCardBtn.title = isBoardAbility ? 'Board Abilities are managed outside the deck system.' : '';
+    }
+    if (this.deckCardSelect) {
+      this.deckCardSelect.disabled = isBoardAbility;
+      this.deckCardSelect.title = isBoardAbility ? 'Board Abilities do not use deck slots.' : '';
+    }
   }
 
   normalizeCardIdInput(value) {
@@ -2307,7 +2904,8 @@ class UI {
           y: (Number(card.titlePosition.y) || 0) / scale
         };
       }
-      const blocks = Array.isArray(card.descriptionBlocks) ? card.descriptionBlocks : [];
+      const descContext = this.getDescriptionContext();
+      const blocks = Array.isArray(card[descContext.blocksKey]) ? card[descContext.blocksKey] : [];
       if (blocks.length) {
         const scaledBlocks = blocks.map((block) => ({
           ...block,
@@ -2316,13 +2914,13 @@ class UI {
             y: (Number(block?.position?.y) || 0) / scale
           }
         }));
-        updates.descriptionBlocks = scaledBlocks;
+        updates[descContext.blocksKey] = scaledBlocks;
         const activeId = this.getActiveDescriptionId(card, scaledBlocks);
         const activeBlock = scaledBlocks.find((block) => block.id === activeId);
-        if (activeBlock) {
+        if (activeBlock && !descContext.isLeaflet) {
           updates.descriptionPosition = activeBlock.position;
         }
-      } else if (card.descriptionPosition) {
+      } else if (!descContext.isLeaflet && card.descriptionPosition) {
         updates.descriptionPosition = {
           x: (Number(card.descriptionPosition.x) || 0) / scale,
           y: (Number(card.descriptionPosition.y) || 0) / scale
@@ -2346,11 +2944,13 @@ class UI {
     if (card.titleLetterSpacing === undefined) fontUpdates.titleLetterSpacing = this.defaultTitleLetterSpacing;
     if (card.descriptionLetterSpacing === undefined) fontUpdates.descriptionLetterSpacing = this.defaultDescriptionLetterSpacing;
     if (card.descriptionBaselineOffset === undefined) fontUpdates.descriptionBaselineOffset = this.defaultDescriptionBaselineOffset;
+    if (card.descriptionColor === undefined) fontUpdates.descriptionColor = this.defaultDescriptionColor;
     if (Object.keys(fontUpdates).length > 0) {
       gameState.updateProperties(fontUpdates);
       card = gameState.getCard();
     }
-    if (!Array.isArray(card.descriptionRich)) {
+    const descriptionContext = this.getDescriptionContext();
+    if (!descriptionContext.isLeaflet && !Array.isArray(card.descriptionRich)) {
       const activeBlock = this.getActiveDescriptionBlock(card);
       gameState.updateProperty(
         'descriptionRich',
@@ -2358,7 +2958,7 @@ class UI {
       );
       card = gameState.getCard();
     }
-    if (card.descriptionHtml === undefined) {
+    if (!descriptionContext.isLeaflet && card.descriptionHtml === undefined) {
       const activeBlock = this.getActiveDescriptionBlock(card);
       gameState.updateProperty('descriptionHtml', activeBlock?.descriptionHtml || '');
       card = gameState.getCard();
@@ -2389,6 +2989,47 @@ class UI {
     }
     if (!Array.isArray(card.abilityDiceEntries)) {
       gameState.updateProperty('abilityDiceEntries', []);
+      card = gameState.getCard();
+    }
+    if (!Array.isArray(card.customStatusEffects)) {
+      gameState.updateProperty('customStatusEffects', []);
+      card = gameState.getCard();
+    }
+    const rawLeafletLayers = card.leafletLayers || {};
+    const normalizedLeafletLayers = {
+      background: rawLeafletLayers.background !== false,
+      art: rawLeafletLayers.art !== false,
+      title: rawLeafletLayers.title !== false,
+      text: rawLeafletLayers.text !== false
+    };
+    if (
+      !card.leafletLayers
+      || typeof card.leafletLayers !== 'object'
+      || card.leafletLayers.background === undefined
+      || card.leafletLayers.art === undefined
+      || card.leafletLayers.title === undefined
+      || card.leafletLayers.text === undefined
+    ) {
+      gameState.updateProperty('leafletLayers', normalizedLeafletLayers);
+      card = gameState.getCard();
+    }
+    if (!card.leafletSide) {
+      gameState.updateProperty('leafletSide', 'front');
+      card = gameState.getCard();
+    }
+    const normalizedLeafletBreaks = this.getLeafletBreakEntries(card);
+    const rawLeafletBreaks = Array.isArray(card.leafletBreaks) ? card.leafletBreaks : [];
+    const leafletBreaksChanged = !Array.isArray(card.leafletBreaks)
+      || rawLeafletBreaks.length !== normalizedLeafletBreaks.length
+      || rawLeafletBreaks.some((entry, index) => {
+        if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return true;
+        const normalized = normalizedLeafletBreaks[index];
+        return String(entry.path || '') !== normalized.path
+          || this.clampLeafletBreakPercent(entry.x, normalized.x) !== normalized.x
+          || this.clampLeafletBreakPercent(entry.y, normalized.y) !== normalized.y;
+      });
+    if (leafletBreaksChanged) {
+      gameState.updateProperty('leafletBreaks', normalizedLeafletBreaks);
       card = gameState.getCard();
     }
 
@@ -2457,7 +3098,17 @@ class UI {
     this.ensureFontSelection(this.titleFontSelect, card.titleFont || this.defaultTitleFont);
     this.ensureFontSelection(this.descriptionFontSelect, card.descriptionFont || this.defaultDescriptionFont);
     if (this.titleFontSizeInput) this.titleFontSizeInput.value = card.titleFontSize || this.defaultTitleFontSize;
-    if (this.descriptionFontSizeInput) this.descriptionFontSizeInput.value = card.descriptionFontSize || this.defaultDescriptionFontSize;
+    const activeDescriptionBlock = this.getActiveDescriptionBlock(card);
+    if (this.descriptionFontSizeInput) {
+      this.descriptionFontSizeInput.value = this.clampDescriptionFontSize(
+        activeDescriptionBlock?.fontSize ?? card.descriptionFontSize,
+        this.getDescriptionContext().defaultFontSize
+      );
+    }
+    this.syncDescriptionColorControls(this.normalizeDescriptionColor(
+      activeDescriptionBlock?.color,
+      this.normalizeDescriptionColor(card.descriptionColor, this.defaultDescriptionColor)
+    ));
     if (this.descriptionLineHeightInput) {
       const spacing = this.clampLineHeightScale(card.descriptionLineHeightScale);
       this.descriptionLineHeightInput.value = spacing;
@@ -2482,19 +3133,29 @@ class UI {
         const blocks = this.getDescriptionBlocks(card).map((block) => (
           block.id === activeBlock.id ? { ...block, scale } : block
         ));
-        gameState.updateProperty('descriptionBlocks', blocks);
+        gameState.updateProperty(this.getDescriptionContext().blocksKey, blocks);
         card = gameState.getCard();
       }
     }
     this.cardTypeSelect.value = card.cardType;
     this.updateSubTypeLabel(card.cardType);
     this.updateSubTypeOptions(card.cardType, card.cardSubType, false);
+    this.updateDeckSaveAvailability(card);
 
     if (this.costInput) {
       const current = card?.costBadge?.value ?? '';
       this.costInput.value = String(current);
     }
     this.renderAbilityDiceControls(card);
+    this.renderCustomStatusEffectsControls(card);
+    this.renderLeafletBreakControls(card);
+    if (this.leafletLayerBackground) this.leafletLayerBackground.checked = card.leafletLayers?.background !== false;
+    if (this.leafletLayerArt) this.leafletLayerArt.checked = card.leafletLayers?.art !== false;
+    if (this.leafletLayerTitle) this.leafletLayerTitle.checked = card.leafletLayers?.title !== false;
+    if (this.leafletLayerText) this.leafletLayerText.checked = card.leafletLayers?.text !== false;
+    if (this.leafletSideSelect) {
+      this.leafletSideSelect.value = (card.leafletSide === 'back') ? 'back' : 'front';
+    }
 
     // Update image preview
     if (card.artData) {
@@ -2557,7 +3218,7 @@ class UI {
       const fallbackPosition = activeBlock ? activeBlock.position : { x: 0, y: 0 };
       gameState.updateProperty('titlePosition', fallbackPosition);
     }
-    if (!card.descriptionPosition) {
+    if (!this.getDescriptionContext().isLeaflet && !card.descriptionPosition) {
       const activeBlock = this.getActiveDescriptionBlock(card);
       const fallbackPosition = activeBlock ? activeBlock.position : { x: 0, y: 0 };
       gameState.updateProperty('descriptionPosition', fallbackPosition);
@@ -2567,6 +3228,12 @@ class UI {
     }
 
     // Update renderer
+    if (typeof renderer?.setWorkspaceMode === 'function') {
+      renderer.setWorkspaceMode(this.workspaceMode);
+    }
+    if (typeof renderer?.setLeafletSide === 'function') {
+      renderer.setLeafletSide(card.leafletSide);
+    }
     renderer.render(card);
     renderer.updateCostBadgePosition(card);
     const activeTitleId = this.getActiveTitleId(card, this.getTitleBlocks(card));
@@ -2619,6 +3286,11 @@ class UI {
         'Main Phase',
         'Instant',
         'Roll Phase'
+      ],
+      'Board Abilities': [
+        'Offensive ability',
+        'Passive Ability',
+        'Defensive ability'
       ]
     };
 
@@ -2635,7 +3307,7 @@ class UI {
     if (!options.length) return;
     const desired = selectedValue && options.includes(selectedValue) ? selectedValue : options[0];
     this.cardSubTypeSelect.value = desired;
-    if (shouldUpdateState) {
+    if (shouldUpdateState || desired !== selectedValue) {
       gameState.updateProperty('cardSubType', desired);
     }
   }
@@ -2643,7 +3315,15 @@ class UI {
   updateSubTypeLabel(cardType) {
     const label = document.getElementById('cardSubTypeLabel');
     if (label) {
-      label.textContent = cardType === 'Action Cards' ? 'Card Phase' : 'Upgrade Type';
+      if (cardType === 'Action Cards') {
+        label.textContent = 'Card Phase';
+        return;
+      }
+      if (cardType === 'Board Abilities') {
+        label.textContent = 'Ability Type';
+        return;
+      }
+      label.textContent = 'Upgrade Type';
     }
   }
 
@@ -2704,9 +3384,17 @@ class UI {
     if (this.titleFontSizeInput) {
       this.titleFontSizeInput.value = card.titleFontSize || this.defaultTitleFontSize;
     }
+    const activeDescriptionBlock = this.getActiveDescriptionBlock(card);
     if (this.descriptionFontSizeInput) {
-      this.descriptionFontSizeInput.value = card.descriptionFontSize || this.defaultDescriptionFontSize;
+      this.descriptionFontSizeInput.value = this.clampDescriptionFontSize(
+        activeDescriptionBlock?.fontSize ?? card.descriptionFontSize,
+        this.getDescriptionContext().defaultFontSize
+      );
     }
+    this.syncDescriptionColorControls(this.normalizeDescriptionColor(
+      activeDescriptionBlock?.color,
+      this.normalizeDescriptionColor(card.descriptionColor, this.defaultDescriptionColor)
+    ));
     if (this.descriptionLineHeightInput) {
       const spacing = this.clampLineHeightScale(card.descriptionLineHeightScale);
       this.descriptionLineHeightInput.value = spacing;
@@ -2829,11 +3517,6 @@ class UI {
     this.applyPrintLayerCssVariables();
   }
 
-  formatReferenceLabel(filename) {
-    if (!this.referenceManager) return String(filename || '');
-    return this.referenceManager.formatLabel(filename);
-  }
-
   ensureFontSelection(select, value) {
     if (!select) return;
     const existing = Array.from(select.options).some((opt) => opt.value === value);
@@ -2874,7 +3557,7 @@ class UI {
       modules: {
         toolbar: this.descriptionToolbar
       },
-      formats: ['font', 'bold', 'italic', 'underline']
+      formats: ['font', 'bold', 'italic', 'underline', 'color']
     });
 
     this.updateQuillFontPickerLabels();
@@ -2910,7 +3593,9 @@ class UI {
         <button type="button" class="description-box-remove">- Box</button>
       </span>
       <span class="ql-formats description-color-controls">
-        <input type="color" class="description-color-picker" value="#ff3333" aria-label="Copy hex color" title="Copy hex to clipboard">
+        <input type="color" class="description-color-picker" value="#ffffff" aria-label="Description box color" title="Description box color">
+        <input type="text" class="description-color-hex" value="#FFFFFF" aria-label="Description color hex" title="Description color hex" spellcheck="false">
+        <button type="button" class="description-color-copy" aria-label="Copy description color hex" title="Copy hex">Copy</button>
       </span>
     `;
 
@@ -2934,13 +3619,73 @@ class UI {
     }
 
     const colorPicker = this.descriptionToolbar.querySelector('.description-color-picker');
+    const colorHexInput = this.descriptionToolbar.querySelector('.description-color-hex');
+    const colorCopyButton = this.descriptionToolbar.querySelector('.description-color-copy');
     if (colorPicker) {
-      const handleCopy = (value) => {
-        if (!value) return;
-        this.copyTextToClipboard(value);
+      this.descriptionColorPicker = colorPicker;
+      this.descriptionColorHexInput = colorHexInput || null;
+      this.descriptionColorCopyButton = colorCopyButton || null;
+      const applySelectionColor = (value) => {
+        if (!this.descriptionQuill) return;
+        const color = this.syncDescriptionColorControls(value);
+        const range = this.descriptionQuill.getSelection() || this.lastDescriptionSelection;
+        if (!range || !Number.isFinite(range.length) || range.length <= 0) return;
+        this.descriptionQuill.setSelection(range);
+        this.descriptionQuill.format('color', color);
+        this.updateDescriptionStateFromEditor(true);
       };
-      colorPicker.addEventListener('input', (e) => handleCopy(e.target.value));
-      colorPicker.addEventListener('change', (e) => handleCopy(e.target.value));
+      colorPicker.addEventListener('input', (e) => applySelectionColor(e.target.value));
+      colorPicker.addEventListener('change', (e) => applySelectionColor(e.target.value));
+
+      if (colorHexInput) {
+        const applyHexInput = () => {
+          const normalized = this.normalizeDescriptionHexInput(colorHexInput.value);
+          if (!normalized) {
+            this.syncDescriptionColorControls(colorPicker.value || this.defaultDescriptionColor);
+            return;
+          }
+          applySelectionColor(normalized);
+        };
+        colorHexInput.addEventListener('change', applyHexInput);
+        colorHexInput.addEventListener('keydown', (event) => {
+          if (event.key !== 'Enter') return;
+          event.preventDefault();
+          applyHexInput();
+          colorHexInput.select();
+        });
+      }
+
+      if (colorCopyButton) {
+        colorCopyButton.addEventListener('click', async () => {
+          const color = this.syncDescriptionColorControls(
+            colorHexInput?.value || colorPicker.value || this.defaultDescriptionColor
+          );
+          let copied = false;
+          if (typeof navigator !== 'undefined' && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            try {
+              await navigator.clipboard.writeText(color);
+              copied = true;
+            } catch (error) {
+              copied = false;
+            }
+          }
+          if (!copied && colorHexInput && typeof document.execCommand === 'function') {
+            colorHexInput.focus();
+            colorHexInput.select();
+            copied = document.execCommand('copy');
+          }
+          colorCopyButton.textContent = copied ? 'Copied' : 'Copy';
+          if (copied) {
+            window.setTimeout(() => {
+              if (this.descriptionColorCopyButton === colorCopyButton) {
+                colorCopyButton.textContent = 'Copy';
+              }
+            }, 900);
+          }
+        });
+      }
+
+      this.syncDescriptionColorControls(this.defaultDescriptionColor);
     }
 
     this.initSidebarResize();
@@ -3018,6 +3763,7 @@ class UI {
 
   updateDescriptionStateFromEditor(force = false) {
     if (!this.descriptionQuill) return;
+    const context = this.getDescriptionContext();
     let card = gameState.getCard();
     card = this.ensureDescriptionBlocks(card);
     const defaultFont = card.descriptionFont || this.defaultDescriptionFont;
@@ -3037,14 +3783,17 @@ class UI {
       };
     });
     const activeBlock = updatedBlocks.find((block) => block.id === activeId) || updatedBlocks[0];
-    gameState.updateProperties({
-      descriptionBlocks: updatedBlocks,
-      activeDescriptionId: activeId,
-      description: plain,
-      descriptionRich: runs,
-      descriptionHtml: html,
-      descriptionPosition: activeBlock ? activeBlock.position : (card.descriptionPosition || { x: 0, y: 0 })
-    });
+    const updates = {
+      [context.blocksKey]: updatedBlocks,
+      [context.activeIdKey]: activeId
+    };
+    if (!context.isLeaflet) {
+      updates.description = plain;
+      updates.descriptionRich = runs;
+      updates.descriptionHtml = html;
+      updates.descriptionPosition = activeBlock ? activeBlock.position : (card.descriptionPosition || { x: 0, y: 0 });
+    }
+    gameState.updateProperties(updates);
     this.activeDescriptionId = activeId;
     if (force) {
       renderer.updateDescriptionImage(gameState.getCard());
@@ -3060,7 +3809,9 @@ class UI {
       if (typeof op.insert !== 'string') return;
       const fontId = op.attributes && op.attributes.font ? op.attributes.font : '';
       const fontFamily = this.fontIdToFamily.get(fontId) || fontId || defaultFont;
-      runs.push({ text: op.insert, font: fontFamily || defaultFont });
+      const colorAttr = op.attributes && op.attributes.color ? String(op.attributes.color) : '';
+      const color = this.normalizeDescriptionColor(colorAttr, '');
+      runs.push({ text: op.insert, font: fontFamily || defaultFont, color });
     });
     const merged = this.mergeAdjacentRuns(runs);
     if (merged.length > 0) {
@@ -3084,11 +3835,12 @@ class UI {
       const text = String(run.text || '');
       if (!text) return;
       const font = run.font || this.defaultDescriptionFont;
+      const color = this.normalizeDescriptionColor(run.color, '');
       const prev = merged[merged.length - 1];
-      if (prev && prev.font === font) {
+      if (prev && prev.font === font && this.normalizeDescriptionColor(prev.color, '') === color) {
         prev.text += text;
       } else {
-        merged.push({ text, font });
+        merged.push({ text, font, color });
       }
     });
     return merged;
@@ -3308,9 +4060,13 @@ class UI {
     return `desc-${seed}-${counter}-${rand}`;
   }
 
-  normalizeDescriptionBlock(block, fallback, fallbackId) {
+  normalizeDescriptionBlock(block, fallback, fallbackId, options = {}) {
     const safeBlock = (block && typeof block === 'object') ? block : {};
     const safeFallback = (fallback && typeof fallback === 'object') ? fallback : {};
+    const fallbackFontSize = this.clampDescriptionFontSize(
+      options.defaultFontSize,
+      this.defaultDescriptionFontSize
+    );
     const id = String(safeBlock.id || fallbackId || '').trim() || String(fallbackId || 'desc-1');
     const description = safeBlock.description !== undefined
       ? String(safeBlock.description)
@@ -3328,35 +4084,51 @@ class UI {
     };
     const rawScale = safeBlock.scale !== undefined ? safeBlock.scale : safeFallback.scale;
     const scale = Number.isFinite(Number(rawScale)) ? Number(rawScale) : this.defaultDescriptionBoxScale;
+    const rawFontSize = safeBlock.fontSize !== undefined ? safeBlock.fontSize : safeFallback.fontSize;
+    const fontSize = this.clampDescriptionFontSize(rawFontSize, fallbackFontSize);
+    const color = this.normalizeDescriptionColor(
+      safeBlock.color !== undefined ? safeBlock.color : safeFallback.color,
+      this.defaultDescriptionColor
+    );
     return {
       id,
       description,
       descriptionRich,
       descriptionHtml,
       position,
-      scale
+      scale,
+      fontSize,
+      color
     };
   }
 
-  getDescriptionBlocks(card) {
+  getDescriptionBlocks(card, mode = this.workspaceMode) {
+    const context = this.getDescriptionContext(mode);
+    const rawBlocks = Array.isArray(card?.[context.blocksKey]) ? card[context.blocksKey] : [];
     const fallback = {
       description: card.description || '',
       descriptionRich: Array.isArray(card.descriptionRich) ? card.descriptionRich : [],
       descriptionHtml: card.descriptionHtml || '',
       position: card.descriptionPosition || { x: 0, y: 0 },
-      scale: this.defaultDescriptionBoxScale
+      scale: this.defaultDescriptionBoxScale,
+      fontSize: context.isLeaflet
+        ? context.defaultFontSize
+        : this.clampDescriptionFontSize(card.descriptionFontSize, context.defaultFontSize),
+      color: this.normalizeDescriptionColor(card.descriptionColor, this.defaultDescriptionColor)
     };
-    if (Array.isArray(card.descriptionBlocks) && card.descriptionBlocks.length) {
-      return card.descriptionBlocks.map((block, idx) => (
-        this.normalizeDescriptionBlock(block, idx === 0 ? fallback : null, `desc-${idx + 1}`)
+    if (rawBlocks.length) {
+      return rawBlocks.map((block, idx) => (
+        this.normalizeDescriptionBlock(block, fallback, `desc-${idx + 1}`, { defaultFontSize: context.defaultFontSize })
       ));
     }
-    return [this.normalizeDescriptionBlock({}, fallback, 'desc-1')];
+    const fallbackId = context.isLeaflet ? 'leaflet-desc-1' : 'desc-1';
+    return [this.normalizeDescriptionBlock({}, fallback, fallbackId, { defaultFontSize: context.defaultFontSize })];
   }
 
-  ensureDescriptionBlocks(card) {
-    const rawBlocks = Array.isArray(card.descriptionBlocks) ? card.descriptionBlocks : [];
-    const normalized = this.getDescriptionBlocks(card);
+  ensureDescriptionBlocks(card, mode = this.workspaceMode) {
+    const context = this.getDescriptionContext(mode);
+    const rawBlocks = Array.isArray(card?.[context.blocksKey]) ? card[context.blocksKey] : [];
+    const normalized = this.getDescriptionBlocks(card, mode);
     let needsNormalize = !rawBlocks.length || rawBlocks.some((block) => {
       if (!block || typeof block !== 'object') return true;
       if (!block.id) return true;
@@ -3365,9 +4137,13 @@ class UI {
       if (!Array.isArray(block.descriptionRich)) return true;
       if (block.descriptionHtml === undefined) return true;
       if (block.scale === undefined || !Number.isFinite(Number(block.scale))) return true;
+      if (block.fontSize === undefined || !Number.isFinite(Number(block.fontSize))) return true;
+      if (block.color === undefined) return true;
+      const blockColor = String(block.color || '').trim();
+      if (!/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(blockColor)) return true;
       return false;
     });
-    if (!needsNormalize && rawBlocks.length === 1) {
+    if (!needsNormalize && rawBlocks.length === 1 && !context.isLeaflet) {
       const onlyBlock = rawBlocks[0] || {};
       const blockText = String(onlyBlock.description || '').trim();
       const cardText = String(card.description || '').trim();
@@ -3388,14 +4164,14 @@ class UI {
     }
     const updates = {};
     if (needsNormalize) {
-      updates.descriptionBlocks = normalized;
+      updates[context.blocksKey] = normalized;
     }
-    const activeId = card.activeDescriptionId;
+    const activeId = card[context.activeIdKey];
     const resolvedActiveId = activeId && normalized.some((block) => block.id === activeId)
       ? activeId
       : (normalized[0] ? normalized[0].id : null);
-    if (resolvedActiveId && resolvedActiveId !== card.activeDescriptionId) {
-      updates.activeDescriptionId = resolvedActiveId;
+    if (resolvedActiveId && resolvedActiveId !== card[context.activeIdKey]) {
+      updates[context.activeIdKey] = resolvedActiveId;
     }
     if (Object.keys(updates).length > 0) {
       gameState.updateProperties(updates);
@@ -3404,16 +4180,17 @@ class UI {
     return card;
   }
 
-  getActiveDescriptionId(card, blocks) {
-    const list = blocks && blocks.length ? blocks : this.getDescriptionBlocks(card);
-    const activeId = card.activeDescriptionId;
+  getActiveDescriptionId(card, blocks, mode = this.workspaceMode) {
+    const context = this.getDescriptionContext(mode);
+    const list = blocks && blocks.length ? blocks : this.getDescriptionBlocks(card, mode);
+    const activeId = card[context.activeIdKey];
     if (activeId && list.some((block) => block.id === activeId)) return activeId;
     return list[0] ? list[0].id : null;
   }
 
-  getActiveDescriptionBlock(card, blocks) {
-    const list = blocks && blocks.length ? blocks : this.getDescriptionBlocks(card);
-    const activeId = this.getActiveDescriptionId(card, list);
+  getActiveDescriptionBlock(card, blocks, mode = this.workspaceMode) {
+    const list = blocks && blocks.length ? blocks : this.getDescriptionBlocks(card, mode);
+    const activeId = this.getActiveDescriptionId(card, list, mode);
     return list.find((block) => block.id === activeId) || list[0] || null;
   }
 
@@ -3430,6 +4207,7 @@ class UI {
   }
 
   setActiveDescriptionBlock(id, options = {}) {
+    const context = this.getDescriptionContext();
     let card = gameState.getCard();
     card = this.ensureDescriptionBlocks(card);
     const blocks = this.getDescriptionBlocks(card);
@@ -3438,14 +4216,22 @@ class UI {
     const activeBlock = blocks.find((block) => block.id === targetId) || blocks[0];
     if (!activeBlock) return;
 
-    if (card.activeDescriptionId !== targetId) {
-      gameState.updateProperties({
-        activeDescriptionId: targetId,
-        description: activeBlock.description || '',
-        descriptionRich: Array.isArray(activeBlock.descriptionRich) ? activeBlock.descriptionRich : [],
-        descriptionHtml: activeBlock.descriptionHtml || '',
-        descriptionPosition: activeBlock.position || { x: 0, y: 0 }
-      });
+    if (card[context.activeIdKey] !== targetId) {
+      const updates = {
+        [context.activeIdKey]: targetId
+      };
+      if (!context.isLeaflet) {
+        updates.description = activeBlock.description || '';
+        updates.descriptionRich = Array.isArray(activeBlock.descriptionRich) ? activeBlock.descriptionRich : [];
+        updates.descriptionHtml = activeBlock.descriptionHtml || '';
+        updates.descriptionPosition = activeBlock.position || { x: 0, y: 0 };
+        updates.descriptionFontSize = this.clampDescriptionFontSize(activeBlock.fontSize ?? card.descriptionFontSize);
+        updates.descriptionColor = this.normalizeDescriptionColor(
+          activeBlock.color,
+          this.normalizeDescriptionColor(card.descriptionColor, this.defaultDescriptionColor)
+        );
+      }
+      gameState.updateProperties(updates);
       card = gameState.getCard();
     }
     this.activeDescriptionId = targetId;
@@ -3455,15 +4241,36 @@ class UI {
       this.descriptionBoxScaleInput.value = scale;
       if (this.descriptionBoxScaleValue) this.descriptionBoxScaleValue.textContent = scale.toFixed(2);
     }
+    if (this.descriptionFontSizeInput) {
+      const fontSize = this.clampDescriptionFontSize(
+        activeBlock.fontSize ?? card.descriptionFontSize,
+        context.defaultFontSize
+      );
+      this.descriptionFontSizeInput.value = fontSize;
+    }
+    this.syncDescriptionColorControls(this.normalizeDescriptionColor(
+      activeBlock.color,
+      this.normalizeDescriptionColor(card.descriptionColor, this.defaultDescriptionColor)
+    ));
     if (options.syncEditor !== false) {
       this.syncDescriptionEditor(card);
     }
   }
 
   addDescriptionBox() {
+    const context = this.getDescriptionContext();
     let card = gameState.getCard();
     card = this.ensureDescriptionBlocks(card);
     const blocks = this.getDescriptionBlocks(card);
+    const activeBlock = this.getActiveDescriptionBlock(card, blocks);
+    const nextFontSize = this.clampDescriptionFontSize(
+      activeBlock?.fontSize ?? card.descriptionFontSize,
+      context.defaultFontSize
+    );
+    const nextColor = this.normalizeDescriptionColor(
+      activeBlock?.color,
+      this.normalizeDescriptionColor(card.descriptionColor, this.defaultDescriptionColor)
+    );
     const newId = this.createDescriptionId();
     const newBlock = {
       id: newId,
@@ -3471,17 +4278,24 @@ class UI {
       descriptionRich: [],
       descriptionHtml: '',
       position: { x: 0, y: 0 },
-      scale: this.defaultDescriptionBoxScale
+      scale: this.defaultDescriptionBoxScale,
+      fontSize: nextFontSize,
+      color: nextColor
     };
     const updatedBlocks = [...blocks, newBlock];
-    gameState.updateProperties({
-      descriptionBlocks: updatedBlocks,
-      activeDescriptionId: newId,
-      description: '',
-      descriptionRich: [],
-      descriptionHtml: '',
-      descriptionPosition: { x: 0, y: 0 }
-    });
+    const updates = {
+      [context.blocksKey]: updatedBlocks,
+      [context.activeIdKey]: newId
+    };
+    if (!context.isLeaflet) {
+      updates.description = '';
+      updates.descriptionRich = [];
+      updates.descriptionHtml = '';
+      updates.descriptionPosition = { x: 0, y: 0 };
+      updates.descriptionFontSize = nextFontSize;
+      updates.descriptionColor = nextColor;
+    }
+    gameState.updateProperties(updates);
     const updatedCard = gameState.getCard();
     this.activeDescriptionId = newId;
     this.updateDescriptionLayerActiveState(newId);
@@ -3492,6 +4306,7 @@ class UI {
   }
 
   removeActiveDescriptionBox() {
+    const context = this.getDescriptionContext();
     let card = gameState.getCard();
     card = this.ensureDescriptionBlocks(card);
     const blocks = this.getDescriptionBlocks(card);
@@ -3504,14 +4319,22 @@ class UI {
         descriptionRich: [],
         descriptionHtml: ''
       };
-      gameState.updateProperties({
-        descriptionBlocks: [clearedBlock],
-        activeDescriptionId: clearedBlock.id,
-        description: '',
-        descriptionRich: [],
-        descriptionHtml: '',
-        descriptionPosition: clearedBlock.position || { x: 0, y: 0 }
-      });
+      const updates = {
+        [context.blocksKey]: [clearedBlock],
+        [context.activeIdKey]: clearedBlock.id
+      };
+      if (!context.isLeaflet) {
+        updates.description = '';
+        updates.descriptionRich = [];
+        updates.descriptionHtml = '';
+        updates.descriptionPosition = clearedBlock.position || { x: 0, y: 0 };
+        updates.descriptionFontSize = this.clampDescriptionFontSize(clearedBlock.fontSize ?? card.descriptionFontSize);
+        updates.descriptionColor = this.normalizeDescriptionColor(
+          clearedBlock.color,
+          this.normalizeDescriptionColor(card.descriptionColor, this.defaultDescriptionColor)
+        );
+      }
+      gameState.updateProperties(updates);
       const updatedCard = gameState.getCard();
       this.activeDescriptionId = clearedBlock.id;
       this.updateDescriptionLayerActiveState(clearedBlock.id);
@@ -3530,14 +4353,22 @@ class UI {
     const nextBlock = remainingBlocks[nextIndex] || remainingBlocks[0];
     if (!nextBlock) return;
 
-    gameState.updateProperties({
-      descriptionBlocks: remainingBlocks,
-      activeDescriptionId: nextBlock.id,
-      description: nextBlock.description || '',
-      descriptionRich: Array.isArray(nextBlock.descriptionRich) ? nextBlock.descriptionRich : [],
-      descriptionHtml: nextBlock.descriptionHtml || '',
-      descriptionPosition: nextBlock.position || { x: 0, y: 0 }
-    });
+    const updates = {
+      [context.blocksKey]: remainingBlocks,
+      [context.activeIdKey]: nextBlock.id
+    };
+    if (!context.isLeaflet) {
+      updates.description = nextBlock.description || '';
+      updates.descriptionRich = Array.isArray(nextBlock.descriptionRich) ? nextBlock.descriptionRich : [];
+      updates.descriptionHtml = nextBlock.descriptionHtml || '';
+      updates.descriptionPosition = nextBlock.position || { x: 0, y: 0 };
+      updates.descriptionFontSize = this.clampDescriptionFontSize(nextBlock.fontSize ?? card.descriptionFontSize);
+      updates.descriptionColor = this.normalizeDescriptionColor(
+        nextBlock.color,
+        this.normalizeDescriptionColor(card.descriptionColor, this.defaultDescriptionColor)
+      );
+    }
+    gameState.updateProperties(updates);
 
     const updatedCard = gameState.getCard();
     this.activeDescriptionId = nextBlock.id;
@@ -3549,6 +4380,7 @@ class UI {
   syncDescriptionEditor(card) {
     if (!this.descriptionQuill) return;
     if (this.descriptionEditor && this.descriptionEditor.contains(document.activeElement)) return;
+    const context = this.getDescriptionContext();
     const synced = this.ensureDescriptionBlocks(card);
     const blocks = this.getDescriptionBlocks(synced);
     const activeBlock = this.getActiveDescriptionBlock(synced, blocks);
@@ -3566,6 +4398,16 @@ class UI {
     this.descriptionQuill.root.style.fontFamily = defaultFont;
     this.descriptionQuill.format('font', this.buildFontId(defaultFont));
     this.suppressDescriptionUpdate = false;
+    if (this.descriptionFontSizeInput) {
+      this.descriptionFontSizeInput.value = this.clampDescriptionFontSize(
+        activeBlock?.fontSize ?? synced.descriptionFontSize,
+        context.defaultFontSize
+      );
+    }
+    this.syncDescriptionColorControls(this.normalizeDescriptionColor(
+      activeBlock?.color,
+      this.normalizeDescriptionColor(synced.descriptionColor, this.defaultDescriptionColor)
+    ));
     if (activeBlock && activeBlock.id) {
       this.activeDescriptionId = activeBlock.id;
       this.updateDescriptionLayerActiveState(activeBlock.id);
@@ -3584,12 +4426,14 @@ class UI {
     runs.forEach((run) => {
       const font = run.font || this.defaultDescriptionFont;
       const fontId = this.buildFontId(font);
+      const color = this.normalizeDescriptionColor(run.color, '');
+      const styleAttr = color ? ` style="color:${escapeHtml(color)}"` : '';
       const text = String(run.text || '');
       const parts = text.split('\n');
       parts.forEach((part, idx) => {
         if (part.length > 0) {
           lines.push(
-            `<span class="ql-font-${escapeHtml(fontId)}">${escapeHtml(part)}</span>`
+            `<span class="ql-font-${escapeHtml(fontId)}"${styleAttr}>${escapeHtml(part)}</span>`
           );
         }
         if (idx < parts.length - 1) {
@@ -3725,11 +4569,6 @@ class UI {
   getHiddenLayerKeys(card) {
     const baseOrder = this.normalizeLayerOrder(card?.layerOrder);
     return this.normalizeHiddenLayers(card?.hiddenLayers, baseOrder);
-  }
-
-  isLayerHidden(card, key) {
-    const hidden = this.getHiddenLayerKeys(card);
-    return hidden.includes(key);
   }
 
   setLayerHidden(key, hidden) {
@@ -3881,6 +4720,164 @@ class UI {
       localStorage.setItem(this.deckStorageKey, JSON.stringify(store));
     } catch (error) {
       console.warn('Failed to save deck storage:', error);
+    }
+  }
+
+  loadBoardAbilityStore() {
+    try {
+      const raw = localStorage.getItem(this.boardAbilityStorageKey);
+      if (!raw) return { abilities: {}, order: [] };
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') return { abilities: {}, order: [] };
+      return {
+        abilities: parsed.abilities || {},
+        order: Array.isArray(parsed.order) ? parsed.order : []
+      };
+    } catch (error) {
+      console.warn('Failed to load board ability storage:', error);
+      return { abilities: {}, order: [] };
+    }
+  }
+
+  saveBoardAbilityStore(store) {
+    try {
+      localStorage.setItem(this.boardAbilityStorageKey, JSON.stringify(store));
+    } catch (error) {
+      console.warn('Failed to save board ability storage:', error);
+    }
+  }
+
+  getStoredBoardSlotAssignments() {
+    const fallback = Array.from({ length: this.boardSlotSelects.length }, () => '');
+    try {
+      const raw = localStorage.getItem(this.boardSlotStorageKey);
+      if (!raw) return fallback;
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return fallback;
+      return fallback.map((_, index) => String(parsed[index] || ''));
+    } catch (error) {
+      console.warn('Failed to load board slot assignments:', error);
+      return fallback;
+    }
+  }
+
+  saveBoardSlotAssignments(values = []) {
+    const normalized = Array.from({ length: this.boardSlotSelects.length }, (_, index) => String(values[index] || ''));
+    try {
+      localStorage.setItem(this.boardSlotStorageKey, JSON.stringify(normalized));
+    } catch (error) {
+      console.warn('Failed to save board slot assignments:', error);
+    }
+  }
+
+  refreshBoardAbilityOptions() {
+    if (!this.boardSlotSelects.length) return;
+    const store = this.loadBoardAbilityStore();
+    const orderedIds = (Array.isArray(store.order) ? store.order : [])
+      .filter((id) => id && store.abilities && store.abilities[id]);
+    const abilities = orderedIds.map((id) => store.abilities[id]).filter(Boolean);
+    const storedSelections = this.getStoredBoardSlotAssignments();
+
+    this.boardSlotSelects.forEach((selectEl, index) => {
+      if (!selectEl) return;
+      const currentValue = String(selectEl.value || storedSelections[index] || '');
+      selectEl.innerHTML = '';
+
+      const emptyOption = document.createElement('option');
+      emptyOption.value = '';
+      emptyOption.textContent = 'Unassigned';
+      selectEl.appendChild(emptyOption);
+
+      abilities.forEach((entry) => {
+        const option = document.createElement('option');
+        option.value = entry.id;
+        option.textContent = entry.subType
+          ? `${entry.name} (${entry.subType})`
+          : entry.name;
+        selectEl.appendChild(option);
+      });
+
+      const isValid = currentValue && abilities.some((entry) => entry.id === currentValue);
+      selectEl.value = isValid ? currentValue : '';
+    });
+
+    this.saveBoardSlotAssignments(this.boardSlotSelects.map((selectEl) => (selectEl ? selectEl.value : '')));
+    this.renderBoardSlotAssignments();
+  }
+
+  setBoardSlotCardContent(slotEl, slotId, entry = null, imageSrc = '') {
+    if (!slotEl) return;
+    slotEl.replaceChildren();
+    slotEl.classList.toggle('is-empty', !imageSrc);
+    slotEl.title = entry
+      ? `${entry.name}${entry.subType ? ` (${entry.subType})` : ''}`
+      : `Slot ${slotId} unassigned`;
+
+    if (imageSrc) {
+      const img = document.createElement('img');
+      img.src = imageSrc;
+      img.alt = entry?.name || `Slot ${slotId}`;
+      slotEl.appendChild(img);
+    } else {
+      const placeholder = document.createElement('div');
+      placeholder.className = 'board-slot-card__placeholder';
+      placeholder.textContent = entry ? `Preview unavailable` : 'Unassigned';
+      slotEl.appendChild(placeholder);
+    }
+  }
+
+  async renderBoardSlotAssignments() {
+    if (!this.boardSlotCards.length) return;
+    const renderToken = ++this.boardSlotRenderToken;
+    const store = this.loadBoardAbilityStore();
+    const abilities = store.abilities && typeof store.abilities === 'object' ? store.abilities : {};
+    const assignments = this.getStoredBoardSlotAssignments();
+    const slotMap = new Map(this.boardSlotCards.map((node) => [String(node.dataset.slotId || ''), node]));
+
+    this.boardSlotCards.forEach((slotEl) => {
+      const slotId = String(slotEl.dataset.slotId || '');
+      this.setBoardSlotCardContent(slotEl, slotId || '?', null, '');
+    });
+
+    await this.ensureDeckDefaultCard();
+    if (renderToken !== this.boardSlotRenderToken) return;
+
+    for (let index = 0; index < assignments.length; index += 1) {
+      const slotId = String(index + 1);
+      const slotEl = slotMap.get(slotId);
+      if (!slotEl) continue;
+      const entryId = String(assignments[index] || '');
+      const entry = entryId ? abilities[entryId] : null;
+      if (!entry) {
+        this.setBoardSlotCardContent(slotEl, slotId, null, '');
+        continue;
+      }
+
+      let imageSrc = '';
+      try {
+        const cardData = this.buildCardFromJson(entry.json);
+        if (!cardData.name || cardData.name === 'Title') {
+          cardData.name = entry.name || `Slot ${slotId}`;
+        }
+        imageSrc = await renderer.renderCardToDataUrl(cardData, {
+          width: Number(DTC_UI_EXPORT_SIZE.width) || 675,
+          height: Number(DTC_UI_EXPORT_SIZE.height) || 1050,
+          includeBleed: false,
+          usePreviewMetrics: false,
+          fitMode: 'contain',
+          trimTransparent: true,
+          trimAlphaThreshold: 1,
+          cropToBleedBounds: true
+        });
+        if (imageSrc) {
+          imageSrc = await this.scaleDeckCardDataUrl(imageSrc, 314, 476, 'cover', 1, true);
+        }
+      } catch (error) {
+        console.warn('Failed to render board slot preview:', slotId, error);
+      }
+
+      if (renderToken !== this.boardSlotRenderToken) return;
+      this.setBoardSlotCardContent(slotEl, slotId, entry, imageSrc);
     }
   }
 
@@ -4257,6 +5254,10 @@ class UI {
       { label: 'Ability Dice (Count)', command: '{{abilitydice,3,#33ccff}}', iconSrc: 'Assets/Icons/Ability Dice/ability_dice.png' },
       { label: 'Ability Dice (Small)', command: '{{abilitydice,small}}', iconSrc: 'Assets/Icons/Ability Dice/straight/small_straight.png' },
       { label: 'Ability Dice (Large)', command: '{{abilitydice,large}}', iconSrc: 'Assets/Icons/Ability Dice/straight/large_straight.png' },
+      { label: 'Basic Dice', command: '{{basicdice,3,#33ccff}}', iconSrc: 'Assets/Icons/Ability Dice/ability_dice.png' },
+      { label: 'Text Dice', command: '{{textdice,3,#33ccff}}', iconSrc: 'Assets/Icons/Ability Dice/ability_dice.png' },
+      { label: 'Defensive Dice', command: '{{defensivedice}}', iconSrc: 'Assets/Icons/Defensive Dice/ability_dice_w.png' },
+      { label: 'Defensive Dice (Count)', command: '{{defensivedice,3}}', iconSrc: 'Assets/Icons/Defensive Dice/ability_dice_w.png' },
       { label: 'Dice', command: '{{dice}}', iconSrc: 'Assets/Icons/Dice/dice.png' },
       { label: 'Half', command: '{{half}}', iconSrc: 'Assets/Icons/Half/half.png' }
     ];
@@ -4353,12 +5354,12 @@ class UI {
   async handleAbilityDiceUpload(slot, file) {
     if (!slot || !file) return;
     const safeSlot = String(slot).toUpperCase();
-    const reader = new FileReader();
-    const dataUrl = await new Promise((resolve, reject) => {
-      reader.onload = () => resolve(String(reader.result || ''));
-      reader.onerror = () => reject(new Error('Failed to read ability dice icon.'));
-      reader.readAsDataURL(file);
-    }).catch(() => '');
+    if (!this.validateImageFile(file, { label: 'ability icon' })) return;
+    const dataUrl = await this.readFileAsDataUrl(file, 'Failed to read ability dice icon.').catch((error) => {
+      console.warn('Failed to upload ability dice icon:', error);
+      alert('Failed to read the selected ability icon.');
+      return '';
+    });
     if (!dataUrl) return;
 
     let card = gameState.getCard();
@@ -4412,25 +5413,20 @@ class UI {
       label.className = 'ability-dice-label';
       label.textContent = entry.slot;
 
-      const inputId = `abilityDiceUpload_${entry.slot}`;
-      const fileInput = document.createElement('input');
-      fileInput.id = inputId;
-      fileInput.type = 'file';
-      fileInput.accept = 'image/*';
-      fileInput.className = 'file-input';
-      fileInput.addEventListener('change', (e) => {
-        const file = e?.target?.files?.[0];
-        if (file) this.handleAbilityDiceUpload(entry.slot, file);
-      });
-
-      const uploadLabel = document.createElement('label');
-      uploadLabel.htmlFor = inputId;
-      uploadLabel.textContent = entry.fileName || 'Upload Icon';
+      const uploadInput = this.createInlineImageUploadInput(
+        `Upload Ability Dice ${entry.slot}`,
+        (file) => this.handleAbilityDiceUpload(entry.slot, file)
+      );
 
       const preview = document.createElement('img');
       preview.className = 'ability-dice-preview';
       preview.alt = `Ability Dice ${entry.slot}`;
-      preview.src = entry.iconData || entry.iconUrl || '';
+      const previewSrc = entry.iconData || entry.iconUrl || '';
+      preview.src = previewSrc;
+      preview.title = entry.fileName || `Ability Dice ${entry.slot}`;
+      if (!previewSrc) {
+        preview.style.display = 'none';
+      }
 
       const removeBtn = document.createElement('button');
       removeBtn.type = 'button';
@@ -4439,11 +5435,459 @@ class UI {
       removeBtn.addEventListener('click', () => this.removeAbilityDiceEntry(entry.slot));
 
       row.appendChild(label);
-      row.appendChild(fileInput);
-      row.appendChild(uploadLabel);
+      row.appendChild(uploadInput);
       row.appendChild(preview);
       row.appendChild(removeBtn);
       this.abilityDiceList.appendChild(row);
+    });
+  }
+
+  buildLeafletBreakOptions() {
+    const options = [
+      ['Assets/Leaflet/Front/Break/Small_1.png', 416, 147],
+      ['Assets/Leaflet/Front/Break/Small_2.png', 416, 147],
+      ['Assets/Leaflet/Front/Break/Small_3.png', 416, 147],
+      ['Assets/Leaflet/Front/Break/Medium_1.png', 426, 264],
+      ['Assets/Leaflet/Front/Break/Medium_2.png', 426, 264],
+      ['Assets/Leaflet/Front/Break/Medium_3.png', 426, 264],
+      ['Assets/Leaflet/Front/Break/bottom_1.png', 426, 264],
+      ['Assets/Leaflet/Front/Break/bottom_2.png', 426, 309],
+      ['Assets/Leaflet/Front/Break/bottom_3.png', 426, 371],
+      ['Assets/Leaflet/Front/Break/bottom_4.png', 426, 625]
+    ];
+    return options.map(([path, width, height]) => ({
+      path,
+      width,
+      height,
+      label: this.formatLeafletBreakLabel(path)
+    }));
+  }
+
+  formatLeafletBreakLabel(path) {
+    const fileName = String(path || '').split('/').pop() || '';
+    const base = fileName.replace(/\.[^/.]+$/, '').replace(/_/g, ' ').trim();
+    if (!base) return 'Break';
+    return base.replace(/\b[a-z]/g, (match) => match.toUpperCase());
+  }
+
+  isValidLeafletBreakPath(path) {
+    const safePath = String(path || '').trim();
+    if (!safePath) return false;
+    return this.leafletBreakOptions.some((option) => option.path === safePath);
+  }
+
+  getLeafletBreakOption(path) {
+    const safePath = String(path || '').trim();
+    if (!safePath) return null;
+    return this.leafletBreakOptions.find((option) => option.path === safePath) || null;
+  }
+
+  clampLeafletBreakPercent(value, fallback = 50) {
+    const numeric = Number(value);
+    const safeValue = Number.isFinite(numeric) ? numeric : fallback;
+    return Math.max(-25, Math.min(125, Math.round(safeValue * 10) / 10));
+  }
+
+  getLeafletBreakDefaultPositions(paths = []) {
+    const validOptions = paths
+      .map((path) => this.getLeafletBreakOption(path))
+      .filter(Boolean);
+    if (!validOptions.length) return [];
+
+    const baseHeight = 1203;
+    const gapPx = 12;
+    const bottomInsetPx = 36;
+    const totalHeight = validOptions.reduce((sum, option) => sum + option.height, 0)
+      + Math.max(0, validOptions.length - 1) * gapPx;
+    let currentTop = Math.max(0, baseHeight - bottomInsetPx - totalHeight);
+
+    return validOptions.map((option) => {
+      const position = {
+        x: 50,
+        y: this.clampLeafletBreakPercent((currentTop / baseHeight) * 100, 50)
+      };
+      currentTop += option.height + gapPx;
+      return position;
+    });
+  }
+
+  normalizeLeafletBreakEntries(source) {
+    const rawEntries = Array.isArray(source) ? source : [];
+    const validPaths = rawEntries
+      .map((entry) => {
+        const rawPath = entry && typeof entry === 'object' && !Array.isArray(entry)
+          ? entry.path
+          : entry;
+        const safePath = String(rawPath || '').trim();
+        return this.isValidLeafletBreakPath(safePath) ? safePath : '';
+      })
+      .filter(Boolean);
+    const defaultPositions = this.getLeafletBreakDefaultPositions(validPaths);
+    let validIndex = 0;
+
+    return rawEntries.map((entry) => {
+      const rawObject = entry && typeof entry === 'object' && !Array.isArray(entry)
+        ? entry
+        : null;
+      const rawPath = rawObject ? rawObject.path : entry;
+      const safePath = String(rawPath || '').trim();
+      if (!this.isValidLeafletBreakPath(safePath)) {
+        return {
+          path: '',
+          x: this.clampLeafletBreakPercent(rawObject?.x, 50),
+          y: this.clampLeafletBreakPercent(rawObject?.y, 50)
+        };
+      }
+
+      const fallback = defaultPositions[validIndex] || { x: 50, y: 50 };
+      validIndex += 1;
+      return {
+        path: safePath,
+        x: this.clampLeafletBreakPercent(rawObject?.x, fallback.x),
+        y: this.clampLeafletBreakPercent(rawObject?.y, fallback.y)
+      };
+    });
+  }
+
+  getLeafletBreakEntries(card) {
+    return this.normalizeLeafletBreakEntries(card?.leafletBreaks);
+  }
+
+  addLeafletBreakEntry() {
+    let card = gameState.getCard();
+    const entries = this.getLeafletBreakEntries(card);
+    gameState.updateProperty('leafletBreaks', [...entries, { path: '', x: 50, y: 50 }]);
+    card = gameState.getCard();
+    this.renderLeafletBreakControls(card);
+    renderer.render(card);
+  }
+
+  updateLeafletBreakEntry(index, value) {
+    const safeIndex = Number(index);
+    if (!Number.isInteger(safeIndex) || safeIndex < 0) return;
+    let card = gameState.getCard();
+    const entries = this.getLeafletBreakEntries(card);
+    if (safeIndex >= entries.length) return;
+    const nextEntries = entries.map((entry) => ({ ...entry }));
+    const previousPath = nextEntries[safeIndex].path;
+    const nextPath = this.isValidLeafletBreakPath(value) ? String(value).trim() : '';
+    nextEntries[safeIndex].path = nextPath;
+    if (!this.isValidLeafletBreakPath(previousPath) && nextPath) {
+      delete nextEntries[safeIndex].x;
+      delete nextEntries[safeIndex].y;
+    }
+    gameState.updateProperty('leafletBreaks', this.normalizeLeafletBreakEntries(nextEntries));
+    card = gameState.getCard();
+    this.renderLeafletBreakControls(card);
+    renderer.render(card);
+  }
+
+  updateLeafletBreakPosition(index, axis, value) {
+    const safeIndex = Number(index);
+    if (!Number.isInteger(safeIndex) || safeIndex < 0) return;
+    if (axis !== 'x' && axis !== 'y') return;
+    const entries = this.getLeafletBreakEntries(gameState.getCard());
+    if (safeIndex >= entries.length) return;
+    const current = entries[safeIndex];
+    this.setLeafletBreakPosition(safeIndex, {
+      x: axis === 'x' ? value : current.x,
+      y: axis === 'y' ? value : current.y
+    });
+  }
+
+  setLeafletBreakPosition(index, position, options = {}) {
+    const safeIndex = Number(index);
+    if (!Number.isInteger(safeIndex) || safeIndex < 0) return null;
+    const nextPosition = position && typeof position === 'object' ? position : {};
+    let card = gameState.getCard();
+    const entries = this.getLeafletBreakEntries(card);
+    if (safeIndex >= entries.length) return null;
+    const nextEntries = entries.map((entry) => ({ ...entry }));
+    nextEntries[safeIndex] = {
+      ...nextEntries[safeIndex],
+      x: this.clampLeafletBreakPercent(nextPosition.x, nextEntries[safeIndex].x),
+      y: this.clampLeafletBreakPercent(nextPosition.y, nextEntries[safeIndex].y)
+    };
+    gameState.updateProperty('leafletBreaks', nextEntries);
+    card = gameState.getCard();
+    if (options.refreshControls !== false) {
+      this.renderLeafletBreakControls(card);
+    }
+    if (options.renderPreview !== false) {
+      renderer.render(card);
+    }
+    return card;
+  }
+
+  removeLeafletBreakEntry(index) {
+    const safeIndex = Number(index);
+    if (!Number.isInteger(safeIndex) || safeIndex < 0) return;
+    let card = gameState.getCard();
+    const entries = this.getLeafletBreakEntries(card);
+    if (safeIndex >= entries.length) return;
+    const next = entries.filter((_, entryIndex) => entryIndex !== safeIndex);
+    gameState.updateProperty('leafletBreaks', next);
+    card = gameState.getCard();
+    this.renderLeafletBreakControls(card);
+    renderer.render(card);
+  }
+
+  renderLeafletBreakControls(card) {
+    if (!this.leafletBreakList) return;
+    const entries = this.getLeafletBreakEntries(card);
+    const isFront = String(card?.leafletSide || 'front').toLowerCase() !== 'back';
+
+    this.leafletBreakList.innerHTML = '';
+
+    if (this.leafletBreakAddBtn) {
+      this.leafletBreakAddBtn.disabled = !isFront;
+      this.leafletBreakAddBtn.title = isFront ? '' : 'Break overlays render on the front leaflet side only.';
+    }
+
+    if (!entries.length) {
+      const empty = document.createElement('div');
+      empty.className = 'leaflet-break-empty';
+      empty.textContent = isFront ? 'No breaks added yet.' : 'Switch to Front to add break overlays.';
+      this.leafletBreakList.appendChild(empty);
+      return;
+    }
+
+    entries.forEach((entry, index) => {
+      const row = document.createElement('div');
+      row.className = 'leaflet-break-row';
+
+      const label = document.createElement('div');
+      label.className = 'ability-dice-label';
+      label.textContent = `Break ${index + 1}`;
+
+      const select = document.createElement('select');
+      select.className = 'leaflet-break-select';
+      select.disabled = !isFront;
+
+      const blankOption = document.createElement('option');
+      blankOption.value = '';
+      blankOption.textContent = 'Select a break';
+      select.appendChild(blankOption);
+
+      this.leafletBreakOptions.forEach((option) => {
+        const optionEl = document.createElement('option');
+        optionEl.value = option.path;
+        optionEl.textContent = option.label;
+        select.appendChild(optionEl);
+      });
+
+      select.value = entry;
+      select.addEventListener('change', (event) => {
+        this.updateLeafletBreakEntry(index, event.target.value);
+      });
+
+      const xInput = document.createElement('input');
+      xInput.type = 'number';
+      xInput.className = 'leaflet-break-position';
+      xInput.min = '-25';
+      xInput.max = '125';
+      xInput.step = '0.1';
+      xInput.placeholder = 'X %';
+      xInput.title = 'Horizontal position (%)';
+      xInput.setAttribute('aria-label', `Break ${index + 1} horizontal position`);
+      xInput.disabled = !isFront || !entry.path;
+      xInput.value = entry.path ? String(entry.x) : '';
+      xInput.addEventListener('change', (event) => {
+        this.updateLeafletBreakPosition(index, 'x', event.target.value);
+      });
+
+      const yInput = document.createElement('input');
+      yInput.type = 'number';
+      yInput.className = 'leaflet-break-position';
+      yInput.min = '-25';
+      yInput.max = '125';
+      yInput.step = '0.1';
+      yInput.placeholder = 'Y %';
+      yInput.title = 'Vertical position (%)';
+      yInput.setAttribute('aria-label', `Break ${index + 1} vertical position`);
+      yInput.disabled = !isFront || !entry.path;
+      yInput.value = entry.path ? String(entry.y) : '';
+      yInput.addEventListener('change', (event) => {
+        this.updateLeafletBreakPosition(index, 'y', event.target.value);
+      });
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'btn btn-danger btn-small';
+      removeBtn.textContent = 'Remove';
+      removeBtn.disabled = !isFront;
+      removeBtn.addEventListener('click', () => this.removeLeafletBreakEntry(index));
+
+      row.appendChild(label);
+      row.appendChild(select);
+      row.appendChild(xInput);
+      row.appendChild(yInput);
+      row.appendChild(removeBtn);
+      this.leafletBreakList.appendChild(row);
+    });
+  }
+
+  slugifyCustomStatusName(name) {
+    return String(name || '')
+      .trim()
+      .toLowerCase()
+      .replace(/['’]/g, '')
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .replace(/_+/g, '_');
+  }
+
+  getReservedTokenKeys() {
+    return new Set([
+      'dmg',
+      'damage',
+      'rdmg',
+      'heal',
+      'prevent',
+      'cp',
+      'draw',
+      'at',
+      'abilitydice',
+      'basicdice',
+      'textdice',
+      'defensivedice',
+      'straight',
+      'dice',
+      'half'
+    ]);
+  }
+
+  getCustomStatusEffects(card) {
+    const rows = Array.isArray(card?.customStatusEffects) ? card.customStatusEffects : [];
+    return rows
+      .map((row) => {
+        const key = this.slugifyCustomStatusName(row?.key || '');
+        if (!key) return null;
+        return {
+          key,
+          name: String(row?.name || key),
+          iconData: row?.iconData || '',
+          iconUrl: row?.iconUrl || '',
+          fileName: row?.fileName || ''
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  addCustomStatusEffectEntry() {
+    if (!this.customStatusNameInput) return;
+    const rawName = String(this.customStatusNameInput.value || '').trim();
+    const key = this.slugifyCustomStatusName(rawName);
+    if (!key) return;
+
+    const reserved = this.getReservedTokenKeys();
+    if (reserved.has(key)) {
+      alert(`"${key}" is reserved. Choose another name.`);
+      return;
+    }
+
+    let card = gameState.getCard();
+    const entries = this.getCustomStatusEffects(card);
+    if (entries.some((entry) => entry.key === key)) {
+      alert(`Status effect "{{${key}}}" already exists.`);
+      return;
+    }
+
+    const next = [...entries, {
+      key,
+      name: rawName,
+      iconData: '',
+      iconUrl: '',
+      fileName: ''
+    }];
+    gameState.updateProperty('customStatusEffects', next);
+    card = gameState.getCard();
+    this.customStatusNameInput.value = '';
+    this.renderCustomStatusEffectsControls(card);
+    renderer.render(card);
+  }
+
+  removeCustomStatusEffectEntry(key) {
+    const safeKey = this.slugifyCustomStatusName(key);
+    let card = gameState.getCard();
+    const entries = this.getCustomStatusEffects(card);
+    const next = entries.filter((entry) => entry.key !== safeKey);
+    gameState.updateProperty('customStatusEffects', next);
+    card = gameState.getCard();
+    this.renderCustomStatusEffectsControls(card);
+    renderer.render(card);
+  }
+
+  async handleCustomStatusEffectUpload(key, file) {
+    const safeKey = this.slugifyCustomStatusName(key);
+    if (!safeKey || !file) return;
+    if (!this.validateImageFile(file, { label: 'status icon' })) return;
+    const dataUrl = await this.readFileAsDataUrl(file, 'Failed to read status effect icon.').catch((error) => {
+      console.warn('Failed to upload status effect icon:', error);
+      alert('Failed to read the selected status icon.');
+      return '';
+    });
+    if (!dataUrl) return;
+
+    let card = gameState.getCard();
+    const entries = this.getCustomStatusEffects(card);
+    const next = entries.map((entry) => (
+      entry.key === safeKey
+        ? { ...entry, iconData: dataUrl, iconUrl: '', fileName: file.name || '' }
+        : entry
+    ));
+    gameState.updateProperty('customStatusEffects', next);
+    card = gameState.getCard();
+    this.renderCustomStatusEffectsControls(card);
+    renderer.render(card);
+  }
+
+  renderCustomStatusEffectsControls(card) {
+    if (!this.customStatusList) return;
+    const entries = this.getCustomStatusEffects(card);
+    this.customStatusList.innerHTML = '';
+    entries.forEach((entry) => {
+      const row = document.createElement('div');
+      row.className = 'ability-dice-item';
+      row.classList.add('custom-status-item');
+
+      const label = document.createElement('div');
+      label.className = 'ability-dice-label';
+      label.textContent = entry.name;
+
+      const command = document.createElement('code');
+      command.className = 'custom-status-command';
+      command.textContent = `{{${entry.key}}}`;
+
+      const uploadInput = this.createInlineImageUploadInput(
+        `Upload ${entry.name} icon`,
+        (file) => this.handleCustomStatusEffectUpload(entry.key, file)
+      );
+
+      const preview = document.createElement('img');
+      preview.className = 'ability-dice-preview';
+      preview.alt = `${entry.name} icon`;
+      const previewSrc = entry.iconData || entry.iconUrl || '';
+      preview.src = previewSrc;
+      preview.title = entry.fileName || `${entry.name} icon`;
+
+      if (!previewSrc) {
+        preview.style.display = 'none';
+      }
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'btn btn-danger btn-small';
+      removeBtn.textContent = 'Remove';
+      removeBtn.addEventListener('click', () => this.removeCustomStatusEffectEntry(entry.key));
+
+      row.appendChild(label);
+      row.appendChild(command);
+      row.appendChild(uploadInput);
+      row.appendChild(preview);
+      row.appendChild(removeBtn);
+      this.customStatusList.appendChild(row);
     });
   }
 
@@ -4505,11 +5949,14 @@ class UI {
 
   getStatusEffectPreviewSize() {
     const card = gameState.getCard ? gameState.getCard() : {};
-    const fontSize = Number(card.descriptionFontSize) || this.defaultDescriptionFontSize;
+    const activeBlock = this.getActiveDescriptionBlock(card);
+    const fontSize = this.clampDescriptionFontSize(
+      activeBlock?.fontSize ?? card.descriptionFontSize,
+      this.getDescriptionContext().defaultFontSize
+    );
     const descriptionIconScale = 1.386;
     const baseSize = Math.round(fontSize * descriptionIconScale);
     const statusScale = Number(renderer?.statusEffectIconScale) || 1;
-    const activeBlock = this.getActiveDescriptionBlock(card);
     const rawScale = Number(activeBlock?.scale);
     const renderScale = Number.isFinite(rawScale) && rawScale > 0 ? rawScale : 1;
     return Math.max(8, Math.round(baseSize * statusScale * renderScale));
@@ -4551,6 +5998,7 @@ class UI {
     card.layers = layers;
     if (!Array.isArray(data.titleBlocks)) card.titleBlocks = [];
     if (!Array.isArray(data.descriptionBlocks)) card.descriptionBlocks = [];
+    if (!Array.isArray(data.leafletDescriptionBlocks)) card.leafletDescriptionBlocks = [];
     return card;
   }
 
@@ -4999,7 +6447,49 @@ class UI {
     }
   }
 
+  saveBoardAbility(card = null) {
+    const target = card && typeof card === 'object' ? card : gameState.getCard();
+    const name = String(target?.name || '').trim();
+    if (!name || name === 'Title') {
+      alert('Please name the Board Ability before saving it.');
+      return;
+    }
+
+    const store = this.loadBoardAbilityStore();
+    const abilities = store.abilities && typeof store.abilities === 'object' ? store.abilities : {};
+    const order = Array.isArray(store.order) ? store.order : [];
+    const existingId = order.find((id) => {
+      const entry = abilities[id];
+      return entry && entry.name === name;
+    });
+
+    if (existingId && !confirm(`"${name}" already exists in the board ability library. Overwrite it?`)) {
+      return;
+    }
+
+    const id = existingId || `board_ability_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    abilities[id] = {
+      id,
+      name,
+      subType: String(target?.cardSubType || ''),
+      savedAt: new Date().toISOString(),
+      json: gameState.toJSON()
+    };
+    if (!existingId) {
+      order.push(id);
+    }
+
+    this.saveBoardAbilityStore({ abilities, order });
+    this.refreshBoardAbilityOptions();
+    alert('Board Ability saved.');
+  }
+
   saveCardToDeck() {
+    const card = gameState.getCard();
+    if (this.isBoardAbilityCard(card)) {
+      this.saveBoardAbility(card);
+      return;
+    }
     const store = this.loadDeckStore();
     const deckId = this.deckSelect ? this.deckSelect.value : '';
     const deck = deckId ? store.decks[deckId] : null;
@@ -5007,7 +6497,6 @@ class UI {
       alert('Please select a deck first.');
       return;
     }
-    const card = gameState.getCard();
     const name = (card.name || 'Untitled').trim();
     const json = gameState.toJSON();
     deck.cards = Array.isArray(deck.cards) ? deck.cards : [];

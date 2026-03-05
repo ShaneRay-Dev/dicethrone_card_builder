@@ -1,0 +1,19 @@
+{
+  "name": "dice-throne-card-builder",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "vitest run --coverage",
+    "test:unit:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:install-browsers": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.2",
+    "@vitest/coverage-v8": "^2.1.8",
+    "jsdom": "^26.1.0",
+    "vitest": "^2.1.8"
+  }
+}
