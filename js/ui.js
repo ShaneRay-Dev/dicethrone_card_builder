@@ -36,6 +36,8 @@ class UI {
     this.abilityDiceSelect = document.getElementById('abilityDiceSelect');
     this.abilityDiceAddBtn = document.getElementById('abilityDiceAddBtn');
     this.abilityDiceList = document.getElementById('abilityDiceList');
+    this.defaultDiceColorInput = document.getElementById('defaultDiceColor');
+    this.defaultDiceColorPicker = document.getElementById('defaultDiceColorPicker');
     this.customStatusNameInput = document.getElementById('customStatusNameInput');
     this.customStatusAddBtn = document.getElementById('customStatusAddBtn');
     this.customStatusList = document.getElementById('customStatusList');
@@ -59,6 +61,7 @@ class UI {
     this.defaultDescriptionLetterSpacing = 0;
     this.defaultDescriptionBoxScale = 1;
     this.defaultDescriptionColor = '#ffffff';
+    this.defaultDiceColor = '#33ccff';
     this.descriptionColorPicker = null;
     this.descriptionColorHexInput = null;
     this.descriptionColorCopyButton = null;
@@ -176,7 +179,7 @@ class UI {
     this.sidebarResizer = document.getElementById('sidebarResizer');
     this.sidebarWidthKey = 'dtc_sidebar_width_v1';
     this.leafletSideSelect = document.getElementById('leafletSide');
-    this.cardModeReferencePath = 'Assets/Reference/Transference_basic.png';
+    this.cardModeReferencePath = 'Assets/Reference/missed_me_II.png';
     this.leafletModeReferencePath = 'Assets/Reference/spiderman_leaflet.png';
 
     const ReferenceManagerCtor = window.ReferenceOverlayManager;
@@ -288,7 +291,7 @@ class UI {
       offsetY: 6
     };
     this.deckLayerAssets = {
-      base: 'Assets/Deck/Deck Template_background.png',
+      base: 'Assets/Deck/Deck Template_background_black.png',
       overlay: 'Assets/Deck/Deck Template.png'
     };
     this.deckThumbWidth = this.deckTemplateConfig.columnWidth;
@@ -398,7 +401,7 @@ class UI {
   getDefaultReferencePathForMode(mode = this.workspaceMode) {
     const normalized = String(mode || '').toLowerCase();
     if (normalized === 'leaflet') return 'Assets/Reference/spiderman_leaflet.png';
-    return 'Assets/Reference/Transference_basic.png';
+    return 'Assets/Reference/missed_me_II.png';
   }
 
   applyWorkspaceReferenceDefault(mode = this.workspaceMode, options = {}) {
@@ -886,6 +889,33 @@ class UI {
     }
     if (this.abilityDiceAddBtn) {
       this.abilityDiceAddBtn.addEventListener('click', () => this.addAbilityDiceEntry());
+    }
+    if (this.defaultDiceColorPicker) {
+      this.defaultDiceColorPicker.addEventListener('input', (e) => {
+        const color = this.syncDefaultDiceColorControls(e.target.value);
+        gameState.updateProperty('defaultDiceColor', color);
+        renderer.render(gameState.getCard());
+      });
+      this.defaultDiceColorPicker.addEventListener('change', (e) => {
+        const color = this.syncDefaultDiceColorControls(e.target.value);
+        gameState.updateProperty('defaultDiceColor', color);
+        renderer.render(gameState.getCard());
+      });
+    }
+    if (this.defaultDiceColorInput) {
+      const applyDefaultDiceColorFromHexInput = () => {
+        const color = this.normalizeDiceColor(this.defaultDiceColorInput.value, this.defaultDiceColor);
+        this.syncDefaultDiceColorControls(color);
+        gameState.updateProperty('defaultDiceColor', color);
+        renderer.render(gameState.getCard());
+      };
+      this.defaultDiceColorInput.addEventListener('change', applyDefaultDiceColorFromHexInput);
+      this.defaultDiceColorInput.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter') return;
+        event.preventDefault();
+        applyDefaultDiceColorFromHexInput();
+        this.defaultDiceColorInput.select();
+      });
     }
 
     if (this.customStatusAddBtn) {
@@ -2642,6 +2672,19 @@ class UI {
     return fallback;
   }
 
+  normalizeDiceColor(value, fallback = this.defaultDiceColor) {
+    const raw = String(value || '').trim();
+    if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(raw)) return raw;
+    return fallback;
+  }
+
+  syncDefaultDiceColorControls(value) {
+    const color = this.normalizeDiceColor(value, this.defaultDiceColor).toUpperCase();
+    if (this.defaultDiceColorPicker) this.defaultDiceColorPicker.value = color;
+    if (this.defaultDiceColorInput) this.defaultDiceColorInput.value = color;
+    return color;
+  }
+
   syncDescriptionColorControls(value) {
     const color = this.normalizeDescriptionColor(value, this.defaultDescriptionColor).toUpperCase();
     if (this.descriptionColorPicker) this.descriptionColorPicker.value = color;
@@ -2945,8 +2988,14 @@ class UI {
     if (card.descriptionLetterSpacing === undefined) fontUpdates.descriptionLetterSpacing = this.defaultDescriptionLetterSpacing;
     if (card.descriptionBaselineOffset === undefined) fontUpdates.descriptionBaselineOffset = this.defaultDescriptionBaselineOffset;
     if (card.descriptionColor === undefined) fontUpdates.descriptionColor = this.defaultDescriptionColor;
+    if (card.defaultDiceColor === undefined) fontUpdates.defaultDiceColor = this.defaultDiceColor;
     if (Object.keys(fontUpdates).length > 0) {
       gameState.updateProperties(fontUpdates);
+      card = gameState.getCard();
+    }
+    const normalizedDefaultDiceColor = this.normalizeDiceColor(card.defaultDiceColor, this.defaultDiceColor);
+    if (normalizedDefaultDiceColor !== card.defaultDiceColor) {
+      gameState.updateProperty('defaultDiceColor', normalizedDefaultDiceColor);
       card = gameState.getCard();
     }
     const descriptionContext = this.getDescriptionContext();
@@ -3146,6 +3195,7 @@ class UI {
       const current = card?.costBadge?.value ?? '';
       this.costInput.value = String(current);
     }
+    this.syncDefaultDiceColorControls(card.defaultDiceColor);
     this.renderAbilityDiceControls(card);
     this.renderCustomStatusEffectsControls(card);
     this.renderLeafletBreakControls(card);
@@ -3561,7 +3611,6 @@ class UI {
     });
 
     this.updateQuillFontPickerLabels();
-    this.debugQuillFontPicker();
 
     this.descriptionQuill.on('text-change', () => {
       if (this.suppressDescriptionUpdate) return;
@@ -3713,30 +3762,6 @@ class UI {
       label.textContent = family;
       label.title = family;
     }
-  }
-
-  debugQuillFontPicker() {
-    if (this._fontPickerDebugged) return;
-    this._fontPickerDebugged = true;
-    const picker = this.descriptionToolbar ? this.descriptionToolbar.querySelector('.ql-font') : null;
-    if (!picker) {
-      console.warn('Quill font picker not found');
-      return;
-    }
-    const items = picker.querySelectorAll('.ql-picker-item');
-    console.log('Quill font picker items:', items.length);
-    items.forEach((item, idx) => {
-      console.log(idx, {
-        dataValue: item.getAttribute('data-value'),
-        dataLabel: item.getAttribute('data-label'),
-        text: item.textContent
-      });
-    });
-    const options = picker.querySelectorAll('option');
-    console.log('Quill font options:', options.length);
-    options.forEach((opt, idx) => {
-      console.log(idx, { value: opt.value, text: opt.textContent });
-    });
   }
 
   injectFontStyles(fonts) {
@@ -5258,6 +5283,8 @@ class UI {
       { label: 'Text Dice', command: '{{textdice,3,#33ccff}}', iconSrc: 'Assets/Icons/Ability Dice/ability_dice.png' },
       { label: 'Defensive Dice', command: '{{defensivedice}}', iconSrc: 'Assets/Icons/Defensive Dice/ability_dice_w.png' },
       { label: 'Defensive Dice (Count)', command: '{{defensivedice,3}}', iconSrc: 'Assets/Icons/Defensive Dice/ability_dice_w.png' },
+      { label: 'Defensive Roll', command: '{{defensive_roll,1}}', iconSrc: 'Assets/Icons/Defensive Dice/defensive_roll.png' },
+      { label: 'Defensive Roll (EX)', command: '{{defensive_roll,ex}}', iconSrc: 'Assets/Icons/Defensive Dice/defensive_roll_ex.png' },
       { label: 'Dice', command: '{{dice}}', iconSrc: 'Assets/Icons/Dice/dice.png' },
       { label: 'Half', command: '{{half}}', iconSrc: 'Assets/Icons/Half/half.png' }
     ];
@@ -5676,7 +5703,7 @@ class UI {
         select.appendChild(optionEl);
       });
 
-      select.value = entry;
+      select.value = entry.path;
       select.addEventListener('change', (event) => {
         this.updateLeafletBreakEntry(index, event.target.value);
       });
@@ -5751,6 +5778,7 @@ class UI {
       'basicdice',
       'textdice',
       'defensivedice',
+      'defensive_roll',
       'straight',
       'dice',
       'half'

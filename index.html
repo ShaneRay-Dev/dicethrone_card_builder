@@ -166,6 +166,14 @@
                   </div>
                 </div>
                 <small class="help-text">Slots A-F. Use `{{abilitydice,a}}` through `{{abilitydice,f}}` in text.</small>
+                <div class="form-group">
+                  <label for="defaultDiceColor">Default Dice Color</label>
+                  <div class="color-inline-control">
+                    <input type="color" id="defaultDiceColorPicker" value="#33ccff" aria-label="Default dice color picker">
+                    <input type="text" id="defaultDiceColor" value="#33CCFF" maxlength="7" spellcheck="false" aria-label="Default dice color hex">
+                  </div>
+                  <small class="help-text">Applies to `{{abilitydice}}`, `{{basicdice}}`, and `{{textdice}}` when no color is provided. `{{defensivedice}}` is unchanged.</small>
+                </div>
                 <div id="abilityDiceList" class="ability-dice-list"></div>
               </div>
             </details>
@@ -192,7 +200,7 @@
               <select id="cropMaskSelect">
                 <option value="Assets/images/Card Art/Common Loot.png">Common Loot (Default)</option>
                 <option value="Assets/Hero Upgrade/Ability Upgrade/hero_upgrade_Ability_background_upper.png">Ability Upgrade Upper</option>
-                <option value="Assets/Board/offensive Ability/Standard_ability_background.png">Offensive Ability Background</option>
+                <option value="Assets/Board/Offensive Ability/Standard_ability_background.png">Offensive Ability Background</option>
                 <option value="Assets/Leaflet/Front/Leaflet_front_background.png">Leaflet Front</option>
               </select>
             </div>

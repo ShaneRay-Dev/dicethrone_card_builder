@@ -31,10 +31,10 @@ describe('assets manifest', () => {
 
     const offensive = boardAbilities?.['Offensive ability'];
     expect(offensive.cardBleed).toBe('');
-    expect(offensive.border).toBe('Assets/Board/offensive Ability/Standard_ability_border.png');
-    expect(offensive.backgroundLower).toBe('Assets/Board/offensive Ability/Standard_ability_background.png');
-    expect(offensive.backgroundUpper).toBe('Assets/Board/offensive Ability/Standard_ability_corner.png');
-    expect(offensive.topNameGradient).toBe('Assets/Board/offensive Ability/Standard_ability_graident.png');
+    expect(offensive.border).toBe('Assets/Board/Offensive Ability/Standard_ability_border.png');
+    expect(offensive.backgroundLower).toBe('Assets/Board/Offensive Ability/Standard_ability_background.png');
+    expect(offensive.backgroundUpper).toBe('Assets/Board/Offensive Ability/Standard_ability_corner.png');
+    expect(offensive.topNameGradient).toBe('Assets/Board/Offensive Ability/Standard_ability_graident.png');
     expect(offensive.cardId).toBe('');
 
     const passive = boardAbilities?.['Passive Ability'];

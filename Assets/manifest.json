@@ -109,17 +109,17 @@
   "Board Abilities": {
     "Offensive ability": {
       "cardBleed": "",
-      "border": "Assets/Board/offensive Ability/Standard_ability_border.png",
+      "border": "Assets/Board/Offensive Ability/Standard_ability_border.png",
       "cardId": "",
-      "backgroundLower": "Assets/Board/offensive Ability/Standard_ability_background.png",
-      "backgroundUpper": "Assets/Board/offensive Ability/Standard_ability_corner.png",
+      "backgroundLower": "Assets/Board/Offensive Ability/Standard_ability_background.png",
+      "backgroundUpper": "Assets/Board/Offensive Ability/Standard_ability_corner.png",
       "imageFrame": "",
       "frameShading": "",
       "panelBleed": "",
       "panelLower": "",
       "secondAbilityFrame": "",
       "panelUpper": "",
-      "topNameGradient": "Assets/Board/offensive Ability/Standard_ability_graident.png",
+      "topNameGradient": "Assets/Board/Offensive Ability/Standard_ability_graident.png",
       "bottomNameGradient": "",
       "attackModifier": ""
     },

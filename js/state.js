@@ -107,6 +107,7 @@ class CardState {
       titleFontSize: 46,
       descriptionFontSize: 39,
       descriptionColor: '#ffffff',
+      defaultDiceColor: '#33ccff',
       descriptionLineHeightScale: 1.2,
       titleLetterSpacing: 0.5,
       descriptionLetterSpacing: 0,
@@ -233,9 +234,31 @@ class CardState {
   fromJSON(jsonString) {
     try {
       const data = JSON.parse(jsonString);
-      this.card = { ...this.getDefaultCard(), ...data };
+      const defaults = this.getDefaultCard();
+      const safeData = data && typeof data === 'object' ? data : {};
+      const safeExport = safeData.export && typeof safeData.export === 'object' ? safeData.export : {};
+      const safeLayers = safeData.layers && typeof safeData.layers === 'object' ? safeData.layers : {};
+      const safeCostBadge = safeData.costBadge && typeof safeData.costBadge === 'object' ? safeData.costBadge : {};
+      const safeArtTransform = safeData.artTransform && typeof safeData.artTransform === 'object' ? safeData.artTransform : {};
+      const safeCostBadgePosition = safeData.costBadgePosition && typeof safeData.costBadgePosition === 'object' ? safeData.costBadgePosition : {};
+      const safeTitlePosition = safeData.titlePosition && typeof safeData.titlePosition === 'object' ? safeData.titlePosition : {};
+      const safeDescriptionPosition = safeData.descriptionPosition && typeof safeData.descriptionPosition === 'object' ? safeData.descriptionPosition : {};
+      const safeLeafletLayers = safeData.leafletLayers && typeof safeData.leafletLayers === 'object' ? safeData.leafletLayers : {};
+
+      this.card = { ...defaults, ...safeData };
+      this.card.export = { ...defaults.export, ...safeExport };
+      this.card.layers = { ...defaults.layers, ...safeLayers };
+      this.card.costBadge = { ...defaults.costBadge, ...safeCostBadge };
+      this.card.artTransform = { ...defaults.artTransform, ...safeArtTransform };
+      this.card.costBadgePosition = { ...defaults.costBadgePosition, ...safeCostBadgePosition };
+      this.card.titlePosition = { ...defaults.titlePosition, ...safeTitlePosition };
+      this.card.descriptionPosition = { ...defaults.descriptionPosition, ...safeDescriptionPosition };
+      this.card.leafletLayers = { ...defaults.leafletLayers, ...safeLeafletLayers };
       this.card.layerOrder = this.normalizeLayerOrder(data.layerOrder || this.card.layerOrder);
       this.card.hiddenLayers = this.normalizeHiddenLayers(data.hiddenLayers, this.card.layerOrder);
+      if (!/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(String(this.card.defaultDiceColor || '').trim())) {
+        this.card.defaultDiceColor = defaults.defaultDiceColor;
+      }
       if (!Array.isArray(data.titleBlocks) || !data.titleBlocks.length) {
         this.card.titleBlocks = [
           {
@@ -270,8 +293,8 @@ class CardState {
             descriptionHtml: data.descriptionHtml ?? '',
             position: { x: 0, y: 0 },
             scale: 1,
-            fontSize: 20,
-            color: '#ffffff'
+            fontSize: defaults.leafletDescriptionBlocks?.[0]?.fontSize ?? 20,
+            color: defaults.leafletDescriptionBlocks?.[0]?.color ?? '#ffffff'
           }
         ];
         this.card.leafletActiveDescriptionId = data.leafletActiveDescriptionId || 'leaflet-desc-1';

@@ -17,6 +17,5 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('diceThroneSavedCard', gameState.toJSON());
   }, 30000);
 
-  console.log('Dice Throne Creator initialized');
 });
 

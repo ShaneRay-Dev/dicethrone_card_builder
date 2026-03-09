@@ -609,6 +609,11 @@ class CardRenderer {
 
   getIconOverlayText(token) {
     const name = (token?.name || '').toLowerCase();
+    if (name === 'defensive_roll') {
+      const raw = String(token?.value || '').trim();
+      if (!/^\d+$/.test(raw)) return '';
+      return raw;
+    }
     if (name !== 'prevent' && name !== 'damage' && name !== 'dmg' && name !== 'rdmg') return '';
     const raw = String(token?.value || '').trim();
     if (!raw || raw === 'blank' || raw === 'half') return '';
@@ -617,20 +622,35 @@ class CardRenderer {
 
   getIconOverlayScale(token) {
     const name = (token?.name || '').toLowerCase();
+    if (name === 'defensive_roll') return 0;
     if (name === 'damage' || name === 'dmg' || name === 'rdmg') return 0.8850086;
     return 1.0;
   }
 
   getIconOverlaySizeAdjust(token) {
     const name = (token?.name || '').toLowerCase();
+    if (name === 'defensive_roll') return 26;
     if (name === 'damage' || name === 'dmg' || name === 'rdmg') return -1;
     return 0;
   }
 
   getIconOverlayYOffsetAdjust(token, iconSize) {
     const name = (token?.name || '').toLowerCase();
+    if (name === 'defensive_roll') return (-iconSize * 0.01) + 1;
     if (name === 'damage' || name === 'dmg' || name === 'rdmg') return iconSize * 0.02;
     return 0;
+  }
+
+  getIconOverlayXOffsetAdjust(token, iconSize) {
+    const name = (token?.name || '').toLowerCase();
+    if (name === 'defensive_roll') return (iconSize * 0.26) - 2;
+    return 0;
+  }
+
+  getIconOverlayFontFamily(token) {
+    const name = (token?.name || '').toLowerCase();
+    if (name === 'defensive_roll') return 'MYRIADPRO-BOLD';
+    return '';
   }
 
   splitTokenParts(raw) {
@@ -773,6 +793,15 @@ class CardRenderer {
       .toLowerCase();
   }
 
+  getEffectiveIconColor(atom) {
+    const explicit = String(atom?.color || '').trim();
+    if (this.parseIconColor(explicit)) return explicit;
+    const name = (atom?.name || '').toLowerCase();
+    if (!['abilitydice', 'basicdice', 'textdice'].includes(name)) return explicit;
+    const fallback = String(this.tokenIconCardContext?.defaultDiceColor || '').trim();
+    return this.parseIconColor(fallback) ? fallback : '';
+  }
+
   isAbilityDiceBaseIconPath(path) {
     const normalized = this.normalizeIconAssetPath(path);
     return normalized.endsWith('assets/icons/ability dice/ability_dice.png');
@@ -782,11 +811,11 @@ class CardRenderer {
     const shadingPath = encodeURI('Assets/Icons/Ability Dice/ability_dice_shading_layer.png');
     const shadingBase = this.iconCache[shadingPath];
     if (!shadingBase) return null;
-    const colorInfo = this.parseIconColor(atom?.color || '');
+    const colorInfo = this.parseIconColor(this.getEffectiveIconColor(atom));
     if (!colorInfo) return shadingBase;
-    const cacheKey = `tint:${shadingPath}:${colorInfo.key}:mix0.5`;
+    const cacheKey = `tint:${shadingPath}:${colorInfo.key}:mix0.25`;
     if (this.iconCache[cacheKey]) return this.iconCache[cacheKey];
-    const tinted = this.tintAbilityTriggerIcon(shadingBase, colorInfo, 0.5);
+    const tinted = this.tintAbilityTriggerIcon(shadingBase, colorInfo, 0.25);
     if (tinted) {
       this.iconCache[cacheKey] = tinted;
       return tinted;
@@ -800,7 +829,7 @@ class CardRenderer {
     if (!base) return null;
     const name = (atom?.name || '').toLowerCase();
     if (name !== 'straight' && name !== 'at' && name !== 'abilitydice' && name !== 'basicdice' && name !== 'textdice' && name !== 'defensivedice') return base;
-    const colorInfo = this.parseIconColor(atom?.color || '');
+    const colorInfo = this.parseIconColor(this.getEffectiveIconColor(atom));
     let icon = base;
     if (colorInfo) {
       const cacheKey = `tint:${path}:${colorInfo.key}`;
@@ -909,7 +938,9 @@ class CardRenderer {
     const overlay = this.iconCache[overlaySrc] || null;
     if (!overlay) return base;
 
-    const colorKey = String(atom?.color || '').trim().toLowerCase();
+    const effectiveColor = this.getEffectiveIconColor(atom);
+    const colorInfo = this.parseIconColor(effectiveColor);
+    const colorKey = colorInfo ? colorInfo.key : 'none';
     const key = `abilitydice:composite:${slot}:${overlaySrc}:${colorKey}`;
     if (this.iconCache[key]) return this.iconCache[key];
 
@@ -1293,10 +1324,32 @@ class CardRenderer {
     return Array.from(new Set(paths));
   }
 
+  collectIconOverlayFonts(text) {
+    const atoms = this.tokenizeForLayout(text);
+    const fonts = [];
+    atoms.forEach((atom) => {
+      if (atom.type !== 'icon') return;
+      const overlayText = this.getIconOverlayText(atom);
+      if (!overlayText) return;
+      const family = this.getIconOverlayFontFamily(atom);
+      if (!family) return;
+      fonts.push(family);
+    });
+    return Array.from(new Set(fonts));
+  }
+
   async preloadIconsForText(text) {
     const paths = this.collectIconPaths(text);
-    if (!paths.length) return;
-    await Promise.all(paths.map((path) => this.loadIcon(path)));
+    const overlayFonts = this.collectIconOverlayFonts(text);
+    const tasks = [];
+    if (paths.length) {
+      tasks.push(...paths.map((path) => this.loadIcon(path)));
+    }
+    if (overlayFonts.length) {
+      tasks.push(...overlayFonts.map((family) => this.ensureFontLoaded(family, 700)));
+    }
+    if (!tasks.length) return;
+    await Promise.all(tasks);
   }
 
   getPlainTextFromRuns(runs) {
@@ -3489,6 +3542,13 @@ class CardRenderer {
       return encodeURI('Assets/Icons/Defensive Dice/ability_dice_w.png');
     }
 
+    if (name === 'defensive_roll') {
+      if (rawValue === 'ex') {
+        return encodeURI('Assets/Icons/Defensive Dice/defensive_roll_ex.png');
+      }
+      return encodeURI('Assets/Icons/Defensive Dice/defensive_roll.png');
+    }
+
     if (name === 'straight') {
       const allowed = ['small', 'large'];
       const safe = normalizeValue(rawValue, allowed, 'small');
@@ -3551,6 +3611,7 @@ class CardRenderer {
     if (name === 'basicdice') return 7;
     if (name === 'textdice') return 7;
     if (name === 'defensivedice') return 7;
+    if (name === 'defensive_roll') return 7;
     if (name === 'straight') return 7;
     if (name === 'dice') return 7;
     if (name === 'half') return 5;
@@ -3578,6 +3639,7 @@ class CardRenderer {
       return 1.85 * 0.5;
     }
     if (name === 'defensivedice') return 1.85;
+    if (name === 'defensive_roll') return 4.55175 * 1.1;
     if (name === 'straight') return 4.55175;
     if (name === 'dice') return 0.588;
     if (name === 'half') return 0.6;
@@ -3606,6 +3668,7 @@ class CardRenderer {
       'basicdice',
       'textdice',
       'defensivedice',
+      'defensive_roll',
       'straight',
       'dice',
       'half'
@@ -4020,14 +4083,17 @@ class CardRenderer {
               1,
               iconSizeForAtom * 0.73205 * this.getIconOverlayScale(atom) + this.getIconOverlaySizeAdjust(atom)
             );
-            const overlayFont = this.formatFontWithSize(ctx.font, overlaySize, 'Arial');
+            const overlayFamily = this.getIconOverlayFontFamily(atom);
+            const overlayFont = overlayFamily
+              ? this.buildFontWithSize(overlayFamily, overlaySize)
+              : this.formatFontWithSize(ctx.font, overlaySize, 'Arial');
             ctx.save();
             ctx.font = overlayFont;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(
               overlayText,
-              iconX + iconSizeForAtom / 2,
+              iconX + iconSizeForAtom / 2 + this.getIconOverlayXOffsetAdjust(atom, iconSizeForAtom),
               y + iconYOffset + iconSizeForAtom / 2 + iconSizeForAtom * 0.02
                 + this.getIconOverlayYOffsetAdjust(atom, iconSizeForAtom)
             );
@@ -4139,7 +4205,10 @@ class CardRenderer {
               1,
               iconSizeForAtom * 0.73205 * this.getIconOverlayScale(atom) + this.getIconOverlaySizeAdjust(atom)
             );
-            const overlayFont = this.buildFontWithSize(atom.font || defaultFont, overlaySize);
+            const overlayFamily = this.getIconOverlayFontFamily(atom);
+            const overlayFont = overlayFamily
+              ? this.buildFontWithSize(overlayFamily, overlaySize)
+              : this.buildFontWithSize(atom.font || defaultFont, overlaySize);
             ctx.save();
             ctx.font = overlayFont;
             ctx.textAlign = 'center';
@@ -4147,7 +4216,7 @@ class CardRenderer {
             ctx.fillStyle = this.normalizeDescriptionColor(defaultTextColor, '#ffffff');
             ctx.fillText(
               overlayText,
-              iconX + iconSizeForAtom / 2,
+              iconX + iconSizeForAtom / 2 + this.getIconOverlayXOffsetAdjust(atom, iconSizeForAtom),
               y + iconYOffset + iconSizeForAtom / 2 + iconSizeForAtom * 0.02
                 + this.getIconOverlayYOffsetAdjust(atom, iconSizeForAtom)
             );

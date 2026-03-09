@@ -105,4 +105,24 @@ describe('index.html upload markup', () => {
 
     dom.window.close();
   });
+
+  it('includes default dice color controls', async () => {
+    const htmlPath = path.resolve(process.cwd(), 'index.html');
+    const html = await readFile(htmlPath, 'utf8');
+    const dom = new JSDOM(html);
+    const { document } = dom.window;
+
+    const colorPicker = document.getElementById('defaultDiceColorPicker');
+    const colorHex = document.getElementById('defaultDiceColor');
+
+    expect(colorPicker).not.toBeNull();
+    expect(colorPicker?.tagName).toBe('INPUT');
+    expect(colorPicker?.getAttribute('type')).toBe('color');
+    expect(colorHex).not.toBeNull();
+    expect(colorHex?.tagName).toBe('INPUT');
+    expect(colorHex?.getAttribute('type')).toBe('text');
+
+    dom.window.close();
+  });
+
 });

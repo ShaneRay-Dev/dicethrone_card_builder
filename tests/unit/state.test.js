@@ -35,18 +35,34 @@ describe('CardState', () => {
     const ok = state.fromJSON(JSON.stringify({
       name: 'Test Card',
       cardType: 'Hero Upgrade',
-      cardSubType: 'Offensive Roll Phase'
+      cardSubType: 'Offensive Roll Phase',
+      layers: {
+        border: false
+      },
+      costBadge: {
+        value: '4'
+      },
+      leafletLayers: {
+        title: false
+      }
     }));
 
     expect(ok).toBe(true);
-    expect(state.getCard().name).toBe('Test Card');
-    expect(state.getCard().costBadge.value).toBe('');
-    expect(state.getCard().titleBlocks).toHaveLength(1);
-    expect(state.getCard().descriptionBlocks).toHaveLength(1);
-    expect(state.getCard().leafletDescriptionBlocks).toHaveLength(1);
-    expect(state.getCard().leafletDescriptionBlocks[0].fontSize).toBe(20);
-    expect(state.getCard().descriptionColor).toBe('#ffffff');
-    expect(state.getCard().descriptionBlocks[0].fontSize).toBe(39);
-    expect(state.getCard().descriptionBlocks[0].color).toBe('#ffffff');
+    const card = state.getCard();
+    expect(card.name).toBe('Test Card');
+    expect(card.costBadge.value).toBe('4');
+    expect(card.costBadge.fontSize).toBe(33);
+    expect(card.titleBlocks).toHaveLength(1);
+    expect(card.descriptionBlocks).toHaveLength(1);
+    expect(card.leafletDescriptionBlocks).toHaveLength(1);
+    expect(card.leafletDescriptionBlocks[0].fontSize).toBe(20);
+    expect(card.descriptionColor).toBe('#ffffff');
+    expect(card.defaultDiceColor).toBe('#33ccff');
+    expect(card.descriptionBlocks[0].fontSize).toBe(39);
+    expect(card.descriptionBlocks[0].color).toBe('#ffffff');
+    expect(card.layers.border).toBe(false);
+    expect(card.layers.backgroundLower).toBe(true);
+    expect(card.leafletLayers.title).toBe(false);
+    expect(card.leafletLayers.text).toBe(true);
   });
 });
