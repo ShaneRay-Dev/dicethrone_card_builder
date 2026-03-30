@@ -1,0 +1,164 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  font-family: "Segoe UI", "Inter", Arial, sans-serif;
+}
+
+body {
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.frame {
+  width: 1920px;
+  height: 1080px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.45);
+  position: relative;
+}
+
+.topbar {
+  height: 74px;
+  padding: 0 26px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.brand {
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  font-size: 24px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  border-radius: 10px;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.workspace {
+  height: calc(100% - 74px);
+  padding: 22px;
+  display: grid;
+  gap: 18px;
+}
+
+.panel {
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 16px;
+}
+
+.panel-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+  opacity: 0.82;
+  font-weight: 700;
+}
+
+.stack {
+  display: grid;
+  gap: 10px;
+}
+
+.chip {
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.preview-stage {
+  border-radius: 18px;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  overflow: hidden;
+}
+
+.preview-card {
+  width: 360px;
+  height: 560px;
+  border-radius: 18px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border: 2px solid rgba(255, 255, 255, 0.75);
+  overflow: hidden;
+}
+
+.preview-card .art {
+  height: 50%;
+}
+
+.preview-card .text {
+  height: 50%;
+  padding: 18px;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.footer-strip {
+  height: 52px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  font-size: 12px;
+}
+
+.graph {
+  width: 180px;
+  height: 28px;
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.graph::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent 0 8%, rgba(255, 255, 255, 0.16) 8% 10%, transparent 10% 24%, rgba(255, 255, 255, 0.2) 24% 26%, transparent 26% 46%, rgba(255, 255, 255, 0.2) 46% 48%, transparent 48% 70%, rgba(255, 255, 255, 0.16) 70% 72%, transparent 72% 100%);
+}
+
+.kpi {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.tiny {
+  font-size: 11px;
+  opacity: 0.78;
+}

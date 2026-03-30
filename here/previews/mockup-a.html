@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mockup A - Command Center</title>
+    <link rel="stylesheet" href="./shared.css" />
+    <style>
+      body {
+        background: radial-gradient(circle at 14% 8%, #182743 0%, #0c1320 36%, #090c12 100%);
+      }
+      .frame {
+        background: linear-gradient(165deg, #101827 0%, #0c1423 42%, #0a111d 100%);
+      }
+      .brand { color: #e6edf6; }
+      .btn { color: #cdd9e8; background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.12); }
+      .btn.primary { background: linear-gradient(140deg, #2ec4b6, #259c91); color: #031212; border-color: #4de5d8; }
+      .workspace { grid-template-columns: 270px 1fr 320px; grid-template-rows: 1fr 52px; }
+      .left, .right { background: rgba(20, 30, 49, 0.74); backdrop-filter: blur(8px); }
+      .center { display: grid; grid-template-rows: 1fr; }
+      .preview-stage {
+        background:
+          radial-gradient(circle at 20% 10%, rgba(46, 196, 182, 0.16) 0%, transparent 40%),
+          repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 44px),
+          linear-gradient(155deg, #0f182b 0%, #0a1121 100%);
+      }
+      .preview-card {
+        background: linear-gradient(180deg, #0d2236 0%, #071624 100%);
+      }
+      .preview-card .art {
+        background: radial-gradient(circle at 40% 20%, #ff9f1c 0%, #d06f00 32%, #5a2f00 76%, #111 100%);
+      }
+      .preview-card .text { color: #f4f8fd; }
+      .chip { color: #d2deee; background: rgba(255, 255, 255, 0.03); }
+      .panel-title, .tiny { color: #9ba9bc; }
+      .footer-strip { grid-column: 1 / 4; color: #c6d1df; background: rgba(5, 9, 16, 0.44); }
+      .graph { background: rgba(46, 196, 182, 0.18); }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <div class="topbar">
+        <div class="brand">Dice Throne Builder | Command Center</div>
+        <div class="actions">
+          <button class="btn">Save Draft</button>
+          <button class="btn">Export PNG</button>
+          <button class="btn">Print Sheet</button>
+          <button class="btn primary">Publish Deck</button>
+        </div>
+      </div>
+      <div class="workspace">
+        <aside class="panel left">
+          <div class="panel-title">Tools</div>
+          <div class="stack">
+            <div class="chip">Card Type + Modes</div>
+            <div class="chip">Layers + Uploads</div>
+            <div class="chip">Text + Icons</div>
+            <div class="chip">Board + Leaflet</div>
+            <div class="chip">Quick Templates</div>
+          </div>
+        </aside>
+        <main class="center">
+          <section class="preview-stage">
+            <div class="preview-card">
+              <div class="art"></div>
+              <div class="text">DOUBLE UP!<br /><span class="tiny">Draw 2. Gain CP.</span></div>
+            </div>
+          </section>
+        </main>
+        <aside class="panel right">
+          <div class="panel-title">Inspector</div>
+          <div class="stack">
+            <div class="chip">Layer Order + Blending</div>
+            <div class="chip">Typography + Commands</div>
+            <div class="chip">Bounds + Alignment</div>
+            <div class="chip">Render Warnings</div>
+            <div class="chip">Undo Timeline</div>
+          </div>
+        </aside>
+        <div class="footer-strip">
+          <div class="row">
+            <span class="kpi">Render 13ms</span>
+            <span class="tiny">GPU: on</span>
+            <span class="tiny">Dirty Layers: 2</span>
+          </div>
+          <div class="graph"></div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

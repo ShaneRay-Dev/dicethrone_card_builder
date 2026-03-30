@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mockup C - Tactical Blueprint</title>
+    <link rel="stylesheet" href="./shared.css" />
+    <style>
+      body {
+        background:
+          radial-gradient(circle at 50% -10%, rgba(74, 144, 226, 0.2) 0%, transparent 44%),
+          linear-gradient(180deg, #0a1220 0%, #08101a 100%);
+      }
+      .frame {
+        background:
+          repeating-linear-gradient(90deg, rgba(164, 180, 203, 0.06) 0 1px, transparent 1px 40px),
+          repeating-linear-gradient(0deg, rgba(164, 180, 203, 0.04) 0 1px, transparent 1px 40px),
+          linear-gradient(165deg, #111c2e 0%, #0d1728 100%);
+      }
+      .topbar {
+        border-bottom-color: rgba(164, 180, 203, 0.24);
+      }
+      .brand { color: #e7effc; }
+      .btn {
+        color: #e3ebf8;
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(164, 180, 203, 0.25);
+      }
+      .btn.primary {
+        background: linear-gradient(140deg, #4a90e2, #3b79c0);
+        color: #f3f8ff;
+        border-color: #67a5ee;
+      }
+      .workspace { grid-template-columns: 330px 1fr 300px; grid-template-rows: 1fr 64px; }
+      .panel {
+        background: rgba(16, 28, 44, 0.82);
+        border-color: #2b3e5d;
+      }
+      .panel-title,
+      .tiny { color: #a4b4cb; }
+      .chip {
+        color: #d8e4f5;
+        border-color: rgba(164, 180, 203, 0.24);
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .preview-stage {
+        background:
+          linear-gradient(180deg, rgba(74, 144, 226, 0.16), transparent 30%),
+          linear-gradient(180deg, #101b2d 0%, #0b1423 100%);
+        border-color: #325175;
+      }
+      .preview-card {
+        border-color: rgba(92, 214, 192, 0.85);
+        background: linear-gradient(180deg, #17263d 0%, #121f33 100%);
+        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.45);
+      }
+      .preview-card .art {
+        background:
+          radial-gradient(circle at 20% 24%, rgba(92, 214, 192, 0.6), transparent 36%),
+          linear-gradient(130deg, #2d4f79 0%, #1f3d63 50%, #102541 100%);
+      }
+      .preview-card .text { color: #ecf3ff; }
+      .footer-strip {
+        grid-column: 1 / 4;
+        border-top-color: #2b3e5d;
+        color: #d7e4f7;
+        background: rgba(9, 15, 25, 0.62);
+      }
+      .graph { background: rgba(92, 214, 192, 0.2); }
+      .warning {
+        color: #e35d6a;
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <div class="topbar">
+        <div class="brand">Dice Throne Builder | Tactical Blueprint</div>
+        <div class="actions">
+          <button class="btn">Batch Assign</button>
+          <button class="btn">Perf Trace</button>
+          <button class="btn">Export</button>
+          <button class="btn primary">Print Run</button>
+        </div>
+      </div>
+      <div class="workspace">
+        <aside class="panel">
+          <div class="panel-title">Asset Matrix</div>
+          <div class="stack">
+            <div class="chip">Folder Tree + Tags</div>
+            <div class="chip">Search + Batch Replace</div>
+            <div class="chip">Pinned Templates</div>
+            <div class="chip">Recent Imports</div>
+            <div class="chip">Validation Queue</div>
+          </div>
+        </aside>
+        <main class="preview-stage">
+          <div class="preview-card">
+            <div class="art"></div>
+            <div class="text">MISSED ME II<br /><span class="tiny">Defense Roll 5. Gain momentum.</span></div>
+          </div>
+        </main>
+        <aside class="panel">
+          <div class="panel-title">Precision Dock</div>
+          <div class="stack">
+            <div class="chip">Nudge X/Y + Rotation</div>
+            <div class="chip">Constraint Grid</div>
+            <div class="chip">Snap Priority</div>
+            <div class="chip">Layer Anchors</div>
+            <div class="chip warning">1 overflow warning</div>
+          </div>
+        </aside>
+        <div class="footer-strip">
+          <div class="row">
+            <span class="kpi">Frame 12.3ms</span>
+            <span class="tiny">Cache hit: 94%</span>
+            <span class="tiny">Queue: stable</span>
+          </div>
+          <div class="graph"></div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

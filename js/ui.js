@@ -166,7 +166,28 @@ class UI {
 
     this.previewContainer = document.querySelector('.preview-container');
     this.previewElement = document.getElementById('cardPreview');
+    this.previewCenterGuideHorizontal = document.getElementById('previewCenterGuideHorizontal');
+    this.previewCenterGuideVertical = document.getElementById('previewCenterGuideVertical');
     this.panelLowerLayer = document.getElementById('panelLowerLayer');
+    this.previewInspector = document.getElementById('previewInspector');
+    this.inspectorWorkspaceValue = document.getElementById('inspectorWorkspaceValue');
+    this.inspectorStageValue = document.getElementById('inspectorStageValue');
+    this.inspectorCardTypeValue = document.getElementById('inspectorCardTypeValue');
+    this.inspectorSubTypeValue = document.getElementById('inspectorSubTypeValue');
+    this.inspectorVisibleLayersValue = document.getElementById('inspectorVisibleLayersValue');
+    this.inspectorHiddenLayersValue = document.getElementById('inspectorHiddenLayersValue');
+    this.inspectorArtValue = document.getElementById('inspectorArtValue');
+    this.inspectorReferenceValue = document.getElementById('inspectorReferenceValue');
+    this.inspectorCardIdValue = document.getElementById('inspectorCardIdValue');
+    this.inspectorRenderMsValue = document.getElementById('inspectorRenderMsValue');
+    this.inspectorUpdatedValue = document.getElementById('inspectorUpdatedValue');
+    this.utilityWorkspaceValue = document.getElementById('utilityWorkspaceValue');
+    this.utilityLayersValue = document.getElementById('utilityLayersValue');
+    this.utilityRenderMsValue = document.getElementById('utilityRenderMsValue');
+    this.utilityArtValue = document.getElementById('utilityArtValue');
+    this.utilityReferenceValue = document.getElementById('utilityReferenceValue');
+    this.utilityUpdatedValue = document.getElementById('utilityUpdatedValue');
+    this.lastRenderDurationMs = null;
     this.containerEl = document.querySelector('.container');
     this.workspaceTabs = [...document.querySelectorAll('.workspace-tab')];
     this.workspacePanels = {
@@ -178,8 +199,9 @@ class UI {
     this.workspaceMode = this.getStoredWorkspaceMode();
     this.sidebarResizer = document.getElementById('sidebarResizer');
     this.sidebarWidthKey = 'dtc_sidebar_width_v1';
+    this.panelSectionOrderKeyPrefix = 'dtc_panel_section_order_v1';
     this.leafletSideSelect = document.getElementById('leafletSide');
-    this.cardModeReferencePath = 'Assets/Reference/missed_me_II.png';
+    this.cardModeReferencePath = 'Assets/Reference/Mighty_Summon_II.png';
     this.leafletModeReferencePath = 'Assets/Reference/spiderman_leaflet.png';
 
     const ReferenceManagerCtor = window.ReferenceOverlayManager;
@@ -359,6 +381,7 @@ class UI {
 
     this.initEventListeners();
     this.initLayerListDragAndDrop();
+    this.initControlPanelDragAndDrop();
     this.loadCardArtOptions();
     this.loadFontOptions();
     if (this.referenceManager) {
@@ -372,7 +395,9 @@ class UI {
     }
     this.refreshDeckUI();
     this.refreshBoardAbilityOptions();
-    this.updateDeckSaveAvailability(gameState.getCard());
+    const initialCard = gameState.getCard();
+    this.updateDeckSaveAvailability(initialCard);
+    this.updatePreviewDiagnostics(initialCard);
   }
 
   getStoredPrintMode() {
@@ -401,7 +426,7 @@ class UI {
   getDefaultReferencePathForMode(mode = this.workspaceMode) {
     const normalized = String(mode || '').toLowerCase();
     if (normalized === 'leaflet') return 'Assets/Reference/spiderman_leaflet.png';
-    return 'Assets/Reference/missed_me_II.png';
+    return 'Assets/Reference/Mighty_Summon_II.png';
   }
 
   applyWorkspaceReferenceDefault(mode = this.workspaceMode, options = {}) {
@@ -446,6 +471,7 @@ class UI {
     const previousMode = this.workspaceMode;
     const nextMode = ['card', 'leaflet', 'board'].includes(mode) ? mode : 'card';
     this.workspaceMode = nextMode;
+    this.setPreviewCenterGuidesVisible(false);
 
     this.workspaceTabs.forEach((tab) => {
       const isActive = tab.dataset.workspace === nextMode;
@@ -527,9 +553,18 @@ class UI {
       try {
         renderer.setWorkspaceMode(nextMode);
         const normalizedCard = this.ensureDescriptionBlocks(gameState.getCard());
+        const renderStart = (typeof performance !== 'undefined' && typeof performance.now === 'function')
+          ? performance.now()
+          : Date.now();
         renderer.render(normalizedCard);
+        const renderEnd = (typeof performance !== 'undefined' && typeof performance.now === 'function')
+          ? performance.now()
+          : Date.now();
+        const renderMs = Math.max(0, renderEnd - renderStart);
+        this.lastRenderDurationMs = renderMs;
         const activeId = this.getActiveDescriptionId(normalizedCard, this.getDescriptionBlocks(normalizedCard));
         if (activeId) this.setActiveDescriptionBlock(activeId, { syncEditor: true });
+        this.updatePreviewDiagnostics(normalizedCard, renderMs);
       } catch (error) {
         console.warn('Failed to re-render while applying workspace mode:', error);
       }
@@ -810,6 +845,16 @@ class UI {
           this.cardModeReferencePath = value;
         }
       });
+    }
+    const refreshPreviewDiagnostics = () => this.updatePreviewDiagnostics(gameState.getCard());
+    if (this.showReferenceCheckbox) {
+      this.showReferenceCheckbox.addEventListener('change', refreshPreviewDiagnostics);
+    }
+    if (this.showReferenceSideBySideCheckbox) {
+      this.showReferenceSideBySideCheckbox.addEventListener('change', refreshPreviewDiagnostics);
+    }
+    if (this.referenceOpacity) {
+      this.referenceOpacity.addEventListener('input', refreshPreviewDiagnostics);
     }
 
     // Card properties
@@ -1591,6 +1636,9 @@ class UI {
         if (this.costBadgeLayer) {
           this.costBadgeLayer.classList.toggle('active', target === 'costBadge');
         }
+        if (target !== 'title' && target !== 'description') {
+          this.setPreviewCenterGuidesVisible(false);
+        }
       };
 
       const onMove = (e) => {
@@ -1666,6 +1714,7 @@ class UI {
           activeLeafletBreakEl.classList.remove('is-dragging');
           activeLeafletBreakEl = null;
         }
+        this.setPreviewCenterGuidesVisible(false);
         window.removeEventListener('pointermove', onMove);
         window.removeEventListener('pointerup', onUp);
         window.removeEventListener('pointercancel', onUp);
@@ -1687,6 +1736,7 @@ class UI {
         e.stopPropagation();
         setActiveTarget(targetKey);
         isDragging = true;
+        this.setPreviewCenterGuidesVisible(false);
         dragScale = this.getPreviewScale();
         startX = e.clientX;
         startY = e.clientY;
@@ -1714,6 +1764,7 @@ class UI {
         e.stopPropagation();
         setActiveTarget('leafletBreak');
         isDragging = true;
+        this.setPreviewCenterGuidesVisible(false);
         activeLeafletBreakIndex = safeIndex;
         activeLeafletBreakEl = breakEl;
         activeLeafletBreakEl.classList.add('is-dragging');
@@ -1744,6 +1795,7 @@ class UI {
         this.setActiveTitleBlock(titleId, { syncInput: true });
         setActiveTarget('title', null, titleId);
         isDragging = true;
+        this.setPreviewCenterGuidesVisible(true);
         activeTitleDragId = titleId;
         dragScale = this.getPreviewScale();
         startX = e.clientX;
@@ -1773,6 +1825,7 @@ class UI {
         this.setActiveDescriptionBlock(descriptionId);
         setActiveTarget('description', descriptionId);
         isDragging = true;
+        this.setPreviewCenterGuidesVisible(true);
         activeDescriptionDragId = descriptionId;
         dragScale = this.getPreviewScale();
         startX = e.clientX;
@@ -2654,6 +2707,15 @@ class UI {
     return currentWidth / baseWidth;
   }
 
+  setPreviewCenterGuidesVisible(visible) {
+    const shouldShow = !!visible && this.workspaceMode !== 'board';
+    const guides = [this.previewCenterGuideHorizontal, this.previewCenterGuideVertical];
+    guides.forEach((guide) => {
+      if (!guide) return;
+      guide.classList.toggle('is-visible', shouldShow);
+    });
+  }
+
   clampLetterSpacing(value) {
     const spacing = Number(value);
     if (!Number.isFinite(spacing)) return 0;
@@ -3284,7 +3346,15 @@ class UI {
     if (typeof renderer?.setLeafletSide === 'function') {
       renderer.setLeafletSide(card.leafletSide);
     }
+    const renderStart = (typeof performance !== 'undefined' && typeof performance.now === 'function')
+      ? performance.now()
+      : Date.now();
     renderer.render(card);
+    const renderEnd = (typeof performance !== 'undefined' && typeof performance.now === 'function')
+      ? performance.now()
+      : Date.now();
+    const renderMs = Math.max(0, renderEnd - renderStart);
+    this.lastRenderDurationMs = renderMs;
     renderer.updateCostBadgePosition(card);
     const activeTitleId = this.getActiveTitleId(card, this.getTitleBlocks(card));
     this.updateTitleLayerActiveState(activeTitleId);
@@ -3323,8 +3393,97 @@ class UI {
     if (this.toggleCostBadge) this.toggleCostBadge.checked = !!(card.layers && card.layers.costBadge);
     if (this.toggleAttackModifier) this.toggleAttackModifier.checked = !!(card.layers && card.layers.attackModifier);
     if (this.toggleCardText) this.toggleCardText.checked = !!(card.layers && card.layers.cardText);
+    this.updatePreviewDiagnostics(card, renderMs);
 
   }
+
+  getWorkspaceLabel(mode = this.workspaceMode) {
+    const normalized = String(mode || '').toLowerCase();
+    if (normalized === 'leaflet') return 'Leaflet Creator';
+    if (normalized === 'board') return 'Board Creator';
+    return 'Card Creator';
+  }
+
+  getStageLabel(mode = this.workspaceMode) {
+    const normalized = String(mode || '').toLowerCase();
+    if (normalized === 'leaflet') return 'Leaflet Render';
+    if (normalized === 'board') return 'Board Layout';
+    return 'Card Render';
+  }
+
+  getLayerVisibilityStats(card) {
+    const safeCard = card && typeof card === 'object' ? card : {};
+    const layers = safeCard.layers && typeof safeCard.layers === 'object' ? safeCard.layers : {};
+    const layerOrder = this.normalizeLayerOrder(safeCard.layerOrder);
+    let visibleCount = 0;
+    layerOrder.forEach((key) => {
+      let enabled;
+      if (key === 'panelUpper') {
+        enabled = layers.panelUpper ?? layers.titleBar;
+      } else if (key === 'panelLower') {
+        enabled = layers.panelLower ?? layers.bottomText;
+      } else {
+        enabled = layers[key];
+      }
+      if (enabled !== false) visibleCount += 1;
+    });
+    const hiddenCount = Array.isArray(safeCard.hiddenLayers) ? safeCard.hiddenLayers.length : 0;
+    return {
+      visibleCount,
+      totalCount: layerOrder.length,
+      hiddenCount
+    };
+  }
+
+  updatePreviewDiagnostics(card, renderMs = null) {
+    const safeCard = card && typeof card === 'object' ? card : gameState.getCard();
+    if (Number.isFinite(renderMs)) {
+      this.lastRenderDurationMs = Math.max(0, renderMs);
+    }
+    const layerStats = this.getLayerVisibilityStats(safeCard);
+    const workspaceLabel = this.getWorkspaceLabel(this.workspaceMode);
+    const stageLabel = this.getStageLabel(this.workspaceMode);
+    const cardType = String(safeCard.cardType || 'Action Cards');
+    const cardSubType = String(safeCard.cardSubType || '--');
+    const cardId = String(safeCard.cardId || '').trim() || 'Unset';
+    const artLoaded = (safeCard.artData || safeCard.artUrl) ? 'Loaded' : 'None';
+    const refEnabled = !!(this.showReferenceCheckbox && this.showReferenceCheckbox.checked);
+    const refSideBySide = !!(this.showReferenceSideBySideCheckbox && this.showReferenceSideBySideCheckbox.checked);
+    const referenceLabel = refEnabled ? (refSideBySide ? 'Side-by-side' : 'Overlay') : 'Off';
+    const renderLabel = Number.isFinite(this.lastRenderDurationMs)
+      ? `${this.lastRenderDurationMs.toFixed(1)}ms`
+      : '--';
+    const updatedLabel = new Date().toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+    const layersLabel = `${layerStats.visibleCount}/${layerStats.totalCount}`;
+
+    const setText = (el, value) => {
+      if (!el) return;
+      el.textContent = String(value);
+    };
+
+    setText(this.inspectorWorkspaceValue, workspaceLabel);
+    setText(this.inspectorStageValue, stageLabel);
+    setText(this.inspectorCardTypeValue, cardType);
+    setText(this.inspectorSubTypeValue, cardSubType);
+    setText(this.inspectorVisibleLayersValue, layersLabel);
+    setText(this.inspectorHiddenLayersValue, String(layerStats.hiddenCount));
+    setText(this.inspectorArtValue, artLoaded);
+    setText(this.inspectorReferenceValue, referenceLabel);
+    setText(this.inspectorCardIdValue, cardId);
+    setText(this.inspectorRenderMsValue, renderLabel);
+    setText(this.inspectorUpdatedValue, updatedLabel);
+    setText(this.utilityWorkspaceValue, workspaceLabel);
+    setText(this.utilityLayersValue, layersLabel);
+    setText(this.utilityRenderMsValue, renderLabel);
+    setText(this.utilityArtValue, artLoaded);
+    setText(this.utilityReferenceValue, referenceLabel);
+    setText(this.utilityUpdatedValue, updatedLabel);
+  }
+
   updateSubTypeOptions(cardType, selectedValue = null, shouldUpdateState = true) {
     const subTypeOptions = {
       'Hero Upgrade': [
@@ -4540,6 +4699,180 @@ class UI {
     });
   }
 
+  initControlPanelDragAndDrop() {
+    const toolPanels = Array.from(document.querySelectorAll('.editor-panel .tool-panel'));
+    if (!toolPanels.length) return;
+    toolPanels.forEach((panel) => this.setupControlPanelDragForContainer(panel));
+  }
+
+  setupControlPanelDragForContainer(panel) {
+    if (!panel || panel.dataset.panelSectionDragInit === 'true') return;
+    panel.dataset.panelSectionDragInit = 'true';
+
+    const sections = this.getDirectPanelSections(panel);
+    if (!sections.length) return;
+
+    sections.forEach((section, index) => {
+      const key = this.getPanelSectionStorageKey(panel, section, index);
+      if (key) section.dataset.panelSectionKey = key;
+      section.classList.add('panel-section-draggable');
+      const summary = this.getDirectPanelSectionSummary(section);
+      if (summary) {
+        summary.classList.add('panel-section-drag-handle');
+        summary.setAttribute('draggable', 'true');
+      }
+    });
+
+    this.restorePanelSectionOrder(panel);
+
+    let draggingSection = null;
+    let suppressSummaryToggleUntil = 0;
+
+    const onDragStart = (e) => {
+      const handle = e.target.closest('.panel-section-drag-handle');
+      if (!handle || !panel.contains(handle)) return;
+      const section = handle.closest('.panel-section-draggable');
+      if (!section || section.parentElement !== panel) return;
+      draggingSection = section;
+      draggingSection.classList.add('dragging');
+      if (e.dataTransfer) {
+        e.dataTransfer.effectAllowed = 'move';
+        try {
+          e.dataTransfer.setData('text/plain', section.dataset.panelSectionKey || 'panel-section');
+        } catch (error) {
+          // ignore
+        }
+      }
+    };
+
+    const onDragOver = (e) => {
+      if (!draggingSection) return;
+      e.preventDefault();
+      if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+      const afterElement = this.getPanelSectionDragAfterElement(panel, e.clientY);
+      if (!afterElement) {
+        panel.appendChild(draggingSection);
+      } else if (afterElement !== draggingSection) {
+        panel.insertBefore(draggingSection, afterElement);
+      }
+    };
+
+    const onDragEnd = () => {
+      if (!draggingSection) return;
+      draggingSection.classList.remove('dragging');
+      draggingSection = null;
+      suppressSummaryToggleUntil = Date.now() + 120;
+      this.persistPanelSectionOrder(panel);
+    };
+
+    const onClickCapture = (e) => {
+      if (Date.now() >= suppressSummaryToggleUntil) return;
+      const handle = e.target.closest('.panel-section-drag-handle');
+      if (!handle || !panel.contains(handle)) return;
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    panel.addEventListener('dragstart', onDragStart);
+    panel.addEventListener('dragover', onDragOver);
+    panel.addEventListener('dragend', onDragEnd);
+    panel.addEventListener('click', onClickCapture, true);
+    panel.addEventListener('drop', (e) => {
+      if (draggingSection) e.preventDefault();
+    });
+  }
+
+  getDirectPanelSectionSummary(section) {
+    if (!section) return null;
+    const first = section.firstElementChild;
+    if (first && first.tagName === 'SUMMARY') return first;
+    return section.querySelector('summary');
+  }
+
+  getDirectPanelSections(panel) {
+    if (!panel) return [];
+    return Array.from(panel.children).filter((child) => (
+      child && child.classList && child.classList.contains('panel-section')
+    ));
+  }
+
+  getPanelSectionStorageKey(panel, section, index = 0) {
+    if (!panel || !section) return '';
+    if (section.dataset.panelSectionKey) return section.dataset.panelSectionKey;
+    if (section.id) return `id:${section.id}`;
+    const panelName = String(panel.dataset.toolPanel || 'default').toLowerCase();
+    const summary = this.getDirectPanelSectionSummary(section);
+    const label = String(summary?.textContent || `section-${index}`)
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    return `label:${panelName}:${label || `section-${index}`}:${index}`;
+  }
+
+  getPanelSectionOrderStorageKey(panel) {
+    if (!panel) return '';
+    const side = panel.closest('#previewRightMenu') ? 'right' : 'left';
+    const panelName = String(panel.dataset.toolPanel || 'default').toLowerCase();
+    return `${this.panelSectionOrderKeyPrefix}:${side}:${panelName}`;
+  }
+
+  restorePanelSectionOrder(panel) {
+    if (!panel || typeof localStorage === 'undefined') return;
+    const storageKey = this.getPanelSectionOrderStorageKey(panel);
+    if (!storageKey) return;
+    let parsed;
+    try {
+      parsed = JSON.parse(localStorage.getItem(storageKey) || '[]');
+    } catch (error) {
+      parsed = [];
+    }
+    if (!Array.isArray(parsed) || !parsed.length) return;
+
+    const sections = this.getDirectPanelSections(panel);
+    const map = new Map();
+    sections.forEach((section) => {
+      const key = section.dataset.panelSectionKey;
+      if (key) map.set(key, section);
+    });
+
+    parsed.forEach((key) => {
+      const section = map.get(key);
+      if (!section) return;
+      panel.appendChild(section);
+      map.delete(key);
+    });
+
+    map.forEach((section) => panel.appendChild(section));
+  }
+
+  persistPanelSectionOrder(panel) {
+    if (!panel || typeof localStorage === 'undefined') return;
+    const storageKey = this.getPanelSectionOrderStorageKey(panel);
+    if (!storageKey) return;
+    const order = this.getDirectPanelSections(panel)
+      .map((section) => section.dataset.panelSectionKey)
+      .filter(Boolean);
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(order));
+    } catch (error) {
+      // ignore storage write failures
+    }
+  }
+
+  getPanelSectionDragAfterElement(container, y) {
+    const items = this.getDirectPanelSections(container)
+      .filter((item) => !item.classList.contains('dragging') && item.offsetParent !== null);
+    return items.reduce((closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - box.height / 2;
+      if (offset < 0 && offset > closest.offset) {
+        return { offset, element: child };
+      }
+      return closest;
+    }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
+  }
+
   getDragAfterElement(container, y) {
     const items = [...container.querySelectorAll('.layer-item:not(.dragging)')]
       .filter((item) => item.offsetParent !== null);
@@ -5273,7 +5606,7 @@ class UI {
       { label: 'R Damage', command: '{{rdmg,4}}', iconSrc: 'Assets/Icons/Rdmg/dmg_blank.png' },
       { label: 'Prevent', command: '{{prevent,6}}', iconSrc: 'Assets/Icons/Prevent/prevent_blank.png' },
       { label: 'Prevent (Half)', command: '{{prevent,half}}', iconSrc: 'Assets/Icons/Prevent/prevent_half.png' },
-      { label: 'Heal', command: '{{heal,2}}', iconSrc: 'Assets/Icons/Heal/heal_2.png' },
+      { label: 'Heal', command: '{{heal,2}}', iconSrc: 'Assets/Icons/Heal/heal_blank.png' },
       { label: 'Straight', command: '{{straight,small,#ff3333}}', iconSrc: 'Assets/Icons/Straight/small.png' },
       { label: 'Ability Trigger', command: '{{at,basic_1,#33ccff}}', iconSrc: 'Assets/Ability Trigger/basic_1.png' },
       { label: 'Ability Dice (Count)', command: '{{abilitydice,3,#33ccff}}', iconSrc: 'Assets/Icons/Ability Dice/ability_dice.png' },

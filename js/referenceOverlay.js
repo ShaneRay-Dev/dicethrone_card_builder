@@ -13,7 +13,7 @@ class ReferenceOverlayManager {
     this.previewContainer = options.previewContainer || null;
 
     this.manifestPath = options.manifestPath || 'Assets/Reference/manifest.json';
-    this.defaultReferencePath = options.defaultReferencePath || 'Assets/Reference/missed_me_II.png';
+    this.defaultReferencePath = options.defaultReferencePath || 'Assets/Reference/Mighty_Summon_II.png';
     this.fitSize = options.fitSize || 'cover';
     this.maxUploadBytes = Number(options.maxUploadBytes) || (5 * 1024 * 1024);
     this.isBound = false;

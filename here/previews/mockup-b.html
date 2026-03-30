@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mockup B - Studio Light</title>
+    <link rel="stylesheet" href="./shared.css" />
+    <style>
+      body {
+        background: linear-gradient(180deg, #eef3fb 0%, #dde7f5 100%);
+      }
+      .frame {
+        background: #f8fbff;
+        border-color: rgba(11, 47, 97, 0.15);
+        box-shadow: 0 25px 72px rgba(18, 38, 68, 0.26);
+      }
+      .topbar {
+        border-bottom-color: rgba(23, 46, 84, 0.14);
+        background: #ffffff;
+      }
+      .brand { color: #152238; }
+      .btn {
+        color: #234064;
+        background: #f0f5fc;
+        border-color: #d2dfef;
+      }
+      .btn.primary {
+        background: linear-gradient(140deg, #0a84ff, #0a6fdd);
+        color: #fff;
+        border-color: #257ff5;
+      }
+      .workspace { grid-template-columns: 310px 1fr 340px; grid-template-rows: 1fr 58px; }
+      .panel {
+        border-color: #d9e3f0;
+        background: #ffffff;
+      }
+      .panel-title,
+      .tiny { color: #50627d; }
+      .chip {
+        color: #1a3558;
+        border-color: #dbe6f3;
+        background: #f4f8fd;
+      }
+      .preview-stage {
+        border-color: #ccdaec;
+        background:
+          radial-gradient(circle at 75% 9%, rgba(10, 132, 255, 0.11), transparent 42%),
+          linear-gradient(180deg, #ffffff 0%, #f6faff 100%);
+      }
+      .preview-card {
+        border-color: #1f4f8c;
+        background: #fdfefe;
+        box-shadow: 0 16px 38px rgba(14, 46, 86, 0.22);
+      }
+      .preview-card .art {
+        background: linear-gradient(130deg, #4aa8ff 0%, #1e7ee0 52%, #0e467e 100%);
+      }
+      .preview-card .text {
+        color: #142338;
+      }
+      .footer-strip {
+        grid-column: 1 / 4;
+        border-top-color: #d8e2ef;
+        background: #ffffff;
+        color: #203754;
+      }
+      .graph {
+        background: rgba(10, 132, 255, 0.18);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <div class="topbar">
+        <div class="brand">Dice Throne Builder | Studio Light</div>
+        <div class="actions">
+          <button class="btn">Templates</button>
+          <button class="btn">Save</button>
+          <button class="btn">Export</button>
+          <button class="btn primary">Share Deck</button>
+        </div>
+      </div>
+      <div class="workspace">
+        <aside class="panel">
+          <div class="panel-title">Asset Browser</div>
+          <div class="stack">
+            <div class="chip">Reference Cards</div>
+            <div class="chip">Frames + Backgrounds</div>
+            <div class="chip">Icons + Dice</div>
+            <div class="chip">Status Effects</div>
+            <div class="chip">Saved Snippets</div>
+          </div>
+        </aside>
+        <main class="preview-stage">
+          <div class="preview-card">
+            <div class="art"></div>
+            <div class="text">MOONSILVER BLADE<br /><span class="tiny">On 3-of-a-kind, inflict moonlight.</span></div>
+          </div>
+        </main>
+        <aside class="panel">
+          <div class="panel-title">Properties</div>
+          <div class="stack">
+            <div class="chip">Position + Snapping</div>
+            <div class="chip">Typography + Color</div>
+            <div class="chip">Upload + Crop</div>
+            <div class="chip">Inline Commands</div>
+            <div class="chip">Validation</div>
+          </div>
+        </aside>
+        <div class="footer-strip">
+          <div class="row">
+            <span class="kpi">Ready to Export</span>
+            <span class="tiny">1920x1080 preview</span>
+          </div>
+          <div class="graph"></div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

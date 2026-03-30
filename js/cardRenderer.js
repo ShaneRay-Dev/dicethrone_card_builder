@@ -123,6 +123,17 @@ class CardRenderer {
     } catch (error) {
       console.warn('Could not load asset manifest:', error);
       this.assetManifest = {};
+    } finally {
+      const stateCard = (typeof window !== 'undefined' && window.gameState && typeof window.gameState.getCard === 'function')
+        ? window.gameState.getCard()
+        : null;
+      if (stateCard) {
+        try {
+          this.render(stateCard);
+        } catch (renderError) {
+          console.warn('Failed to re-render after loading asset manifest:', renderError);
+        }
+      }
     }
   }
 
@@ -614,7 +625,7 @@ class CardRenderer {
       if (!/^\d+$/.test(raw)) return '';
       return raw;
     }
-    if (name !== 'prevent' && name !== 'damage' && name !== 'dmg' && name !== 'rdmg') return '';
+    if (name !== 'prevent' && name !== 'damage' && name !== 'dmg' && name !== 'rdmg' && name !== 'heal') return '';
     const raw = String(token?.value || '').trim();
     if (!raw || raw === 'blank' || raw === 'half') return '';
     return raw;
@@ -623,21 +634,25 @@ class CardRenderer {
   getIconOverlayScale(token) {
     const name = (token?.name || '').toLowerCase();
     if (name === 'defensive_roll') return 0;
-    if (name === 'damage' || name === 'dmg' || name === 'rdmg') return 0.8850086;
+    if (name === 'damage' || name === 'dmg') return 0.8939481;
+    if (name === 'rdmg' || name === 'heal') return 0.8850086;
     return 1.0;
   }
 
   getIconOverlaySizeAdjust(token) {
     const name = (token?.name || '').toLowerCase();
     if (name === 'defensive_roll') return 26;
-    if (name === 'damage' || name === 'dmg' || name === 'rdmg') return -1;
+    if (name === 'heal') return 8;
+    if (name === 'damage' || name === 'dmg' || name === 'rdmg') return 1;
     return 0;
   }
 
   getIconOverlayYOffsetAdjust(token, iconSize) {
     const name = (token?.name || '').toLowerCase();
     if (name === 'defensive_roll') return (-iconSize * 0.01) + 1;
-    if (name === 'damage' || name === 'dmg' || name === 'rdmg') return iconSize * 0.02;
+    if (name === 'rdmg') return (iconSize * 0.02) + 1;
+    if (name === 'damage' || name === 'dmg') return (iconSize * 0.02) + 1;
+    if (name === 'heal') return iconSize * 0.02;
     return 0;
   }
 
@@ -651,6 +666,54 @@ class CardRenderer {
     const name = (token?.name || '').toLowerCase();
     if (name === 'defensive_roll') return 'MYRIADPRO-BOLD';
     return '';
+  }
+
+  getIconOverlayColor(token, fallbackColor = '#ffffff') {
+    const name = (token?.name || '').toLowerCase();
+    if (name === 'heal') return '#111111';
+    return fallbackColor;
+  }
+
+  useFixedCenteredOverlay(token) {
+    const name = (token?.name || '').toLowerCase();
+    return name === 'dmg' || name === 'damage';
+  }
+
+  getFixedCenteredOverlaySize(token, iconSizeForAtom) {
+    if (!this.useFixedCenteredOverlay(token)) return null;
+    return Math.max(1, iconSizeForAtom * 0.6732);
+  }
+
+  getIconOverlayTrackingPx(token, overlaySize) {
+    const name = (token?.name || '').toLowerCase();
+    if (name === 'dmg' || name === 'damage') {
+      return -Math.max(0.5, overlaySize * 0.05);
+    }
+    return 0;
+  }
+
+  drawIconOverlayText(ctx, token, text, centerX, centerY, overlaySize) {
+    const raw = String(text || '');
+    if (!raw) return;
+    const tracking = this.getIconOverlayTrackingPx(token, overlaySize);
+    if (!Number.isFinite(tracking) || Math.abs(tracking) < 0.01 || raw.length <= 1) {
+      ctx.fillText(raw, centerX, centerY);
+      return;
+    }
+
+    const chars = Array.from(raw);
+    const widths = chars.map((ch) => Math.max(0, ctx.measureText(ch).width));
+    const totalWidth = widths.reduce((sum, width) => sum + width, 0)
+      + tracking * Math.max(0, chars.length - 1);
+
+    const prevAlign = ctx.textAlign;
+    ctx.textAlign = 'left';
+    let x = centerX - (totalWidth / 2);
+    chars.forEach((ch, idx) => {
+      ctx.fillText(ch, x, centerY);
+      x += widths[idx] + tracking;
+    });
+    ctx.textAlign = prevAlign;
   }
 
   splitTokenParts(raw) {
@@ -719,6 +782,51 @@ class CardRenderer {
       return { r, g, b, key: `rgb(${r}, ${g}, ${b})` };
     }
     return null;
+  }
+
+  getRelativeLuminance(colorInfo) {
+    if (!colorInfo) return 0;
+    const toLinear = (channel) => {
+      const c = Math.max(0, Math.min(255, Number(channel))) / 255;
+      if (c <= 0.04045) return c / 12.92;
+      return ((c + 0.055) / 1.055) ** 2.4;
+    };
+    const r = toLinear(colorInfo.r);
+    const g = toLinear(colorInfo.g);
+    const b = toLinear(colorInfo.b);
+    return (0.2126 * r) + (0.7152 * g) + (0.0722 * b);
+  }
+
+  adjustShadingContrast(base, mode = 'neutral', strength = 0.32) {
+    if (!base) return null;
+    const safeStrength = Math.max(0, Math.min(1, Number(strength)));
+    const canvas = document.createElement('canvas');
+    canvas.width = base.width;
+    canvas.height = base.height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    ctx.drawImage(base, 0, 0);
+    if (mode === 'neutral' || safeStrength <= 0) return canvas;
+
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+
+    for (let i = 0; i < data.length; i += 4) {
+      const alpha = data[i + 3];
+      if (!alpha) continue;
+      if (mode === 'darken') {
+        data[i] = Math.round(data[i] * (1 - safeStrength));
+        data[i + 1] = Math.round(data[i + 1] * (1 - safeStrength));
+        data[i + 2] = Math.round(data[i + 2] * (1 - safeStrength));
+      } else if (mode === 'lighten') {
+        data[i] = Math.round(data[i] + ((255 - data[i]) * safeStrength));
+        data[i + 1] = Math.round(data[i + 1] + ((255 - data[i + 1]) * safeStrength));
+        data[i + 2] = Math.round(data[i + 2] + ((255 - data[i + 2]) * safeStrength));
+      }
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+    return canvas;
   }
 
   tintStraightIcon(base, colorInfo) {
@@ -813,14 +921,47 @@ class CardRenderer {
     if (!shadingBase) return null;
     const colorInfo = this.parseIconColor(this.getEffectiveIconColor(atom));
     if (!colorInfo) return shadingBase;
-    const cacheKey = `tint:${shadingPath}:${colorInfo.key}:mix0.25`;
-    if (this.iconCache[cacheKey]) return this.iconCache[cacheKey];
-    const tinted = this.tintAbilityTriggerIcon(shadingBase, colorInfo, 0.25);
-    if (tinted) {
-      this.iconCache[cacheKey] = tinted;
-      return tinted;
+
+    const luminance = this.getRelativeLuminance(colorInfo);
+    let colorTintMix = 0.14;
+    let mode = 'neutral';
+    let strength = 0;
+    if (luminance >= 0.72) {
+      // Very light dice colors: reduce tint influence and darken more.
+      colorTintMix = 0.07;
+      mode = 'darken';
+      strength = 0.48;
+    } else if (luminance >= 0.60) {
+      // Light dice colors: keep highlights controlled.
+      colorTintMix = 0.09;
+      mode = 'darken';
+      strength = 0.42;
+    } else if (luminance <= 0.34) {
+      // Dark base dice color: push shading lighter for contrast, but keep subtle.
+      colorTintMix = 0.16;
+      mode = 'lighten';
+      strength = 0.28;
     }
-    return shadingBase;
+
+    const tintKey = `abilitydice:shade:tint:${shadingPath}:${colorInfo.key}:mix${colorTintMix.toFixed(2)}`;
+    let tintedShading = this.iconCache[tintKey];
+    if (!tintedShading) {
+      tintedShading = this.tintAbilityTriggerIcon(shadingBase, colorInfo, colorTintMix) || shadingBase;
+      this.iconCache[tintKey] = tintedShading;
+    }
+
+    if (mode === 'neutral') return tintedShading;
+
+    const cacheKey = `abilitydice:shade:${shadingPath}:${colorInfo.key}:mix${colorTintMix.toFixed(2)}:${mode}:${strength.toFixed(2)}`;
+    if (this.iconCache[cacheKey]) return this.iconCache[cacheKey];
+
+    const adjusted = this.adjustShadingContrast(tintedShading, mode, strength);
+    if (adjusted) {
+      this.iconCache[cacheKey] = adjusted;
+      return adjusted;
+    }
+
+    return tintedShading;
   }
 
   getIconImageForAtom(atom, path) {
@@ -3494,8 +3635,12 @@ class CardRenderer {
     }
 
     if (name === 'heal') {
-      const allowed = ['1','2','3','4','5','half','blank'];
-      return mapFolder('Heal', 'heal', allowed);
+      if (rawValue === 'half') {
+        const allowed = ['half'];
+        return mapFolder('Heal', 'heal', allowed, 'half');
+      }
+      const allowed = ['blank'];
+      return mapFolder('Heal', 'heal', allowed, 'blank');
     }
 
     if (name === 'prevent') {
@@ -3602,7 +3747,7 @@ class CardRenderer {
   getIconSpaceCount(token) {
     const name = (token?.name || '').toLowerCase();
     if (name === 'dmg' || name === 'damage' || name === 'rdmg') return 9;
-    if (name === 'heal') return 8;
+    if (name === 'heal') return 9;
     if (name === 'prevent') return 7;
     if (name === 'cp') return 7;
     if (name === 'draw') return 6;
@@ -3620,8 +3765,9 @@ class CardRenderer {
 
   getIconScale(token) {
     const name = (token?.name || '').toLowerCase();
-    if (name === 'dmg' || name === 'damage' || name === 'rdmg') return 1.0;
-    if (name === 'heal') return 1.0;
+    if (name === 'dmg' || name === 'damage') return 0.99;
+    if (name === 'rdmg') return 1.0;
+    if (name === 'heal') return 0.855;
     if (name === 'prevent') return 1.0;
     if (name === 'cp') return 0.855;
     if (name === 'draw') return 1.0;
@@ -3694,7 +3840,7 @@ class CardRenderer {
     if (name === 'draw') return -Math.round(iconSize * 0.15);
     if (name === 'prevent') return -Math.round(iconSize * 0.1);
     if (name === 'cp') return -Math.round(iconSize * 0.1);
-    if (name === 'damage' || name === 'dmg' || name === 'rdmg') return -Math.round(iconSize * 0.15);
+    if (name === 'damage' || name === 'dmg' || name === 'rdmg' || name === 'heal') return -Math.round(iconSize * 0.15);
     if (this.isStatusEffectToken(token)) {
       const modifier = String(token?.value || '').trim().toLowerCase();
       if (modifier === 'leaflet') return 0;
@@ -4079,23 +4225,37 @@ class CardRenderer {
           const overlayText = this.getIconOverlayText(atom);
           const drawOverlay = () => {
             if (!overlayText) return;
-            const overlaySize = Math.max(
-              1,
-              iconSizeForAtom * 0.73205 * this.getIconOverlayScale(atom) + this.getIconOverlaySizeAdjust(atom)
-            );
+            const useFixedCenteredOverlay = this.useFixedCenteredOverlay(atom);
+            const fixedCenteredOverlaySize = this.getFixedCenteredOverlaySize(atom, iconSizeForAtom);
+            const overlaySize = useFixedCenteredOverlay && fixedCenteredOverlaySize
+              ? fixedCenteredOverlaySize
+              : Math.max(
+                1,
+                iconSizeForAtom * 0.73205 * this.getIconOverlayScale(atom) + this.getIconOverlaySizeAdjust(atom)
+              );
             const overlayFamily = this.getIconOverlayFontFamily(atom);
             const overlayFont = overlayFamily
               ? this.buildFontWithSize(overlayFamily, overlaySize)
               : this.formatFontWithSize(ctx.font, overlaySize, 'Arial');
+            const overlayX = useFixedCenteredOverlay
+              ? iconX + iconSizeForAtom / 2
+              : iconX + iconSizeForAtom / 2 + this.getIconOverlayXOffsetAdjust(atom, iconSizeForAtom);
+            const overlayY = useFixedCenteredOverlay
+              ? y + iconYOffset + iconSizeForAtom / 2 + (iconSizeForAtom * 0.06)
+              : y + iconYOffset + iconSizeForAtom / 2 + iconSizeForAtom * 0.02
+                + this.getIconOverlayYOffsetAdjust(atom, iconSizeForAtom);
             ctx.save();
             ctx.font = overlayFont;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(
+            ctx.fillStyle = this.getIconOverlayColor(atom, '#ffffff');
+            this.drawIconOverlayText(
+              ctx,
+              atom,
               overlayText,
-              iconX + iconSizeForAtom / 2 + this.getIconOverlayXOffsetAdjust(atom, iconSizeForAtom),
-              y + iconYOffset + iconSizeForAtom / 2 + iconSizeForAtom * 0.02
-                + this.getIconOverlayYOffsetAdjust(atom, iconSizeForAtom)
+              overlayX,
+              overlayY,
+              overlaySize
             );
             ctx.restore();
           };
@@ -4201,24 +4361,40 @@ class CardRenderer {
           const overlayText = this.getIconOverlayText(atom);
           const drawOverlay = () => {
             if (!overlayText) return;
-            const overlaySize = Math.max(
-              1,
-              iconSizeForAtom * 0.73205 * this.getIconOverlayScale(atom) + this.getIconOverlaySizeAdjust(atom)
-            );
+            const useFixedCenteredOverlay = this.useFixedCenteredOverlay(atom);
+            const fixedCenteredOverlaySize = this.getFixedCenteredOverlaySize(atom, iconSizeForAtom);
+            const overlaySize = useFixedCenteredOverlay && fixedCenteredOverlaySize
+              ? fixedCenteredOverlaySize
+              : Math.max(
+                1,
+                iconSizeForAtom * 0.73205 * this.getIconOverlayScale(atom) + this.getIconOverlaySizeAdjust(atom)
+              );
             const overlayFamily = this.getIconOverlayFontFamily(atom);
             const overlayFont = overlayFamily
               ? this.buildFontWithSize(overlayFamily, overlaySize)
               : this.buildFontWithSize(atom.font || defaultFont, overlaySize);
+            const overlayX = useFixedCenteredOverlay
+              ? iconX + iconSizeForAtom / 2
+              : iconX + iconSizeForAtom / 2 + this.getIconOverlayXOffsetAdjust(atom, iconSizeForAtom);
+            const overlayY = useFixedCenteredOverlay
+              ? y + iconYOffset + iconSizeForAtom / 2 + (iconSizeForAtom * 0.06)
+              : y + iconYOffset + iconSizeForAtom / 2 + iconSizeForAtom * 0.02
+                + this.getIconOverlayYOffsetAdjust(atom, iconSizeForAtom);
             ctx.save();
             ctx.font = overlayFont;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillStyle = this.normalizeDescriptionColor(defaultTextColor, '#ffffff');
-            ctx.fillText(
+            ctx.fillStyle = this.getIconOverlayColor(
+              atom,
+              this.normalizeDescriptionColor(defaultTextColor, '#ffffff')
+            );
+            this.drawIconOverlayText(
+              ctx,
+              atom,
               overlayText,
-              iconX + iconSizeForAtom / 2 + this.getIconOverlayXOffsetAdjust(atom, iconSizeForAtom),
-              y + iconYOffset + iconSizeForAtom / 2 + iconSizeForAtom * 0.02
-                + this.getIconOverlayYOffsetAdjust(atom, iconSizeForAtom)
+              overlayX,
+              overlayY,
+              overlaySize
             );
             ctx.restore();
           };
