@@ -79,6 +79,7 @@ class CardRenderer {
       title: { color: 'rgba(0,0,0,0.42)', blur: 3, offsetX: 0, offsetY: 2 },
       description: { color: 'rgba(0,0,0,0.5)', blur: 4, offsetX: 0, offsetY: 2 }
     };
+    this.contentRenderNonce = 0;
     this.previewRenderNonce = 0;
     this.leafletBreakRenderNonce = 0;
     this.tokenIconCardContext = null;
@@ -90,6 +91,7 @@ class CardRenderer {
     this.leafletSide = 'front';
     this.leafletFrontAsset = encodeURI('Assets/Leaflet/Front/Leaflet_front_background.png');
     this.leafletBackAsset = encodeURI('Assets/Leaflet/Back/Leaflet_Back_Boarder.png');
+    this.previewZoom = 1;
     this.cardBaseAspect = (Number(DTC_RENDER_EXPORT_SIZE.height) || 1050) / (Number(DTC_RENDER_EXPORT_SIZE.width) || 675);
     this.leafletBaseAspect = 1203 / 640;
     this.boardAbilityLocationAsset = encodeURI('Assets/Board/Bord Template_Ability_location_guide.png');
@@ -1199,6 +1201,7 @@ class CardRenderer {
 
   render(card) {
     if (!card) return;
+    const renderNonce = ++this.contentRenderNonce;
     this.tokenIconCardContext = card;
     this.clearPreviewOutputMask();
     this.updatePreviewViewportScale();
@@ -1213,7 +1216,7 @@ class CardRenderer {
     this.updateCardStyle(card);
 
     // Update text content
-    this.updateCardContent(card);
+    this.updateCardContent(card, renderNonce);
     this.updateArtTransform(card);
 
     if (this.workspaceMode === 'leaflet') {
@@ -1231,7 +1234,7 @@ class CardRenderer {
     this.applyLayerOrder(card);
 
     // Apply cost badge
-    this.updateCostBadge(card);
+    this.updateCostBadge(card, renderNonce);
 
     // Apply art crop to frame
     this.updateArtCrop(card);
@@ -1239,12 +1242,26 @@ class CardRenderer {
     this.renderArtPreview(card);
   }
 
+  clampPreviewZoom(value) {
+    const zoom = Number(value);
+    if (!Number.isFinite(zoom)) return 1;
+    return Math.max(0.5, Math.min(3, zoom));
+  }
+
+  setPreviewZoom(value) {
+    this.previewZoom = this.clampPreviewZoom(value);
+    this.updatePreviewViewportScale();
+    return this.previewZoom;
+  }
+
+  getPreviewZoom() {
+    return this.clampPreviewZoom(this.previewZoom);
+  }
+
   updatePreviewViewportScale() {
     const container = document.querySelector('.preview-container');
     if (!container) return;
-    // Lock preview zoom so moving the window across monitors (different DPI/scaling)
-    // does not change card sizing/placement.
-    container.style.setProperty('--zoom-scale', '1');
+    container.style.setProperty('--zoom-scale', String(this.getPreviewZoom()));
   }
 
   clearPreviewOutputMask() {
@@ -1579,7 +1596,7 @@ class CardRenderer {
     const baseRaw = previewContainer
       ? getComputedStyle(previewContainer).getPropertyValue('--card-width')
       : '';
-    const baseWidth = parseFloat(baseRaw) || 673;
+    const baseWidth = parseFloat(baseRaw) || 675;
     const currentWidth = this.previewElement ? this.previewElement.clientWidth : baseWidth;
     if (!baseWidth || !currentWidth) return 1;
     return currentWidth / baseWidth;
@@ -2028,15 +2045,15 @@ class CardRenderer {
     // No need for direct cardInner styling
   }
 
-  updateCardContent(card) {
+  updateCardContent(card, renderNonce = this.contentRenderNonce) {
     // Update title image (in Panel Upper)
-    this.updateTitleImage(card);
+    this.updateTitleImage(card, renderNonce);
 
     // Update description image (in Panel Lower)
-    this.updateDescriptionImage(card);
+    this.updateDescriptionImage(card, renderNonce);
 
     // Update card ID text (right edge)
-    this.updateCardIdText(card);
+    this.updateCardIdText(card, renderNonce);
   }
 
   normalizeCardIdText(value) {
@@ -2089,7 +2106,8 @@ class CardRenderer {
     return this.titleLayerMap;
   }
 
-  async renderTitleBlockImage(card, block, titleEl, base) {
+  async renderTitleBlockImage(card, block, titleEl, base, renderNonce = this.contentRenderNonce) {
+    if (renderNonce !== this.contentRenderNonce) return;
     if (!titleEl || !base) return;
     const text = (block.text || '').trim();
     if (!text) {
@@ -2111,6 +2129,7 @@ class CardRenderer {
     if (!this.areIconsReady(text)) {
       await this.preloadIconsForText(text);
     }
+    if (renderNonce !== this.contentRenderNonce) return;
 
     const { width, height, centerX, centerY, maxWidth } = base;
     const canvas = document.createElement('canvas');
@@ -2120,25 +2139,27 @@ class CardRenderer {
     if (!ctx) return;
 
     const fontSize = Number(card.titleFontSize) || 18;
+    const currentScale = this.getPreviewScale();
+    const scaledFontSize = Math.max(1, fontSize * currentScale);
     const titleFont = card.titleFont || 'Arial';
     await this.ensureFontLoaded(titleFont, 700);
-    ctx.font = `700 ${fontSize}px ${this.getFontFamily(titleFont)}`;
+    if (renderNonce !== this.contentRenderNonce) return;
+    ctx.font = `700 ${scaledFontSize}px ${this.getFontFamily(titleFont)}`;
     ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    this.applyTextShadow(ctx, 'title', 1, 'title');
+    this.applyTextShadow(ctx, 'title', currentScale, 'title');
 
     const offset = block.position || { x: 0, y: 0 };
-    const currentScale = this.getPreviewScale();
     const offsetX = (Number(offset.x) || 0) * currentScale;
     const offsetY = (Number(offset.y) || 0) * currentScale;
-    const iconSize = Math.round(fontSize * 0.9);
-    const letterSpacing = Number(card.titleLetterSpacing) || 0;
+    const iconSize = Math.max(1, Math.round(scaledFontSize * 0.9));
+    const letterSpacing = (Number(card.titleLetterSpacing) || 0) * currentScale;
     const layout = this.layoutTextWithIcons(
       ctx,
       text,
       maxWidth,
-      fontSize * 1.35,
+      scaledFontSize * 1.35,
       iconSize,
       letterSpacing,
       1.05
@@ -2159,6 +2180,7 @@ class CardRenderer {
     tightCtx.shadowOffsetX = ctx.shadowOffsetX;
     tightCtx.shadowOffsetY = ctx.shadowOffsetY;
     this.drawLaidOutTextWithIcons(tightCtx, layout, pad, pad, iconSize, 'center', letterSpacing);
+    if (renderNonce !== this.contentRenderNonce) return;
 
     titleEl.style.pointerEvents = 'auto';
     titleEl.style.backgroundImage = `url('${tightCanvas.toDataURL('image/png')}')`;
@@ -2172,9 +2194,18 @@ class CardRenderer {
     titleEl.style.left = `${left}px`;
     titleEl.style.top = `${top}px`;
     titleEl.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+    const safeScale = Math.max(0.0001, currentScale || 1);
+    titleEl.dataset.layoutBaseWidth = String(tightCanvas.width / safeScale);
+    titleEl.dataset.layoutBaseHeight = String(tightCanvas.height / safeScale);
+    titleEl.dataset.layoutBaseLeft = String(left / safeScale);
+    titleEl.dataset.layoutBaseTop = String(top / safeScale);
+    titleEl.dataset.layoutOffsetX = String(Number(offset.x) || 0);
+    titleEl.dataset.layoutOffsetY = String(Number(offset.y) || 0);
+    titleEl.dataset.layoutKind = 'text-overlay';
   }
 
-  async updateTitleImage(card) {
+  async updateTitleImage(card, renderNonce = this.contentRenderNonce) {
+    if (renderNonce !== this.contentRenderNonce) return;
     const blocks = this.getTitleBlocks(card);
     if (!blocks.length) return;
     const layerMap = this.syncTitleLayers(blocks);
@@ -2194,8 +2225,9 @@ class CardRenderer {
     const bgUpperSrc = assets.backgroundUpper;
     if (bgUpperSrc && !this.bgLowerBoundsCache[bgUpperSrc]) {
       this.computeOpaqueBounds(bgUpperSrc).then((bounds) => {
+        if (renderNonce !== this.contentRenderNonce) return;
         if (bounds) this.bgLowerBoundsCache[bgUpperSrc] = bounds;
-        this.updateTitleImage(card);
+        this.updateTitleImage(card, renderNonce);
       }).catch(() => {});
     }
 
@@ -2222,13 +2254,15 @@ class CardRenderer {
     };
 
     for (const block of blocks) {
+      if (renderNonce !== this.contentRenderNonce) return;
       const titleEl = layerMap.get(block.id);
       if (!titleEl) continue;
-      await this.renderTitleBlockImage(card, block, titleEl, base);
+      await this.renderTitleBlockImage(card, block, titleEl, base, renderNonce);
     }
   }
 
-  async updateCardIdText(card) {
+  async updateCardIdText(card, renderNonce = this.contentRenderNonce) {
+    if (renderNonce !== this.contentRenderNonce) return;
     const idEl = this.cardIdTextLayer;
     if (!idEl) return;
     const text = this.normalizeCardIdText(card.cardId || '');
@@ -2243,8 +2277,9 @@ class CardRenderer {
     const idSrc = assets.cardId;
     if (idSrc && !this.cardIdBoundsCache[idSrc]) {
       this.computeOpaqueBounds(idSrc).then((bounds) => {
+        if (renderNonce !== this.contentRenderNonce) return;
         if (bounds) this.cardIdBoundsCache[idSrc] = bounds;
-        this.updateCardIdText(card);
+        this.updateCardIdText(card, renderNonce);
       }).catch(() => {});
     }
 
@@ -2277,6 +2312,7 @@ class CardRenderer {
     const fontFamily = card.cardIdFont || 'MyriadPro-Light';
     const fontWeight = 700;
     await this.ensureFontLoaded(fontFamily, fontWeight);
+    if (renderNonce !== this.contentRenderNonce) return;
 
     const canvas = document.createElement('canvas');
     canvas.width = width;
@@ -2356,7 +2392,8 @@ class CardRenderer {
     return this.descriptionLayerMap;
   }
 
-  async renderDescriptionBlockImage(card, block, descLayer, base) {
+  async renderDescriptionBlockImage(card, block, descLayer, base, renderNonce = this.contentRenderNonce) {
+    if (renderNonce !== this.contentRenderNonce) return;
     if (!descLayer || !base) return;
     const runs = this.getDescriptionRuns(card, block);
     const plainText = this.getPlainTextFromRuns(runs).trim();
@@ -2379,6 +2416,7 @@ class CardRenderer {
     if (!this.areIconsReady(plainText)) {
       await this.preloadIconsForText(plainText);
     }
+    if (renderNonce !== this.contentRenderNonce) return;
 
     const { width, height, centerX, centerY, maxWidth, descriptionLineHeightScale } = base;
 
@@ -2389,24 +2427,26 @@ class CardRenderer {
     if (!ctx) return;
 
     const fontSize = Number(block.fontSize) || Number(card.descriptionFontSize) || 18;
+    const currentScale = this.getPreviewScale();
+    const scaledFontSize = Math.max(1, fontSize * currentScale);
     const descFont = card.descriptionFont || 'Arial';
     const fontsToLoad = this.collectFontsFromRuns(runs, descFont);
     await Promise.all(fontsToLoad.map((font) => this.ensureFontLoaded(font, 700)));
-    ctx.font = `700 ${fontSize}px ${this.getFontFamily(descFont)}`;
+    if (renderNonce !== this.contentRenderNonce) return;
+    ctx.font = `700 ${scaledFontSize}px ${this.getFontFamily(descFont)}`;
     ctx.fillStyle = this.normalizeDescriptionColor(block.color, this.normalizeDescriptionColor(card.descriptionColor, '#ffffff'));
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    this.applyTextShadow(ctx, 'description', 1, 'description');
+    this.applyTextShadow(ctx, 'description', currentScale, 'description');
 
     const offset = block.position || { x: 0, y: 0 };
-    const currentScale = this.getPreviewScale();
     const offsetX = (Number(offset.x) || 0) * currentScale;
     const offsetY = (Number(offset.y) || 0) * currentScale;
     const descriptionIconScale = 1.386;
-    const iconSize = Math.round(fontSize * descriptionIconScale);
-    const letterSpacing = Number(card.descriptionLetterSpacing) || 0;
+    const iconSize = Math.max(1, Math.round(scaledFontSize * descriptionIconScale));
+    const letterSpacing = (Number(card.descriptionLetterSpacing) || 0) * currentScale;
     const atoms = this.tokenizeRichRuns(runs, descFont);
-    const lineHeight = Math.max(1, fontSize * descriptionLineHeightScale - 1);
+    const lineHeight = Math.max(1, (scaledFontSize * descriptionLineHeightScale) - currentScale);
     let layout = this.layoutRichTextWithIcons(
       ctx,
       atoms,
@@ -2415,7 +2455,7 @@ class CardRenderer {
       iconSize,
       letterSpacing,
       1.0,
-      fontSize,
+      scaledFontSize,
       descFont
     );
     const usePlainLayout = !layout.lines.length;
@@ -2464,11 +2504,12 @@ class CardRenderer {
         iconSize,
         'center',
         letterSpacing,
-        fontSize,
+        scaledFontSize,
         descFont,
         this.normalizeDescriptionColor(block.color, this.normalizeDescriptionColor(card.descriptionColor, '#ffffff'))
       );
     }
+    if (renderNonce !== this.contentRenderNonce) return;
 
     const rawScale = Number(block.scale);
     const renderScale = Number.isFinite(rawScale) && rawScale > 0 ? rawScale : 1;
@@ -2487,9 +2528,70 @@ class CardRenderer {
     descLayer.style.left = `${left}px`;
     descLayer.style.top = `${top}px`;
     descLayer.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+    const safeScale = Math.max(0.0001, currentScale || 1);
+    descLayer.dataset.layoutBaseWidth = String(scaledWidth / safeScale);
+    descLayer.dataset.layoutBaseHeight = String(scaledHeight / safeScale);
+    descLayer.dataset.layoutBaseLeft = String(left / safeScale);
+    descLayer.dataset.layoutBaseTop = String(top / safeScale);
+    descLayer.dataset.layoutOffsetX = String(Number(offset.x) || 0);
+    descLayer.dataset.layoutOffsetY = String(Number(offset.y) || 0);
+    descLayer.dataset.layoutKind = 'text-overlay';
   }
 
-  async updateDescriptionImage(card) {
+  applyScaledOverlayLayout(layer, scale) {
+    if (!layer || !layer.dataset) return false;
+    const baseWidth = Number(layer.dataset.layoutBaseWidth);
+    const baseHeight = Number(layer.dataset.layoutBaseHeight);
+    const baseLeft = Number(layer.dataset.layoutBaseLeft);
+    const baseTop = Number(layer.dataset.layoutBaseTop);
+    const offsetX = Number(layer.dataset.layoutOffsetX);
+    const offsetY = Number(layer.dataset.layoutOffsetY);
+    if (
+      !Number.isFinite(baseWidth) ||
+      !Number.isFinite(baseHeight) ||
+      !Number.isFinite(baseLeft) ||
+      !Number.isFinite(baseTop) ||
+      !Number.isFinite(offsetX) ||
+      !Number.isFinite(offsetY)
+    ) {
+      return false;
+    }
+    const safeScale = Math.max(0.0001, Number(scale) || 1);
+    const width = Math.max(1, Math.round(baseWidth * safeScale));
+    const height = Math.max(1, Math.round(baseHeight * safeScale));
+    const left = baseLeft * safeScale;
+    const top = baseTop * safeScale;
+    const translateX = offsetX * safeScale;
+    const translateY = offsetY * safeScale;
+    layer.style.width = `${width}px`;
+    layer.style.height = `${height}px`;
+    layer.style.left = `${left}px`;
+    layer.style.top = `${top}px`;
+    layer.style.transform = `translate(${translateX}px, ${translateY}px)`;
+    layer.style.backgroundSize = `${width}px ${height}px`;
+    return true;
+  }
+
+  reflowPreviewForZoom(card) {
+    const scale = this.getPreviewScale();
+    if (!Number.isFinite(scale) || scale <= 0) return false;
+    let didUpdate = false;
+    if (this.titleLayerMap && this.titleLayerMap.size) {
+      for (const layer of this.titleLayerMap.values()) {
+        didUpdate = this.applyScaledOverlayLayout(layer, scale) || didUpdate;
+      }
+    }
+    if (this.descriptionLayerMap && this.descriptionLayerMap.size) {
+      for (const layer of this.descriptionLayerMap.values()) {
+        didUpdate = this.applyScaledOverlayLayout(layer, scale) || didUpdate;
+      }
+    }
+    this.updateCostBadgePosition(card || gameState.getCard());
+    return didUpdate;
+  }
+
+  async updateDescriptionImage(card, renderNonce = this.contentRenderNonce) {
+    if (renderNonce !== this.contentRenderNonce) return;
     const blocks = this.getDescriptionBlocks(card);
     if (!blocks.length) return;
     const layerMap = this.syncDescriptionLayers(blocks);
@@ -2511,8 +2613,9 @@ class CardRenderer {
     const bgLowerSrc = assets.backgroundLower;
     if (bgLowerSrc && !this.bgLowerBoundsCache[bgLowerSrc]) {
       this.computeOpaqueBounds(bgLowerSrc).then((bounds) => {
+        if (renderNonce !== this.contentRenderNonce) return;
         if (bounds) this.bgLowerBoundsCache[bgLowerSrc] = bounds;
-        this.updateDescriptionImage(card);
+        this.updateDescriptionImage(card, renderNonce);
       }).catch(() => {});
     }
 
@@ -2540,9 +2643,10 @@ class CardRenderer {
     };
 
     for (const block of blocks) {
+      if (renderNonce !== this.contentRenderNonce) return;
       const descLayer = layerMap.get(block.id);
       if (!descLayer) continue;
-      await this.renderDescriptionBlockImage(card, block, descLayer, base);
+      await this.renderDescriptionBlockImage(card, block, descLayer, base, renderNonce);
     }
   }
   updateArtTransform(card) {
@@ -2645,7 +2749,8 @@ class CardRenderer {
       if (artImage) artImage.style.display = 'block';
     }
   }
-  async updateCostBadge(card) {
+  async updateCostBadge(card, renderNonce = this.contentRenderNonce) {
+    if (renderNonce !== this.contentRenderNonce) return;
     if (!this.costBadgeLayer) return;
 
     const value = String(card?.costBadge?.value ?? '').trim();
@@ -2655,6 +2760,7 @@ class CardRenderer {
       return;
     }
     const dataUrl = await this.buildCostBadgeDataUrl(value, card?.costBadge?.fontSize);
+    if (renderNonce !== this.contentRenderNonce) return;
     this.costBadgeLayer.style.backgroundImage = dataUrl ? `url('${dataUrl}')` : '';
     this.updateCostBadgePosition(card);
   }
@@ -3346,9 +3452,13 @@ class CardRenderer {
     return (output || canvas).toDataURL('image/png');
   }
 
-  async exportAsImage() {
+  async exportAsImage(options = {}) {
     try {
       const card = gameState.getCard();
+      const requestedDpi = Number(options?.dpi);
+      const safeDpi = Number.isFinite(requestedDpi) && requestedDpi > 0 ? requestedDpi : 300;
+      const baseDpi = 300;
+      const renderScale = Math.max(0.5, Math.min(4, safeDpi / baseDpi));
       const cloneCard = (source) => deepCloneRender(source || {});
       const buildLayerMap = (sourceLayers = {}, defaults = {}, defaultVisible = true) => {
         const map = {};
@@ -3367,8 +3477,8 @@ class CardRenderer {
       const finalMaskSrc = this.finalExportCropMaskPath || this.renderBleedOverridePath;
       const baseWidth = Number(DTC_RENDER_EXPORT_SIZE.width) || 675;
       const baseHeight = Number(DTC_RENDER_EXPORT_SIZE.height) || 1050;
-      const exportWidth = baseWidth;
-      const exportHeight = baseHeight;
+      const exportWidth = Math.max(1, Math.round(baseWidth * renderScale));
+      const exportHeight = Math.max(1, Math.round(baseHeight * renderScale));
 
       const baseCard = cloneCard(card);
       baseCard.layers = buildLayerMap(card.layers || {}, {
@@ -3378,8 +3488,8 @@ class CardRenderer {
       }, true);
       const baseCanvas = await this.renderCardToCanvas(baseCard, {
         includeBleed: false,
-        width: baseWidth,
-        height: baseHeight,
+        width: exportWidth,
+        height: exportHeight,
         usePreviewMetrics: false,
         fitMode: 'cover',
         padding: 0,
@@ -3395,8 +3505,8 @@ class CardRenderer {
       }, false);
       const overlayCanvas = await this.renderCardToCanvas(overlayCard, {
         includeBleed: false,
-        width: baseWidth,
-        height: baseHeight,
+        width: exportWidth,
+        height: exportHeight,
         usePreviewMetrics: false,
         fitMode: 'cover',
         padding: 0,
@@ -3413,9 +3523,9 @@ class CardRenderer {
 
       // Keep card art at configured export size, then place text/card-id overlay on top.
       outCtx.clearRect(0, 0, exportWidth, exportHeight);
-      outCtx.drawImage(baseCanvas, 0, 0, baseWidth, baseHeight);
+      outCtx.drawImage(baseCanvas, 0, 0, exportWidth, exportHeight);
       if (overlayCanvas) {
-        outCtx.drawImage(overlayCanvas, 0, 0, baseWidth, baseHeight);
+        outCtx.drawImage(overlayCanvas, 0, 0, exportWidth, exportHeight);
       }
       // Fixed-rect export: keep exact registration at configured export size with no post normalization.
       let finalOutput = output;
@@ -3456,7 +3566,8 @@ class CardRenderer {
 
       const link = document.createElement('a');
       link.href = finalOutput.toDataURL('image/png');
-      link.download = `${gameState.card.name || 'card'}.png`;
+      const dpiSuffix = Math.round(safeDpi) === 300 ? '' : `_${Math.round(safeDpi)}dpi`;
+      link.download = `${gameState.card.name || 'card'}${dpiSuffix}.png`;
       link.click();
 
       return true;

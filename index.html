@@ -23,6 +23,8 @@
           <select id="deckCardSelect"></select>
           <button id="deckSaveBtn" class="btn btn-secondary btn-small" type="button">Save Card</button>
           <button id="deckLoadBtn" class="btn btn-secondary btn-small" type="button">Load Card</button>
+          <button id="deckDuplicateCardBtn" class="btn btn-secondary btn-small" type="button">Duplicate Card</button>
+          <button id="deckBatchImportBtn" class="btn btn-secondary btn-small" type="button">Batch Import</button>
           <button id="deckDeleteCardBtn" class="btn btn-secondary btn-small" type="button">Delete Card</button>
           <button id="deckDeleteBtn" class="btn btn-secondary btn-small" type="button">Delete Deck</button>
         </div>
@@ -31,10 +33,13 @@
         <div class="export-menu" id="exportMenu">
           <button id="btn-export" class="btn btn-secondary" type="button" aria-haspopup="true" aria-expanded="false">Export</button>
           <div class="export-menu__panel" id="exportMenuPanel" aria-hidden="true">
-            <button class="export-menu__item" type="button" data-export="png">Export PNG</button>
+            <button class="export-menu__item" type="button" data-export="png-300">Export PNG (300 DPI)</button>
+            <button class="export-menu__item" type="button" data-export="png-600">Export PNG (600 DPI)</button>
+            <button class="export-menu__item" type="button" data-export="png-1200">Export PNG (1200 DPI)</button>
             <button class="export-menu__item" type="button" data-export="json">Export JSON</button>
           </div>
         </div>
+        <button id="btn-share-link" class="btn btn-secondary" type="button">Share Link</button>
         <button id="btn-deck-view" class="btn btn-secondary" type="button">Deck View</button>
         <button id="btn-print-sheet" class="btn btn-secondary" type="button">Print Sheet</button>
         <button id="btn-reset-canvas" class="btn btn-secondary">Reset Canvas</button>
@@ -206,6 +211,7 @@
             </div>
             <div class="form-group">
               <label for="artSelect">Default Art</label>
+              <input type="text" id="artSearchInput" placeholder="Search art library..." autocomplete="off">
               <select id="artSelect">
                 <option value="">None</option>
               </select>
@@ -329,6 +335,7 @@
           <div class="panel-content">
           <div class="form-group">
             <label for="referenceSelect">Reference Library</label>
+            <input type="text" id="referenceSearchInput" placeholder="Search references..." autocomplete="off">
             <select id="referenceSelect"></select>
           </div>
           <div class="form-group">
@@ -485,6 +492,14 @@
             <div class="ref-row">
               <span>Opacity</span>
               <input type="range" id="referenceOpacity" min="0" max="1" step="0.05" value="0.7">
+            </div>
+            <div class="ref-row">
+              <span>Zoom</span>
+              <input type="range" id="previewZoom" min="0.5" max="3" step="0.05" value="1">
+            </div>
+            <div class="ref-row">
+              <span>Scale</span>
+              <strong id="previewZoomValue">100%</strong>
             </div>
           </div>
           <div class="status-effects-toggle tool-panel is-active" data-tool-panel="card-render-controls">
