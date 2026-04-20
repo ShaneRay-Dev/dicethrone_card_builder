@@ -1,8 +1,8 @@
 /* Preview Panel */
 .preview-panel {
   background:
-    radial-gradient(120% 90% at 50% 0%, rgba(62, 98, 146, 0.2) 0%, rgba(11, 16, 28, 0) 58%),
-    linear-gradient(180deg, #111827 0%, #0c1220 100%);
+    radial-gradient(120% 90% at 50% 0%, rgba(116, 159, 214, 0.28) 0%, rgba(21, 32, 51, 0) 58%),
+    linear-gradient(180deg, #1a2840 0%, #152238 100%);
   border: 1px solid var(--border-color);
   border-left: none;
   border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
@@ -38,7 +38,7 @@
   gap: 24px;
   border: 1px solid rgba(141, 162, 189, 0.18);
   border-radius: var(--radius-lg);
-  background-color: #0b111b;
+  background-color: #14233a;
   background-image:
     linear-gradient(rgba(136, 155, 182, 0.07) 1px, transparent 1px),
     linear-gradient(90deg, rgba(136, 155, 182, 0.07) 1px, transparent 1px),
@@ -48,7 +48,7 @@
   background-position: 0 0, 0 0, -1px -1px, -1px -1px;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.03),
-    inset 0 30px 60px rgba(0, 0, 0, 0.25);
+    inset 0 24px 48px rgba(0, 0, 0, 0.18);
   /* Allow full card height/width to remain visible via scrolling. */
   overflow: auto;
   padding: 18px;
