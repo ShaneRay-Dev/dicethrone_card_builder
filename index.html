@@ -3,61 +3,100 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dice Throne Creator</title>
+  <title>Dice Throne Creator | Card, Leaflet, and Board Builder</title>
+  <meta name="description" content="Build custom Dice Throne cards, leaflets, and boards with live preview, layered editing, and high-resolution print exports.">
+  <meta name="keywords" content="Dice Throne card builder, custom card creator, tabletop card maker, print-ready card export, deck builder">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Dice Throne Creator">
+  <meta property="og:description" content="Create Dice Throne cards, leaflets, and boards with live preview and print-ready exports.">
+  <meta property="og:url" content="./">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Dice Throne Creator">
+  <meta name="twitter:description" content="Create Dice Throne cards, leaflets, and boards with live preview and print-ready exports.">
+  <link rel="canonical" href="./">
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="css/editor-panel.css">
   <link rel="stylesheet" href="css/preview.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css">
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Dice Throne Creator",
+      "applicationCategory": "GameApplication",
+      "operatingSystem": "Any",
+      "description": "Create custom Dice Throne cards, leaflets, and boards with layered editing and high-resolution print export."
+    }
+  </script>
 </head>
 <body>
   <div class="app">
     <!-- Header -->
     <header class="header">
-      <h1>Dice Throne Creator</h1>
+      <div class="header-brand">
+        <h1>Dice Throne Creator</h1>
+        <p class="header-subtitle">No account needed. Edits autosave locally every 30 seconds.</p>
+      </div>
       <div class="header-actions">
-        <button id="btn-new" class="btn btn-primary">New Card</button>
-        <div class="header-deck">
-          <input type="text" id="deckNameInput" placeholder="Deck name">
-          <button id="deckCreateBtn" class="btn btn-secondary btn-small" type="button">Create Deck</button>
-          <select id="deckSelect"></select>
-          <select id="deckCardSelect"></select>
-          <button id="deckSaveBtn" class="btn btn-secondary btn-small" type="button">Save Card</button>
-          <button id="deckLoadBtn" class="btn btn-secondary btn-small" type="button">Load Card</button>
-          <button id="deckDuplicateCardBtn" class="btn btn-secondary btn-small" type="button">Duplicate Card</button>
-          <button id="deckBatchImportBtn" class="btn btn-secondary btn-small" type="button">Batch Import</button>
-          <button id="deckDeleteCardBtn" class="btn btn-secondary btn-small" type="button">Delete Card</button>
-          <button id="deckDeleteBtn" class="btn btn-secondary btn-small" type="button">Delete Deck</button>
-        </div>
-        <button id="btn-save" class="btn btn-primary">Save</button>
-        <button id="btn-load" class="btn btn-secondary">Load</button>
-        <div class="export-menu" id="exportMenu">
-          <button id="btn-export" class="btn btn-secondary" type="button" aria-haspopup="true" aria-expanded="false">Export</button>
-          <div class="export-menu__panel" id="exportMenuPanel" aria-hidden="true">
-            <button class="export-menu__item" type="button" data-export="png-300">Export PNG (300 DPI)</button>
-            <button class="export-menu__item" type="button" data-export="png-600">Export PNG (600 DPI)</button>
-            <button class="export-menu__item" type="button" data-export="png-1200">Export PNG (1200 DPI)</button>
-            <button class="export-menu__item" type="button" data-export="json">Export JSON</button>
+        <div class="header-primary-actions">
+          <button id="btn-new" class="btn btn-primary" type="button">New Card</button>
+          <div class="export-menu" id="exportMenu">
+            <button id="btn-export" class="btn btn-secondary" type="button" aria-haspopup="true" aria-expanded="false">Export</button>
+            <div class="export-menu__panel" id="exportMenuPanel" aria-hidden="true">
+              <button class="export-menu__item" type="button" data-export="png-300">Export PNG (300 DPI)</button>
+              <button class="export-menu__item" type="button" data-export="png-600">Export PNG (600 DPI)</button>
+              <button class="export-menu__item" type="button" data-export="png-1200">Export PNG (1200 DPI)</button>
+              <button class="export-menu__item" type="button" data-export="json">Export JSON</button>
+            </div>
+          </div>
+          <button id="btn-print-sheet" class="btn btn-secondary" type="button">Print Sheet</button>
+          <div class="export-menu" id="actionsMenu">
+            <button id="btn-actions" class="btn btn-secondary" type="button" aria-haspopup="true" aria-expanded="false">Actions</button>
+            <div class="export-menu__panel export-menu__panel--wide" id="actionsMenuPanel" aria-hidden="true">
+              <button id="btn-save" class="export-menu__item" type="button">Save JSON</button>
+              <button id="btn-load" class="export-menu__item" type="button">Load JSON</button>
+              <button id="btn-share-link" class="export-menu__item" type="button">Share Link</button>
+              <button id="btn-deck-view" class="export-menu__item" type="button">Deck View</button>
+              <button id="btn-reset-canvas" class="export-menu__item" type="button">Reset Canvas</button>
+            </div>
           </div>
         </div>
-        <button id="btn-share-link" class="btn btn-secondary" type="button">Share Link</button>
-        <button id="btn-deck-view" class="btn btn-secondary" type="button">Deck View</button>
-        <button id="btn-print-sheet" class="btn btn-secondary" type="button">Print Sheet</button>
-        <button id="btn-reset-canvas" class="btn btn-secondary">Reset Canvas</button>
+        <div class="header-utility-actions">
+          <button id="btn-quick-start" class="btn btn-secondary" type="button">Quick Start</button>
+          <button id="btn-how-to" class="btn btn-secondary" type="button">How To Use</button>
+          <button id="btn-whats-new" class="btn btn-secondary" type="button">What&apos;s New</button>
+          <button id="btn-app-settings" class="btn btn-secondary" type="button">Settings</button>
+        </div>
+      </div>
+      <div class="workspace-nav workspace-nav--header-selectors" role="tablist" aria-label="Creator Mode">
+        <button id="workspaceCardBtn" class="workspace-tab is-active" type="button" role="tab" data-workspace="card" aria-selected="true">Card Creator</button>
+        <button id="workspaceLeafletBtn" class="workspace-tab" type="button" role="tab" data-workspace="leaflet" aria-selected="false">Leaflet Creator</button>
+        <button id="workspaceBoardBtn" class="workspace-tab" type="button" role="tab" data-workspace="board" aria-selected="false">Board Creator</button>
       </div>
     </header>
 
-    <div class="workspace-nav" role="tablist" aria-label="Creator Mode">
-      <button id="workspaceCardBtn" class="workspace-tab is-active" type="button" role="tab" data-workspace="card" aria-selected="true">Card Creator</button>
-      <button id="workspaceLeafletBtn" class="workspace-tab" type="button" role="tab" data-workspace="leaflet" aria-selected="false">Leaflet Creator</button>
-      <button id="workspaceBoardBtn" class="workspace-tab" type="button" role="tab" data-workspace="board" aria-selected="false">Board Creator</button>
-    </div>
+    <details class="header-deck-panel">
+      <summary>Project Deck</summary>
+      <div class="header-deck">
+        <input type="text" id="deckNameInput" placeholder="Deck name">
+        <button id="deckCreateBtn" class="btn btn-secondary btn-small" type="button">Create Deck</button>
+        <select id="deckSelect"></select>
+        <select id="deckCardSelect"></select>
+        <button id="deckSaveBtn" class="btn btn-secondary btn-small" type="button">Save Card</button>
+        <button id="deckLoadBtn" class="btn btn-secondary btn-small" type="button">Load Card</button>
+        <button id="deckDuplicateCardBtn" class="btn btn-secondary btn-small" type="button">Duplicate Card</button>
+        <button id="deckBatchImportBtn" class="btn btn-secondary btn-small" type="button">Batch Import</button>
+        <button id="deckDeleteCardBtn" class="btn btn-secondary btn-small" type="button">Delete Card</button>
+        <button id="deckDeleteBtn" class="btn btn-secondary btn-small" type="button">Delete Deck</button>
+      </div>
+    </details>
 
     <!-- Main Content -->
     <div class="container">
       <!-- Left Panel: Editor -->
       <aside class="editor-panel">
         <div class="tool-panel is-active" data-tool-panel="card-settings">
-        <details class="panel-section" open>
+        <details class="panel-section panel-section--primary" open>
           <summary id="cardPropertiesSummary">Card Properties</summary>
           <div class="panel-content">
             <div class="form-group" id="cardTypeGroup">
@@ -186,7 +225,7 @@
         </details>
 
         <!-- Image Upload Section -->
-        <details class="panel-section" open>
+        <details class="panel-section panel-section--primary" open>
           <summary id="artSectionTitle">Card Art</summary>
           <div class="panel-content">
             <div class="form-group">
@@ -222,7 +261,7 @@
         </details>
 
         <!-- Layers -->
-        <details class="panel-section" id="cardLayersSection" open>
+        <details class="panel-section panel-section--primary" id="cardLayersSection" open>
           <summary>Layers</summary>
           <div class="panel-content">
             <div class="form-group layers-group">
@@ -330,7 +369,7 @@
         </details>
 
         <!-- Reference Overlay -->
-        <details class="panel-section">
+        <details class="panel-section panel-section--primary">
           <summary>Reference</summary>
           <div class="panel-content">
           <div class="form-group">
@@ -347,7 +386,7 @@
         </details>
 
         <!-- Export -->
-        <details class="panel-section">
+        <details class="panel-section" hidden>
           <summary>Export</summary>
           <div class="panel-content">
             <div class="form-group">
@@ -699,6 +738,14 @@
         </div>
       </div>
       <div class="print-modal__body">
+        <details class="print-guide" open>
+          <summary>Print Setup Guide</summary>
+          <div class="print-guide__content">
+            <p>Use <strong>Standard</strong> mode for full bleed templates and <strong>Compact</strong> mode for denser card placement.</p>
+            <p>Keep <strong>Safe</strong> and <strong>Cut</strong> overlays enabled while aligning cards, then disable overlays before final export if needed.</p>
+            <p>For home printers, export PNG first to verify margins, then export PDF for final print runs.</p>
+          </div>
+        </details>
         <div class="print-selection">
           <div class="print-selection__header">
             <div id="printSelectionSummary" class="print-selection__summary"></div>
@@ -764,6 +811,198 @@
           </thead>
           <tbody id="otherCommandsTableBody"></tbody>
         </table>
+      </div>
+    </div>
+  </div>
+
+  <footer class="app-footer">
+    <p>This project is not affiliated with Roxley Games. Dice Throne marks, artwork, and related assets belong to their respective owners.</p>
+    <div class="app-footer__links">
+      <button class="footer-link" type="button" data-open-modal="privacyModal">Privacy Policy</button>
+      <button class="footer-link" type="button" data-open-modal="termsModal">Terms of Service</button>
+      <button class="footer-link" type="button" data-open-modal="helpModal">How To Use</button>
+    </div>
+  </footer>
+
+  <div class="mobile-action-bar" aria-label="Quick Actions">
+    <button id="btn-mobile-new" class="mobile-action-bar__btn" type="button">New</button>
+    <button id="btn-mobile-export" class="mobile-action-bar__btn" type="button">Export</button>
+    <button id="btn-mobile-print" class="mobile-action-bar__btn" type="button">Print</button>
+    <button id="btn-mobile-help" class="mobile-action-bar__btn" type="button">Help</button>
+  </div>
+
+  <div id="appToast" class="app-toast" role="status" aria-live="polite"></div>
+
+  <div id="appLoadingOverlay" class="app-loading-overlay" aria-hidden="true">
+    <div class="app-loading-overlay__card">
+      <div class="app-loading-overlay__spinner" aria-hidden="true"></div>
+      <p id="appLoadingText">Processing...</p>
+    </div>
+  </div>
+
+  <div id="quickStartModal" class="site-modal" aria-hidden="true">
+    <div class="site-modal__backdrop" data-close-modal="quickStartModal"></div>
+    <div class="site-modal__panel" role="dialog" aria-modal="true" aria-labelledby="quickStartTitle">
+      <div class="site-modal__header">
+        <h2 id="quickStartTitle">Quick Start</h2>
+        <button class="btn btn-secondary btn-small" type="button" data-close-modal="quickStartModal">Close</button>
+      </div>
+      <div class="site-modal__body">
+        <ol class="site-modal__steps">
+          <li>Pick a creator mode at the top: Card, Leaflet, or Board.</li>
+          <li>Add title and description in the left panel.</li>
+          <li>Upload artwork and tune layers.</li>
+          <li>Export PNG/PDF or save JSON for reuse.</li>
+        </ol>
+        <div class="site-modal__actions">
+          <button id="quickStartNewCardBtn" class="btn btn-primary btn-small" type="button">Start New Card</button>
+          <button id="quickStartLoadJsonBtn" class="btn btn-secondary btn-small" type="button">Load JSON</button>
+          <button id="quickStartHowToBtn" class="btn btn-secondary btn-small" type="button">Open Full Guide</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="helpModal" class="site-modal" aria-hidden="true">
+    <div class="site-modal__backdrop" data-close-modal="helpModal"></div>
+    <div class="site-modal__panel" role="dialog" aria-modal="true" aria-labelledby="helpModalTitle">
+      <div class="site-modal__header">
+        <h2 id="helpModalTitle">How To Use</h2>
+        <button class="btn btn-secondary btn-small" type="button" data-close-modal="helpModal">Close</button>
+      </div>
+      <div class="site-modal__body">
+        <p>Use the left panel to edit card properties, artwork, and layers. The right preview updates live.</p>
+        <p>Use deck tools in the header to create decks, save cards, and batch import names.</p>
+        <p>Open Print Sheet for final page layouts and export PNG/PDF for production.</p>
+        <p>Shortcuts: <code>Ctrl+S</code> save, <code>Ctrl+Z</code> undo, <code>Ctrl+Shift+Z</code> redo.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="changelogModal" class="site-modal" aria-hidden="true">
+    <div class="site-modal__backdrop" data-close-modal="changelogModal"></div>
+    <div class="site-modal__panel" role="dialog" aria-modal="true" aria-labelledby="changelogModalTitle">
+      <div class="site-modal__header">
+        <h2 id="changelogModalTitle">What&apos;s New</h2>
+        <button class="btn btn-secondary btn-small" type="button" data-close-modal="changelogModal">Close</button>
+      </div>
+      <div class="site-modal__body">
+        <ul class="site-modal__list">
+          <li>New Quick Start guide for first-time creators.</li>
+          <li>Action hierarchy refresh with grouped top-bar controls.</li>
+          <li>Application settings for saved defaults and data reset.</li>
+          <li>Expanded print setup guidance directly in Print Sheet.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div id="settingsModal" class="site-modal" aria-hidden="true">
+    <div class="site-modal__backdrop" data-close-modal="settingsModal"></div>
+    <div class="site-modal__panel" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+      <div class="site-modal__header">
+        <h2 id="settingsModalTitle">Application Settings</h2>
+        <button class="btn btn-secondary btn-small" type="button" data-close-modal="settingsModal">Close</button>
+      </div>
+      <div class="site-modal__body">
+        <label class="settings-checkbox">
+          <input id="showProcessingToasts" type="checkbox" checked>
+          <span>Show Processing Notifications</span>
+        </label>
+        <div class="site-modal__actions">
+          <button id="saveDefaultsBtn" class="btn btn-primary btn-small" type="button">Save Current as My Defaults</button>
+          <button id="resetToDefaultsBtn" class="btn btn-secondary btn-small" type="button">Reset to My Defaults</button>
+          <button id="restoreFactoryDefaultsBtn" class="btn btn-secondary btn-small" type="button">Restore Factory Settings</button>
+          <button id="resetAppDataBtn" class="btn btn-danger btn-small" type="button">Reset App Data</button>
+        </div>
+        <div class="site-modal__meta-links">
+          <button class="footer-link" type="button" data-open-modal="privacyModal">Privacy Policy</button>
+          <button class="footer-link" type="button" data-open-modal="termsModal">Terms of Service</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="privacyModal" class="site-modal" aria-hidden="true">
+    <div class="site-modal__backdrop" data-close-modal="privacyModal"></div>
+    <div class="site-modal__panel" role="dialog" aria-modal="true" aria-labelledby="privacyModalTitle">
+      <div class="site-modal__header">
+        <h2 id="privacyModalTitle">Privacy Policy</h2>
+        <button class="btn btn-secondary btn-small" type="button" data-close-modal="privacyModal">Close</button>
+      </div>
+      <div class="site-modal__body">
+        <p>Card data is stored locally in your browser for autosave and preferences.</p>
+        <p>This app does not require an account and does not upload project data unless you explicitly share or export it.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="termsModal" class="site-modal" aria-hidden="true">
+    <div class="site-modal__backdrop" data-close-modal="termsModal"></div>
+    <div class="site-modal__panel" role="dialog" aria-modal="true" aria-labelledby="termsModalTitle">
+      <div class="site-modal__header">
+        <h2 id="termsModalTitle">Terms of Service</h2>
+        <button class="btn btn-secondary btn-small" type="button" data-close-modal="termsModal">Close</button>
+      </div>
+      <div class="site-modal__body">
+        <p>Use this tool responsibly and only with assets you have permission to use.</p>
+        <p>Creators are responsible for compliance with game publisher rules and local print/distribution laws.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="deckBatchImportModal" class="site-modal" aria-hidden="true">
+    <div class="site-modal__backdrop" data-close-modal="deckBatchImportModal"></div>
+    <div class="site-modal__panel" role="dialog" aria-modal="true" aria-labelledby="deckBatchImportModalTitle">
+      <div class="site-modal__header">
+        <h2 id="deckBatchImportModalTitle">Batch Import Deck Cards</h2>
+        <button class="btn btn-secondary btn-small" type="button" data-close-modal="deckBatchImportModal">Close</button>
+      </div>
+      <div class="site-modal__body">
+        <p>Paste one card name per line. Supports <code>3x Card Name</code> and <code>Card Name x3</code>.</p>
+        <textarea id="deckBatchImportInput" rows="10" placeholder="3x Swift Strike&#10;2x Guard Break&#10;Singularity"></textarea>
+        <label class="settings-checkbox">
+          <input id="deckBatchImportReplace" type="checkbox">
+          <span>Replace existing deck cards (instead of appending)</span>
+        </label>
+        <div class="site-modal__actions">
+          <button id="deckBatchImportConfirmBtn" class="btn btn-primary btn-small" type="button">Import Cards</button>
+          <button class="btn btn-secondary btn-small" type="button" data-close-modal="deckBatchImportModal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="confirmActionModal" class="site-modal" aria-hidden="true">
+    <div class="site-modal__backdrop"></div>
+    <div class="site-modal__panel" role="dialog" aria-modal="true" aria-labelledby="confirmActionTitle">
+      <div class="site-modal__header">
+        <h2 id="confirmActionTitle">Confirm Action</h2>
+      </div>
+      <div class="site-modal__body">
+        <p id="confirmActionMessage">Are you sure you want to continue?</p>
+        <div class="site-modal__actions">
+          <button id="confirmActionCancelBtn" class="btn btn-secondary btn-small" type="button">Cancel</button>
+          <button id="confirmActionConfirmBtn" class="btn btn-primary btn-small" type="button">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="shareLinkModal" class="site-modal" aria-hidden="true">
+    <div class="site-modal__backdrop" data-close-modal="shareLinkModal"></div>
+    <div class="site-modal__panel" role="dialog" aria-modal="true" aria-labelledby="shareLinkModalTitle">
+      <div class="site-modal__header">
+        <h2 id="shareLinkModalTitle">Share Link</h2>
+        <button class="btn btn-secondary btn-small" type="button" data-close-modal="shareLinkModal">Close</button>
+      </div>
+      <div class="site-modal__body">
+        <p>Copy this URL to share your current card.</p>
+        <input id="shareLinkInput" type="text" readonly>
+        <div class="site-modal__actions">
+          <button id="shareLinkCopyBtn" class="btn btn-primary btn-small" type="button">Copy Link</button>
+          <button class="btn btn-secondary btn-small" type="button" data-close-modal="shareLinkModal">Done</button>
+        </div>
       </div>
     </div>
   </div>

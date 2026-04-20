@@ -16,6 +16,12 @@ class ReferenceOverlayManager {
     this.defaultReferencePath = options.defaultReferencePath || 'Assets/Reference/missed_me_II.png';
     this.fitSize = options.fitSize || 'cover';
     this.maxUploadBytes = Number(options.maxUploadBytes) || (5 * 1024 * 1024);
+    this.notify = typeof options.notify === 'function'
+      ? options.notify
+      : ((message) => {
+        const text = String(message || '').trim();
+        if (text) console.warn(text);
+      });
     this.isBound = false;
 
     if (!DTC_REFERENCE_ROOT.defaultReferencePath) {
@@ -143,12 +149,12 @@ class ReferenceOverlayManager {
   async handleFile(file, inputEl = null) {
     if (!file) return false;
     if (!file.type.startsWith('image/')) {
-      alert('Please select a valid image file');
+      this.notify('Please select a valid image file');
       if (inputEl) inputEl.value = '';
       return false;
     }
     if (file.size > this.maxUploadBytes) {
-      alert('Image file is too large. Maximum size is 5MB');
+      this.notify('Image file is too large. Maximum size is 5MB');
       if (inputEl) inputEl.value = '';
       return false;
     }
@@ -166,7 +172,7 @@ class ReferenceOverlayManager {
       if (inputEl) inputEl.value = '';
       return true;
     } catch (error) {
-      alert('Failed to read the selected reference image.');
+      this.notify('Failed to read the selected reference image.');
       if (inputEl) inputEl.value = '';
       return false;
     }
