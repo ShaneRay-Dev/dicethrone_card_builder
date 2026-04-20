@@ -6,14 +6,30 @@ document.addEventListener('DOMContentLoaded', () => {
   renderer.applyAssetsForCardType(gameState.card.cardType, gameState.card.cardSubType);
 
   // Load shared card from URL hash first (if present), otherwise restore local autosave.
-  const loadedFromHash = typeof ui.tryLoadCardFromUrlHash === 'function'
+  let hasPreloadedCard = typeof ui.tryLoadCardFromUrlHash === 'function'
     ? ui.tryLoadCardFromUrlHash({ clearHash: true })
     : false;
-  if (!loadedFromHash) {
+  if (!hasPreloadedCard) {
     const savedCard = localStorage.getItem('diceThroneSavedCard');
     if (savedCard) {
-      gameState.fromJSON(savedCard);
+      const loadedFromAutosave = gameState.fromJSON(savedCard) === true;
+      if (loadedFromAutosave) {
+        ui.updateUI();
+        hasPreloadedCard = true;
+      } else {
+        // Drop invalid autosave payloads so startup can cleanly recover.
+        localStorage.removeItem('diceThroneSavedCard');
+      }
+    }
+    if (!hasPreloadedCard && typeof ui.applySavedDefaultsToState === 'function') {
+      hasPreloadedCard = ui.applySavedDefaultsToState({ silent: true }) === true;
+    }
+    if (!hasPreloadedCard) {
+      gameState.reset();
       ui.updateUI();
+      if (typeof ui.scheduleRenderWarmup === 'function') {
+        ui.scheduleRenderWarmup({ immediate: true });
+      }
     }
   }
 

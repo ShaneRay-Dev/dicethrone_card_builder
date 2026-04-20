@@ -1,15 +1,18 @@
 /* Preview Panel */
 .preview-panel {
-  background: var(--panel-bg);
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(62, 98, 146, 0.2) 0%, rgba(11, 16, 28, 0) 58%),
+    linear-gradient(180deg, #111827 0%, #0c1220 100%);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 40px;
+  border-left: none;
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  overflow: auto;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  align-items: stretch;
+  justify-content: flex-start;
+  overflow: hidden;
+  box-shadow: none;
 }
 
 .preview-container {
@@ -33,10 +36,22 @@
   width: 100%;
   flex: 1;
   gap: 24px;
+  border: 1px solid rgba(141, 162, 189, 0.18);
+  border-radius: var(--radius-lg);
+  background-color: #0b111b;
+  background-image:
+    linear-gradient(rgba(136, 155, 182, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(136, 155, 182, 0.07) 1px, transparent 1px),
+    linear-gradient(rgba(136, 155, 182, 0.14) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(136, 155, 182, 0.14) 1px, transparent 1px);
+  background-size: 12px 12px, 12px 12px, 48px 48px, 48px 48px;
+  background-position: 0 0, 0 0, -1px -1px, -1px -1px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    inset 0 30px 60px rgba(0, 0, 0, 0.25);
   /* Allow full card height/width to remain visible via scrolling. */
   overflow: auto;
-  padding-top: 18px;
-  padding-bottom: 18px;
+  padding: 18px;
   position: relative;
 }
 
@@ -108,7 +123,8 @@
   /* Bleed area padding (2.49" x 3.74") approximated */
   padding: var(--bleed-large-inset);
   box-sizing: border-box;
-  background: linear-gradient(135deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.05) 100%);
+  background: transparent;
+  box-shadow: none;
   flex: 0 0 auto;
   overflow: hidden;
 }
@@ -474,7 +490,9 @@
 /* Responsive */
 @media (max-width: 1200px) {
   .preview-panel {
-    padding: 20px;
+    border-left: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 0;
   }
 
   .preview-container {

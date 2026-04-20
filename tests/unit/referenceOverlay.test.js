@@ -30,13 +30,12 @@ async function createManager() {
   const dom = new JSDOM(buildReferenceHtml(), {
     url: 'http://localhost/'
   });
-  const alertSpy = vi.fn();
+  const notifySpy = vi.fn();
   const { document } = dom.window;
   globalThis.window = dom.window;
   globalThis.document = document;
   globalThis.FileReader = dom.window.FileReader;
   globalThis.File = dom.window.File;
-  globalThis.alert = alertSpy;
   globalThis.defaultReferencePath = '';
 
   const modulePath = require.resolve('../../js/referenceOverlay.js');
@@ -52,10 +51,11 @@ async function createManager() {
     referenceOverlay: document.getElementById('referenceOverlay'),
     referenceSide: document.getElementById('referenceSide'),
     referenceOpacity: document.getElementById('referenceOpacity'),
-    previewContainer: document.getElementById('previewContainer')
+    previewContainer: document.getElementById('previewContainer'),
+    notify: notifySpy
   });
 
-  return { alertSpy, dom, manager };
+  return { notifySpy, dom, manager };
 }
 
 describe('ReferenceOverlayManager', () => {
@@ -78,13 +78,13 @@ describe('ReferenceOverlayManager', () => {
   });
 
   it('rejects non-image uploads', async () => {
-    const { alertSpy, dom, manager } = await createManager();
+    const { notifySpy, dom, manager } = await createManager();
     const file = new dom.window.File(['not an image'], 'bad.txt', { type: 'text/plain' });
 
     const result = await manager.handleFile(file);
 
     expect(result).toBe(false);
-    expect(alertSpy).toHaveBeenCalledWith('Please select a valid image file');
+    expect(notifySpy).toHaveBeenCalledWith('Please select a valid image file');
 
     dom.window.close();
   });

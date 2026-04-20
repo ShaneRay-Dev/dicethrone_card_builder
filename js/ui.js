@@ -62,6 +62,23 @@ class UI {
     this.defaultDescriptionBoxScale = 1;
     this.defaultDescriptionColor = '#ffffff';
     this.defaultDiceColor = '#33ccff';
+    this.cardSubTypeOptions = {
+      'Hero Upgrade': [
+        'Ability Upgrade',
+        'Defense Upgrade',
+        'Passive Upgrade'
+      ],
+      'Action Cards': [
+        'Main Phase',
+        'Instant',
+        'Roll Phase'
+      ],
+      'Board Abilities': [
+        'Offensive ability',
+        'Passive Ability',
+        'Defensive ability'
+      ]
+    };
     this.descriptionColorPicker = null;
     this.descriptionColorHexInput = null;
     this.descriptionColorCopyButton = null;
@@ -170,28 +187,7 @@ class UI {
 
     this.previewContainer = document.querySelector('.preview-container');
     this.previewElement = document.getElementById('cardPreview');
-    this.previewCenterGuideHorizontal = document.getElementById('previewCenterGuideHorizontal');
-    this.previewCenterGuideVertical = document.getElementById('previewCenterGuideVertical');
     this.panelLowerLayer = document.getElementById('panelLowerLayer');
-    this.previewInspector = document.getElementById('previewInspector');
-    this.inspectorWorkspaceValue = document.getElementById('inspectorWorkspaceValue');
-    this.inspectorStageValue = document.getElementById('inspectorStageValue');
-    this.inspectorCardTypeValue = document.getElementById('inspectorCardTypeValue');
-    this.inspectorSubTypeValue = document.getElementById('inspectorSubTypeValue');
-    this.inspectorVisibleLayersValue = document.getElementById('inspectorVisibleLayersValue');
-    this.inspectorHiddenLayersValue = document.getElementById('inspectorHiddenLayersValue');
-    this.inspectorArtValue = document.getElementById('inspectorArtValue');
-    this.inspectorReferenceValue = document.getElementById('inspectorReferenceValue');
-    this.inspectorCardIdValue = document.getElementById('inspectorCardIdValue');
-    this.inspectorRenderMsValue = document.getElementById('inspectorRenderMsValue');
-    this.inspectorUpdatedValue = document.getElementById('inspectorUpdatedValue');
-    this.utilityWorkspaceValue = document.getElementById('utilityWorkspaceValue');
-    this.utilityLayersValue = document.getElementById('utilityLayersValue');
-    this.utilityRenderMsValue = document.getElementById('utilityRenderMsValue');
-    this.utilityArtValue = document.getElementById('utilityArtValue');
-    this.utilityReferenceValue = document.getElementById('utilityReferenceValue');
-    this.utilityUpdatedValue = document.getElementById('utilityUpdatedValue');
-    this.lastRenderDurationMs = null;
     this.containerEl = document.querySelector('.container');
     this.workspaceTabs = [...document.querySelectorAll('.workspace-tab')];
     this.workspacePanels = {
@@ -203,11 +199,10 @@ class UI {
     this.workspaceMode = this.getStoredWorkspaceMode();
     this.sidebarResizer = document.getElementById('sidebarResizer');
     this.sidebarWidthKey = 'dtc_sidebar_width_v1';
-    this.panelSectionOrderKeyPrefix = 'dtc_panel_section_order_v1';
     this.previewZoomStorageKey = 'dtc_preview_zoom_v1';
     this.previewZoom = this.getStoredPreviewZoom();
     this.leafletSideSelect = document.getElementById('leafletSide');
-    this.cardModeReferencePath = 'Assets/Reference/Mighty_Summon_II.png';
+    this.cardModeReferencePath = 'Assets/Reference/missed_me_II.png';
     this.leafletModeReferencePath = 'Assets/Reference/spiderman_leaflet.png';
 
     const ReferenceManagerCtor = window.ReferenceOverlayManager;
@@ -223,7 +218,8 @@ class UI {
       previewContainer: this.previewContainer,
       manifestPath: 'Assets/Reference/manifest.json',
       defaultReferencePath: this.cardModeReferencePath,
-      fitSize: 'cover'
+      fitSize: 'cover',
+      notify: (message) => this.showToast(message, { force: true, duration: 2800 })
     }) : null;
     this.sharedImagePicker = null;
     this.sharedImagePickerHandler = null;
@@ -234,9 +230,20 @@ class UI {
     this.btnLoad = document.getElementById('btn-load');
     this.btnExport = document.getElementById('btn-export');
     this.btnShareLink = document.getElementById('btn-share-link');
+    this.btnActions = document.getElementById('btn-actions');
+    this.actionsMenu = document.getElementById('actionsMenu');
+    this.actionsMenuPanel = document.getElementById('actionsMenuPanel');
     this.exportMenu = document.getElementById('exportMenu');
     this.exportMenuPanel = document.getElementById('exportMenuPanel');
     this.btnResetCanvas = document.getElementById('btn-reset-canvas');
+    this.btnQuickStart = document.getElementById('btn-quick-start');
+    this.btnHowTo = document.getElementById('btn-how-to');
+    this.btnWhatsNew = document.getElementById('btn-whats-new');
+    this.btnAppSettings = document.getElementById('btn-app-settings');
+    this.btnMobileNew = document.getElementById('btn-mobile-new');
+    this.btnMobileExport = document.getElementById('btn-mobile-export');
+    this.btnMobilePrint = document.getElementById('btn-mobile-print');
+    this.btnMobileHelp = document.getElementById('btn-mobile-help');
     this.fileInput = document.getElementById('fileInput');
     this.deckNameInput = document.getElementById('deckNameInput');
     this.deckCreateBtn = document.getElementById('deckCreateBtn');
@@ -304,6 +311,69 @@ class UI {
     this.otherCommandsModal = document.getElementById('otherCommandsModal');
     this.otherCommandsCloseBtn = document.getElementById('otherCommandsCloseBtn');
     this.otherCommandsTableBody = document.getElementById('otherCommandsTableBody');
+    this.appToast = document.getElementById('appToast');
+    this.appLoadingOverlay = document.getElementById('appLoadingOverlay');
+    this.appLoadingText = document.getElementById('appLoadingText');
+    this.busyDepth = 0;
+    this.renderDataUrlCache = new Map();
+    this.renderDataUrlCacheLimit = 420;
+    this.renderWarmupToken = 0;
+    this.renderWarmupTimer = null;
+    this.renderWarmupInFlight = false;
+    this.renderWarmupQueued = false;
+    this.toastHideTimer = null;
+    this.quickStartModal = document.getElementById('quickStartModal');
+    this.helpModal = document.getElementById('helpModal');
+    this.changelogModal = document.getElementById('changelogModal');
+    this.settingsModal = document.getElementById('settingsModal');
+    this.privacyModal = document.getElementById('privacyModal');
+    this.termsModal = document.getElementById('termsModal');
+    this.deckBatchImportModal = document.getElementById('deckBatchImportModal');
+    this.deckBatchImportInput = document.getElementById('deckBatchImportInput');
+    this.deckBatchImportReplace = document.getElementById('deckBatchImportReplace');
+    this.deckBatchImportConfirmBtn = document.getElementById('deckBatchImportConfirmBtn');
+    this.confirmActionModal = document.getElementById('confirmActionModal');
+    this.confirmActionTitle = document.getElementById('confirmActionTitle');
+    this.confirmActionMessage = document.getElementById('confirmActionMessage');
+    this.confirmActionCancelBtn = document.getElementById('confirmActionCancelBtn');
+    this.confirmActionConfirmBtn = document.getElementById('confirmActionConfirmBtn');
+    this.shareLinkModal = document.getElementById('shareLinkModal');
+    this.shareLinkInput = document.getElementById('shareLinkInput');
+    this.shareLinkCopyBtn = document.getElementById('shareLinkCopyBtn');
+    this.quickStartNewCardBtn = document.getElementById('quickStartNewCardBtn');
+    this.quickStartLoadJsonBtn = document.getElementById('quickStartLoadJsonBtn');
+    this.quickStartHowToBtn = document.getElementById('quickStartHowToBtn');
+    this.saveDefaultsBtn = document.getElementById('saveDefaultsBtn');
+    this.resetToDefaultsBtn = document.getElementById('resetToDefaultsBtn');
+    this.restoreFactoryDefaultsBtn = document.getElementById('restoreFactoryDefaultsBtn');
+    this.resetAppDataBtn = document.getElementById('resetAppDataBtn');
+    this.showProcessingToasts = document.getElementById('showProcessingToasts');
+    this.modalOpenButtons = Array.from(document.querySelectorAll('[data-open-modal]'));
+    this.modalCloseButtons = Array.from(document.querySelectorAll('[data-close-modal]'));
+    this.userDefaultsKey = 'dtc_user_default_card_v1';
+    this.quickStartSeenKey = 'dtc_seen_quick_start_v1';
+    this.showToastsKey = 'dtc_show_processing_toasts_v1';
+    this.printModeStorageKey = 'dtc_print_mode_v1';
+    this.showToasts = this.getStoredShowToasts();
+    this.appStorageKeys = [
+      'diceThroneSavedCard',
+      this.deckStorageKey,
+      this.boardAbilityStorageKey,
+      this.boardSlotStorageKey,
+      this.workspaceModeStorageKey,
+      this.sidebarWidthKey,
+      this.previewZoomStorageKey,
+      this.printModeStorageKey,
+      this.cropperOnUploadKey,
+      this.cropMaskKey,
+      this.showHiddenLayersKey,
+      this.deckViewScaleKey,
+      this.deckViewOffsetXKey,
+      this.deckViewOffsetYKey,
+      this.userDefaultsKey,
+      this.quickStartSeenKey,
+      this.showToastsKey
+    ];
     this.statusEffectsCache = null;
     this.deckDefaultCardPath = 'Assets/Deck/default/deck-default.json';
     this.deckDefaultCard = null;
@@ -326,7 +396,6 @@ class UI {
       overlay: 'Assets/Deck/Deck Template.png'
     };
     this.deckThumbWidth = this.deckTemplateConfig.columnWidth;
-    this.printModeStorageKey = 'dtc_print_mode_v1';
     this.printModes = {
       standard: {
         templateConfig: {
@@ -394,7 +463,6 @@ class UI {
     this.initEventListeners();
     this.setPreviewZoom(this.previewZoom, { persist: false, rerender: false });
     this.initLayerListDragAndDrop();
-    this.initControlPanelDragAndDrop();
     this.loadCardArtOptions();
     this.loadFontOptions();
     if (this.referenceManager) {
@@ -411,9 +479,9 @@ class UI {
     }
     this.refreshDeckUI();
     this.refreshBoardAbilityOptions();
-    const initialCard = gameState.getCard();
-    this.updateDeckSaveAvailability(initialCard);
-    this.updatePreviewDiagnostics(initialCard);
+    this.updateDeckSaveAvailability(gameState.getCard());
+    this.syncProcessingToastSetting();
+    this.maybeShowQuickStart();
   }
 
   getStoredPrintMode() {
@@ -436,6 +504,13 @@ class UI {
     return 'card';
   }
 
+  getStoredShowToasts() {
+    if (typeof localStorage === 'undefined') return true;
+    const raw = localStorage.getItem(this.showToastsKey);
+    if (raw === null) return true;
+    return raw !== 'false';
+  }
+
   getDescriptionContext(mode = this.workspaceMode) {
     const isLeaflet = String(mode || '').toLowerCase() === 'leaflet';
     return {
@@ -449,7 +524,7 @@ class UI {
   getDefaultReferencePathForMode(mode = this.workspaceMode) {
     const normalized = String(mode || '').toLowerCase();
     if (normalized === 'leaflet') return 'Assets/Reference/spiderman_leaflet.png';
-    return 'Assets/Reference/Mighty_Summon_II.png';
+    return 'Assets/Reference/missed_me_II.png';
   }
 
   applyWorkspaceReferenceDefault(mode = this.workspaceMode, options = {}) {
@@ -494,7 +569,6 @@ class UI {
     const previousMode = this.workspaceMode;
     const nextMode = ['card', 'leaflet', 'board'].includes(mode) ? mode : 'card';
     this.workspaceMode = nextMode;
-    this.setPreviewCenterGuidesVisible(false);
 
     this.workspaceTabs.forEach((tab) => {
       const isActive = tab.dataset.workspace === nextMode;
@@ -576,18 +650,9 @@ class UI {
       try {
         renderer.setWorkspaceMode(nextMode);
         const normalizedCard = this.ensureDescriptionBlocks(gameState.getCard());
-        const renderStart = (typeof performance !== 'undefined' && typeof performance.now === 'function')
-          ? performance.now()
-          : Date.now();
         renderer.render(normalizedCard);
-        const renderEnd = (typeof performance !== 'undefined' && typeof performance.now === 'function')
-          ? performance.now()
-          : Date.now();
-        const renderMs = Math.max(0, renderEnd - renderStart);
-        this.lastRenderDurationMs = renderMs;
         const activeId = this.getActiveDescriptionId(normalizedCard, this.getDescriptionBlocks(normalizedCard));
         if (activeId) this.setActiveDescriptionBlock(activeId, { syncEditor: true });
-        this.updatePreviewDiagnostics(normalizedCard, renderMs);
       } catch (error) {
         console.warn('Failed to re-render while applying workspace mode:', error);
       }
@@ -660,13 +725,111 @@ class UI {
     const title = safeLabel.charAt(0).toUpperCase() + safeLabel.slice(1);
     if (!file) return false;
     if (!String(file.type || '').startsWith('image/')) {
-      alert(`Please select a valid ${safeLabel} file.`);
+      this.showToast(`Please select a valid ${safeLabel} file.`, { force: true, duration: 2600 });
       return false;
     }
     if (file.size > maxBytes) {
       const maxMb = Math.max(1, Math.round(maxBytes / (1024 * 1024)));
-      alert(`${title} file is too large. Maximum size is ${maxMb}MB.`);
+      this.showToast(`${title} file is too large. Maximum size is ${maxMb}MB.`, { force: true, duration: 3200 });
       return false;
+    }
+    return true;
+  }
+
+  getSubtypeOptionsForCardType(cardType = 'Action Cards') {
+    const key = String(cardType || '').trim();
+    const options = this.cardSubTypeOptions && this.cardSubTypeOptions[key];
+    return Array.isArray(options) ? [...options] : [];
+  }
+
+  normalizeCardTypeAndSubtypeState(options = {}) {
+    const card = gameState.getCard();
+    const rawType = String(card?.cardType || '').trim();
+    const validTypes = this.cardSubTypeOptions ? Object.keys(this.cardSubTypeOptions) : [];
+    const fallbackType = validTypes.includes('Action Cards')
+      ? 'Action Cards'
+      : (validTypes[0] || rawType || 'Action Cards');
+    const cardType = validTypes.includes(rawType) ? rawType : fallbackType;
+    const subtypeOptions = this.getSubtypeOptionsForCardType(cardType);
+    const rawSubType = String(card?.cardSubType || '').trim();
+    const fallbackSubType = subtypeOptions[0] || '';
+    const cardSubType = subtypeOptions.includes(rawSubType) ? rawSubType : fallbackSubType;
+
+    const updates = {};
+    if (cardType && cardType !== card.cardType) updates.cardType = cardType;
+    if (cardSubType && cardSubType !== card.cardSubType) updates.cardSubType = cardSubType;
+    if (!Object.keys(updates).length) return false;
+    gameState.updateProperties(updates);
+    if (options.notify) {
+      this.showToast('Invalid card template detected. Restored a supported template.', { force: true, duration: 3000 });
+    }
+    return true;
+  }
+
+  ensureRenderableCardLayerState(options = {}) {
+    const card = gameState.getCard();
+    if (String(this.workspaceMode || '').toLowerCase() === 'leaflet') {
+      const leaflet = card?.leafletLayers || {};
+      const hasVisibleLeafletLayer = [
+        leaflet.background !== false,
+        leaflet.art !== false,
+        leaflet.title !== false,
+        leaflet.text !== false
+      ].some(Boolean);
+      if (hasVisibleLeafletLayer) return false;
+      gameState.updateProperty('leafletLayers', {
+        background: true,
+        art: true,
+        title: true,
+        text: true
+      });
+      if (options.notify) {
+        this.showToast('At least one leaflet layer must remain visible. Restored defaults.', { force: true, duration: 3000 });
+      }
+      return true;
+    }
+    if (String(this.workspaceMode || '').toLowerCase() === 'board') {
+      return false;
+    }
+
+    const layers = card?.layers && typeof card.layers === 'object' ? card.layers : {};
+    const panelUpperVisible = layers.panelUpper ?? layers.titleBar;
+    const panelLowerVisible = layers.panelLower ?? layers.bottomText;
+    const hasVisibleLayer = [
+      layers.backgroundLower !== false,
+      layers.backgroundUpper !== false,
+      layers.artwork !== false,
+      layers.imageFrame !== false,
+      layers.frameShading !== false,
+      layers.border !== false,
+      layers.cardId !== false,
+      layers.panelBleed !== false,
+      panelLowerVisible !== false,
+      layers.secondAbilityFrame !== false,
+      panelUpperVisible !== false,
+      layers.topNameGradient !== false,
+      layers.bottomNameGradient !== false,
+      layers.costBadge !== false,
+      (card?.cardSubType === 'Roll Phase' && layers.attackModifier !== false),
+      layers.titleText !== false,
+      layers.cardText !== false
+    ].some(Boolean);
+
+    if (hasVisibleLayer) return false;
+
+    const updates = {
+      'layers.backgroundLower': true,
+      'layers.border': true,
+      'layers.panelUpper': true,
+      'layers.panelLower': true,
+      'layers.titleText': true,
+      'layers.cardText': true
+    };
+    if (layers.titleBar !== undefined) updates['layers.titleBar'] = true;
+    if (layers.bottomText !== undefined) updates['layers.bottomText'] = true;
+    gameState.updateProperties(updates);
+    if (options.notify) {
+      this.showToast('At least one card layer must remain visible. Restored base layers.', { force: true, duration: 3000 });
     }
     return true;
   }
@@ -938,9 +1101,10 @@ class UI {
   }
 
   async shareCardLink() {
+    this.closeActionsMenu();
     const payload = this.buildShareCardPayload();
     if (!payload) {
-      alert('Unable to generate share link right now.');
+      this.showToast('Unable to generate share link right now.', { force: true });
       return;
     }
 
@@ -948,21 +1112,21 @@ class UI {
     url.hash = `card=${encodeURIComponent(payload)}`;
     const shareUrl = url.toString();
     if (shareUrl.length > 7900) {
-      alert('This card is too large for URL sharing. Save/export JSON instead.');
+      this.showToast('This card is too large for URL sharing. Save/export JSON instead.', { force: true, duration: 3200 });
       return;
     }
 
     try {
       if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
         await navigator.clipboard.writeText(shareUrl);
-        alert('Share link copied to clipboard.');
+        this.showToast('Share link copied to clipboard.', { force: true });
         return;
       }
     } catch (error) {
       console.warn('Clipboard copy failed:', error);
     }
 
-    prompt('Copy this share link:', shareUrl);
+    this.openShareLinkModal(shareUrl);
   }
 
   tryLoadCardFromUrlHash(options = {}) {
@@ -1013,16 +1177,6 @@ class UI {
           this.cardModeReferencePath = value;
         }
       });
-    }
-    const refreshPreviewDiagnostics = () => this.updatePreviewDiagnostics(gameState.getCard());
-    if (this.showReferenceCheckbox) {
-      this.showReferenceCheckbox.addEventListener('change', refreshPreviewDiagnostics);
-    }
-    if (this.showReferenceSideBySideCheckbox) {
-      this.showReferenceSideBySideCheckbox.addEventListener('change', refreshPreviewDiagnostics);
-    }
-    if (this.referenceOpacity) {
-      this.referenceOpacity.addEventListener('input', refreshPreviewDiagnostics);
     }
 
     // Card properties
@@ -1329,8 +1483,95 @@ class UI {
         this.toggleExportMenu();
       });
     }
+    if (this.btnActions) {
+      this.btnActions.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.toggleActionsMenu();
+      });
+    }
     if (this.btnResetCanvas) {
       this.btnResetCanvas.addEventListener('click', () => this.resetCanvas());
+    }
+    if (this.btnQuickStart) {
+      this.btnQuickStart.addEventListener('click', () => this.openModal('quickStartModal'));
+    }
+    if (this.btnHowTo) {
+      this.btnHowTo.addEventListener('click', () => this.openModal('helpModal'));
+    }
+    if (this.btnWhatsNew) {
+      this.btnWhatsNew.addEventListener('click', () => this.openModal('changelogModal'));
+    }
+    if (this.btnAppSettings) {
+      this.btnAppSettings.addEventListener('click', () => this.openModal('settingsModal'));
+    }
+    if (this.btnMobileNew) {
+      this.btnMobileNew.addEventListener('click', () => this.newCard());
+    }
+    if (this.btnMobileExport) {
+      this.btnMobileExport.addEventListener('click', () => this.toggleExportMenu());
+    }
+    if (this.btnMobilePrint) {
+      this.btnMobilePrint.addEventListener('click', () => this.openPrintSheet());
+    }
+    if (this.btnMobileHelp) {
+      this.btnMobileHelp.addEventListener('click', () => this.openModal('helpModal'));
+    }
+    if (this.quickStartNewCardBtn) {
+      this.quickStartNewCardBtn.addEventListener('click', () => {
+        this.closeModal('quickStartModal');
+        this.newCard();
+      });
+    }
+    if (this.quickStartLoadJsonBtn) {
+      this.quickStartLoadJsonBtn.addEventListener('click', () => {
+        this.closeModal('quickStartModal');
+        this.loadCard();
+      });
+    }
+    if (this.quickStartHowToBtn) {
+      this.quickStartHowToBtn.addEventListener('click', () => {
+        this.closeModal('quickStartModal');
+        this.openModal('helpModal');
+      });
+    }
+    if (this.showProcessingToasts) {
+      this.showProcessingToasts.addEventListener('change', (e) => {
+        this.showToasts = !!e.target.checked;
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem(this.showToastsKey, String(this.showToasts));
+        }
+      });
+    }
+    if (this.saveDefaultsBtn) {
+      this.saveDefaultsBtn.addEventListener('click', () => this.saveCurrentAsDefaults());
+    }
+    if (this.resetToDefaultsBtn) {
+      this.resetToDefaultsBtn.addEventListener('click', () => this.resetToSavedDefaults());
+    }
+    if (this.restoreFactoryDefaultsBtn) {
+      this.restoreFactoryDefaultsBtn.addEventListener('click', () => this.restoreFactoryDefaults());
+    }
+    if (this.resetAppDataBtn) {
+      this.resetAppDataBtn.addEventListener('click', () => this.resetAppData());
+    }
+    if (this.modalOpenButtons.length) {
+      this.modalOpenButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const modalId = String(button.getAttribute('data-open-modal') || '').trim();
+          if (!modalId) return;
+          this.openModal(modalId);
+        });
+      });
+    }
+    if (this.modalCloseButtons.length) {
+      this.modalCloseButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const modalId = String(button.getAttribute('data-close-modal') || '').trim();
+          if (!modalId) return;
+          this.closeModal(modalId);
+        });
+      });
     }
     if (this.btnDeckView) {
       this.btnDeckView.addEventListener('click', () => this.openDeckView());
@@ -1491,6 +1732,9 @@ class UI {
     if (this.btnShareLink) {
       this.btnShareLink.addEventListener('click', () => this.shareCardLink());
     }
+    if (this.shareLinkCopyBtn) {
+      this.shareLinkCopyBtn.addEventListener('click', async () => this.copyShareLinkFromModal());
+    }
 
     if (this.previewZoomInput) {
       this.previewZoomInput.addEventListener('input', (e) => {
@@ -1521,9 +1765,11 @@ class UI {
     }
 
     document.addEventListener('click', (e) => {
-      if (!this.exportMenu || !this.exportMenuPanel) return;
-      if (!this.exportMenu.contains(e.target)) {
+      if (this.exportMenu && this.exportMenuPanel && !this.exportMenu.contains(e.target)) {
         this.closeExportMenu();
+      }
+      if (this.actionsMenu && this.actionsMenuPanel && !this.actionsMenu.contains(e.target)) {
+        this.closeActionsMenu();
       }
     });
 
@@ -1540,7 +1786,10 @@ class UI {
       this.deckDuplicateCardBtn.addEventListener('click', () => this.duplicateCardInDeck());
     }
     if (this.deckBatchImportBtn) {
-      this.deckBatchImportBtn.addEventListener('click', () => this.batchImportCardsToDeck());
+      this.deckBatchImportBtn.addEventListener('click', () => this.openDeckBatchImportModal());
+    }
+    if (this.deckBatchImportConfirmBtn) {
+      this.deckBatchImportConfirmBtn.addEventListener('click', () => this.submitDeckBatchImport());
     }
     if (this.deckDeleteCardBtn) {
       this.deckDeleteCardBtn.addEventListener('click', () => this.deleteCardFromDeck());
@@ -1551,6 +1800,7 @@ class UI {
     if (this.deckSelect) {
       this.deckSelect.addEventListener('change', () => {
         this.refreshDeckCards();
+        this.scheduleRenderWarmup({ immediate: true });
         if (this.isDeckViewOpen()) this.renderDeckView();
         if (this.isPrintSheetOpen()) this.renderPrintSheet();
       });
@@ -1678,53 +1928,62 @@ class UI {
       });
     }
 
+    const refreshLayerVisibilityAfterToggle = () => {
+      const repaired = this.ensureRenderableCardLayerState({ notify: true });
+      const currentCard = gameState.getCard();
+      renderer.updateVisibility(currentCard);
+      if (repaired) {
+        this.updateUI();
+      }
+    };
+
     // Layer toggles for individual card elements
     if (this.toggleCardBleed) {
       this.toggleCardBleed.addEventListener('change', (e) => {
         gameState.updateProperty('layers.cardBleed', e.target.checked);
-        renderer.updateVisibility(gameState.getCard());
+        refreshLayerVisibilityAfterToggle();
       });
     }
 
     if (this.toggleBackgroundLower) {
       this.toggleBackgroundLower.addEventListener('change', (e) => {
         gameState.updateProperty('layers.backgroundLower', e.target.checked);
-        renderer.updateVisibility(gameState.getCard());
+        refreshLayerVisibilityAfterToggle();
       });
     }
 
     if (this.toggleBackgroundUpper) {
       this.toggleBackgroundUpper.addEventListener('change', (e) => {
         gameState.updateProperty('layers.backgroundUpper', e.target.checked);
-        renderer.updateVisibility(gameState.getCard());
+        refreshLayerVisibilityAfterToggle();
       });
     }
 
     if (this.toggleImageFrame) {
       this.toggleImageFrame.addEventListener('change', (e) => {
         gameState.updateProperty('layers.imageFrame', e.target.checked);
-        renderer.updateVisibility(gameState.getCard());
+        refreshLayerVisibilityAfterToggle();
       });
     }
 
     if (this.toggleFrameShading) {
       this.toggleFrameShading.addEventListener('change', (e) => {
         gameState.updateProperty('layers.frameShading', e.target.checked);
-        renderer.updateVisibility(gameState.getCard());
+        refreshLayerVisibilityAfterToggle();
       });
     }
 
     if (this.toggleBorder) {
       this.toggleBorder.addEventListener('change', (e) => {
         gameState.updateProperty('layers.border', e.target.checked);
-        renderer.updateVisibility(gameState.getCard());
+        refreshLayerVisibilityAfterToggle();
       });
     }
 
     if (this.toggleCardId) {
       this.toggleCardId.addEventListener('change', (e) => {
         gameState.updateProperty('layers.cardId', e.target.checked);
-        renderer.updateVisibility(gameState.getCard());
+        refreshLayerVisibilityAfterToggle();
       });
     }
 
@@ -1732,14 +1991,14 @@ class UI {
       this.toggleTitleBar.addEventListener('change', (e) => {
         gameState.updateProperty('layers.titleBar', e.target.checked);
         gameState.updateProperty('layers.panelUpper', e.target.checked);
-        renderer.updateVisibility(gameState.getCard());
+        refreshLayerVisibilityAfterToggle();
       });
     }
 
     if (this.toggleTitleText) {
       this.toggleTitleText.addEventListener('change', (e) => {
         gameState.updateProperty('layers.titleText', e.target.checked);
-        renderer.updateVisibility(gameState.getCard());
+        refreshLayerVisibilityAfterToggle();
       });
     }
 
@@ -1747,14 +2006,14 @@ class UI {
     if (this.toggleArtwork) {
       this.toggleArtwork.addEventListener('change', (e) => {
         gameState.updateProperty('layers.artwork', e.target.checked);
-        renderer.updateVisibility(gameState.getCard());
+        refreshLayerVisibilityAfterToggle();
       });
     }
 
     if (this.togglePanelBleed) {
       this.togglePanelBleed.addEventListener('change', (e) => {
         gameState.updateProperty('layers.panelBleed', e.target.checked);
-        renderer.updateVisibility(gameState.getCard());
+        refreshLayerVisibilityAfterToggle();
       });
     }
 
@@ -1762,49 +2021,49 @@ class UI {
       this.toggleBottomText.addEventListener('change', (e) => {
         gameState.updateProperty('layers.bottomText', e.target.checked);
         gameState.updateProperty('layers.panelLower', e.target.checked);
-        renderer.updateVisibility(gameState.getCard());
+        refreshLayerVisibilityAfterToggle();
       });
     }
 
     if (this.toggleSecondAbilityFrame) {
       this.toggleSecondAbilityFrame.addEventListener('change', (e) => {
         gameState.updateProperty('layers.secondAbilityFrame', e.target.checked);
-        renderer.updateVisibility(gameState.getCard());
+        refreshLayerVisibilityAfterToggle();
       });
     }
 
     if (this.toggleTopNameGradient) {
       this.toggleTopNameGradient.addEventListener('change', (e) => {
         gameState.updateProperty('layers.topNameGradient', e.target.checked);
-        renderer.updateVisibility(gameState.getCard());
+        refreshLayerVisibilityAfterToggle();
       });
     }
 
     if (this.toggleBottomNameGradient) {
       this.toggleBottomNameGradient.addEventListener('change', (e) => {
         gameState.updateProperty('layers.bottomNameGradient', e.target.checked);
-        renderer.updateVisibility(gameState.getCard());
+        refreshLayerVisibilityAfterToggle();
       });
     }
 
     if (this.toggleCostBadge) {
       this.toggleCostBadge.addEventListener('change', (e) => {
         gameState.updateProperty('layers.costBadge', e.target.checked);
-        renderer.updateVisibility(gameState.getCard());
+        refreshLayerVisibilityAfterToggle();
       });
     }
 
     if (this.toggleAttackModifier) {
       this.toggleAttackModifier.addEventListener('change', (e) => {
         gameState.updateProperty('layers.attackModifier', e.target.checked);
-        renderer.updateVisibility(gameState.getCard());
+        refreshLayerVisibilityAfterToggle();
       });
     }
 
     if (this.toggleCardText) {
       this.toggleCardText.addEventListener('change', (e) => {
         gameState.updateProperty('layers.cardText', e.target.checked);
-        renderer.updateVisibility(gameState.getCard());
+        refreshLayerVisibilityAfterToggle();
       });
     }
 
@@ -1841,9 +2100,6 @@ class UI {
         }
         if (this.costBadgeLayer) {
           this.costBadgeLayer.classList.toggle('active', target === 'costBadge');
-        }
-        if (target !== 'title' && target !== 'description') {
-          this.setPreviewCenterGuidesVisible(false);
         }
       };
 
@@ -1920,7 +2176,6 @@ class UI {
           activeLeafletBreakEl.classList.remove('is-dragging');
           activeLeafletBreakEl = null;
         }
-        this.setPreviewCenterGuidesVisible(false);
         window.removeEventListener('pointermove', onMove);
         window.removeEventListener('pointerup', onUp);
         window.removeEventListener('pointercancel', onUp);
@@ -1942,7 +2197,6 @@ class UI {
         e.stopPropagation();
         setActiveTarget(targetKey);
         isDragging = true;
-        this.setPreviewCenterGuidesVisible(false);
         dragScale = this.getPreviewScale();
         startX = e.clientX;
         startY = e.clientY;
@@ -1970,7 +2224,6 @@ class UI {
         e.stopPropagation();
         setActiveTarget('leafletBreak');
         isDragging = true;
-        this.setPreviewCenterGuidesVisible(false);
         activeLeafletBreakIndex = safeIndex;
         activeLeafletBreakEl = breakEl;
         activeLeafletBreakEl.classList.add('is-dragging');
@@ -2001,7 +2254,6 @@ class UI {
         this.setActiveTitleBlock(titleId, { syncInput: true });
         setActiveTarget('title', null, titleId);
         isDragging = true;
-        this.setPreviewCenterGuidesVisible(true);
         activeTitleDragId = titleId;
         dragScale = this.getPreviewScale();
         startX = e.clientX;
@@ -2031,7 +2283,6 @@ class UI {
         this.setActiveDescriptionBlock(descriptionId);
         setActiveTarget('description', descriptionId);
         isDragging = true;
-        this.setPreviewCenterGuidesVisible(true);
         activeDescriptionDragId = descriptionId;
         dragScale = this.getPreviewScale();
         startX = e.clientX;
@@ -2231,6 +2482,16 @@ class UI {
           this.redo();
         }
       }
+      if (e.key === 'Escape') {
+        this.closeExportMenu();
+        this.closeActionsMenu();
+        const openModalId = this.getOpenSiteModalId();
+        if (openModalId) {
+          this.closeModal(openModalId);
+          e.preventDefault();
+          return;
+        }
+      }
       if (e.key === 'Delete' || e.key === 'Backspace') {
         const activeElement = document.activeElement;
         const tagName = activeElement ? activeElement.tagName.toLowerCase() : '';
@@ -2255,13 +2516,24 @@ class UI {
     });
   }
 
-  newCard() {
-    if (confirm('Create a new card? This will clear the current card.')) {
+  async newCard() {
+    this.closeActionsMenu();
+    const shouldCreate = await this.confirmAction({
+      title: 'Create New Card',
+      message: 'Create a new card? This will clear the current card.',
+      confirmLabel: 'Create Card',
+      cancelLabel: 'Keep Editing'
+    });
+    if (!shouldCreate) return;
+
+    const loadedDefaults = this.applySavedDefaultsToState({ silent: true });
+    if (!loadedDefaults) {
       gameState.reset();
-      this.applyDefaultCardIdFromDeck(true);
-      this.updateUI();
-      alert('New card created!');
     }
+    this.applyDefaultCardIdFromDeck(true);
+    this.updateUI();
+    this.scheduleRenderWarmup({ immediate: true });
+    this.showToast(loadedDefaults ? 'New card created from your defaults.' : 'New card created.', { force: true });
   }
 
   saveCard() {
@@ -2273,10 +2545,12 @@ class UI {
     link.download = `${gameState.card.name || 'card'}.json`;
     link.click();
     URL.revokeObjectURL(url);
-    alert('Card saved!');
+    this.closeActionsMenu();
+    this.showToast('Card JSON downloaded.', { force: true });
   }
 
   loadCard() {
+    this.closeActionsMenu();
     this.openFilePicker(this.fileInput);
   }
 
@@ -2364,6 +2638,9 @@ class UI {
     };
 
     for (let index = 0; index < images.length; index += 1) {
+      if (index > 0 && index % 4 === 0) {
+        await this.yieldToBrowser();
+      }
       const imgEl = images[index];
       const src = imgEl.currentSrc || imgEl.src;
       if (!src) continue;
@@ -2393,19 +2670,31 @@ class UI {
 
   async exportDeckView() {
     if (!this.deckTemplate) return;
-    const wasOpen = this.isDeckViewOpen();
-    if (!wasOpen) {
-      this.openDeckView();
-      await new Promise((resolve) => requestAnimationFrame(resolve));
+    this.beginBusy('Exporting deck preview image...');
+    try {
+      const wasOpen = this.isDeckViewOpen();
+      if (!wasOpen) {
+        this.openDeckView();
+        await this.yieldToBrowser(2);
+      }
+      await this.renderDeckView();
+      await this.waitForDeckImages();
+      const canvas = await this.captureDeckViewCanvas(1);
+      if (!canvas) {
+        this.showToast('Deck export failed. Try refreshing deck view.', { force: true });
+        return;
+      }
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = this.buildDeckViewFilename();
+      link.click();
+      this.showToast('Deck view exported as PNG.', { force: true });
+    } catch (error) {
+      console.error('Deck view export failed:', error);
+      this.showToast('Deck view export failed. Please try again.', { force: true, duration: 3200 });
+    } finally {
+      this.endBusy();
     }
-    await this.renderDeckView();
-    await this.waitForDeckImages();
-    const canvas = await this.captureDeckViewCanvas(1);
-    if (!canvas) return;
-    const link = document.createElement('a');
-    link.href = canvas.toDataURL('image/png');
-    link.download = this.buildDeckViewFilename();
-    link.click();
   }
 
   buildPrintSheetBaseFilename() {
@@ -2487,6 +2776,9 @@ class UI {
 
       const imgs = Array.from(page.querySelectorAll('.print-card img'));
       for (let index = 0; index < imgs.length; index += 1) {
+        if (index > 0 && index % 4 === 0) {
+          await this.yieldToBrowser();
+        }
         const imgEl = imgs[index];
         const src = imgEl.currentSrc || imgEl.src;
         if (!src) continue;
@@ -2507,80 +2799,109 @@ class UI {
   }
 
   async exportPrintSheetAsPng() {
-    if (!this.isPrintSheetOpen()) this.openPrintSheet();
-    await this.renderPrintSheet();
-    await this.waitForPrintImages();
-    const canvases = await this.capturePrintPageCanvases();
-    if (!canvases.length) return;
-
-    let output = canvases[0];
-    if (canvases.length > 1) {
-      const width = Math.max(...canvases.map((canvas) => canvas.width));
-      const height = canvases.reduce((sum, canvas) => sum + canvas.height, 0);
-      output = document.createElement('canvas');
-      output.width = width;
-      output.height = height;
-      const ctx = output.getContext('2d');
-      if (ctx) {
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, width, height);
-        let y = 0;
-        canvases.forEach((canvas) => {
-          ctx.drawImage(canvas, 0, y);
-          y += canvas.height;
-        });
+    this.beginBusy('Building print sheet PNG...');
+    try {
+      if (!this.isPrintSheetOpen()) this.openPrintSheet();
+      await this.renderPrintSheet();
+      await this.waitForPrintImages();
+      const canvases = await this.capturePrintPageCanvases();
+      if (!canvases.length) {
+        this.showToast('No print pages available to export.', { force: true });
+        return;
       }
-    }
 
-    const link = document.createElement('a');
-    link.href = output.toDataURL('image/png');
-    link.download = `${this.buildPrintSheetBaseFilename()}_print_sheet.png`;
-    link.click();
+      let output = canvases[0];
+      if (canvases.length > 1) {
+        const width = Math.max(...canvases.map((canvas) => canvas.width));
+        const height = canvases.reduce((sum, canvas) => sum + canvas.height, 0);
+        output = document.createElement('canvas');
+        output.width = width;
+        output.height = height;
+        const ctx = output.getContext('2d');
+        if (ctx) {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, width, height);
+          let y = 0;
+          canvases.forEach((canvas) => {
+            ctx.drawImage(canvas, 0, y);
+            y += canvas.height;
+          });
+        }
+      }
+
+      const link = document.createElement('a');
+      link.href = output.toDataURL('image/png');
+      link.download = `${this.buildPrintSheetBaseFilename()}_print_sheet.png`;
+      link.click();
+      this.showToast('Print sheet PNG exported.', { force: true });
+    } catch (error) {
+      console.error('Print PNG export failed:', error);
+      this.showToast('Print sheet PNG export failed. Please try again.', { force: true, duration: 3200 });
+    } finally {
+      this.endBusy();
+    }
   }
 
   async exportPrintSheetAsPdf() {
     if (!window.jspdf || !window.jspdf.jsPDF) {
-      alert('PDF export is unavailable right now. Reload and try again.');
+      this.showToast('PDF export is unavailable right now. Reload and try again.', { force: true, duration: 3200 });
       return;
     }
-    if (!this.isPrintSheetOpen()) this.openPrintSheet();
-    await this.renderPrintSheet();
-    await this.waitForPrintImages();
-    const canvases = await this.capturePrintPageCanvases(2);
-    if (!canvases.length) return;
-
-    const { jsPDF } = window.jspdf;
-    const first = canvases[0];
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'px',
-      format: [first.width, first.height]
-    });
-
-    canvases.forEach((canvas, index) => {
-      if (index > 0) {
-        pdf.addPage([canvas.width, canvas.height], 'portrait');
+    this.beginBusy('Generating print-ready PDF...');
+    try {
+      if (!this.isPrintSheetOpen()) this.openPrintSheet();
+      await this.renderPrintSheet();
+      await this.waitForPrintImages();
+      const canvases = await this.capturePrintPageCanvases(2);
+      if (!canvases.length) {
+        this.showToast('No print pages available to export.', { force: true });
+        return;
       }
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, canvas.width, canvas.height, undefined, 'FAST');
-    });
 
-    pdf.save(`${this.buildPrintSheetBaseFilename()}_print_sheet.pdf`);
+      const { jsPDF } = window.jspdf;
+      const first = canvases[0];
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        format: [first.width, first.height]
+      });
+
+      canvases.forEach((canvas, index) => {
+        if (index > 0) {
+          pdf.addPage([canvas.width, canvas.height], 'portrait');
+        }
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, canvas.width, canvas.height, undefined, 'FAST');
+      });
+
+      pdf.save(`${this.buildPrintSheetBaseFilename()}_print_sheet.pdf`);
+      this.showToast('Print sheet PDF exported.', { force: true });
+    } catch (error) {
+      console.error('Print PDF export failed:', error);
+      this.showToast('Print sheet PDF export failed. Please try again.', { force: true, duration: 3200 });
+    } finally {
+      this.endBusy();
+    }
   }
 
   async printPrintSheet() {
-    if (!this.isPrintSheetOpen()) this.openPrintSheet();
-    await this.renderPrintSheet();
-    await this.waitForPrintImages();
-    const canvases = await this.capturePrintPageCanvases(2);
-    if (!canvases.length) return;
+    this.beginBusy('Preparing print pages...');
+    try {
+      if (!this.isPrintSheetOpen()) this.openPrintSheet();
+      await this.renderPrintSheet();
+      await this.waitForPrintImages();
+      const canvases = await this.capturePrintPageCanvases(2);
+      if (!canvases.length) {
+        this.showToast('No print pages available.', { force: true });
+        return;
+      }
 
-    const win = window.open('', '_blank');
-    if (!win) {
-      alert('Unable to open print window. Please allow popups for this site.');
-      return;
-    }
-    const images = canvases.map((canvas) => canvas.toDataURL('image/png'));
-    const html = `
+      const win = window.open('', '_blank');
+      if (!win) {
+        this.showToast('Unable to open print window. Please allow popups for this site.', { force: true, duration: 3400 });
+        return;
+      }
+      const images = canvases.map((canvas) => canvas.toDataURL('image/png'));
+      const html = `
 <!doctype html>
 <html>
 <head>
@@ -2597,17 +2918,25 @@ class UI {
   ${images.map((src) => `<img src="${src}" alt="Print sheet page" />`).join('')}
 </body>
 </html>`;
-    win.document.open();
-    win.document.write(html);
-    win.document.close();
-    win.focus();
-    win.print();
+      win.document.open();
+      win.document.write(html);
+      win.document.close();
+      win.focus();
+      win.print();
+      this.showToast('Print window opened.', { force: true });
+    } catch (error) {
+      console.error('Print preparation failed:', error);
+      this.showToast('Print preparation failed. Please try again.', { force: true, duration: 3200 });
+    } finally {
+      this.endBusy();
+    }
   }
 
   toggleExportMenu(force) {
     if (!this.exportMenuPanel || !this.btnExport) return;
     const isOpen = this.exportMenuPanel.classList.contains('is-open');
     const next = typeof force === 'boolean' ? force : !isOpen;
+    if (next) this.closeActionsMenu();
     this.exportMenuPanel.classList.toggle('is-open', next);
     this.exportMenuPanel.setAttribute('aria-hidden', next ? 'false' : 'true');
     this.btnExport.setAttribute('aria-expanded', next ? 'true' : 'false');
@@ -2615,6 +2944,413 @@ class UI {
 
   closeExportMenu() {
     this.toggleExportMenu(false);
+  }
+
+  toggleActionsMenu(force) {
+    if (!this.actionsMenuPanel || !this.btnActions) return;
+    const isOpen = this.actionsMenuPanel.classList.contains('is-open');
+    const next = typeof force === 'boolean' ? force : !isOpen;
+    if (next) this.closeExportMenu();
+    this.actionsMenuPanel.classList.toggle('is-open', next);
+    this.actionsMenuPanel.setAttribute('aria-hidden', next ? 'false' : 'true');
+    this.btnActions.setAttribute('aria-expanded', next ? 'true' : 'false');
+  }
+
+  closeActionsMenu() {
+    this.toggleActionsMenu(false);
+  }
+
+  getSiteModalById(modalId) {
+    if (!modalId || typeof document === 'undefined') return null;
+    return document.getElementById(modalId);
+  }
+
+  getOpenSiteModalId() {
+    if (typeof document === 'undefined') return '';
+    const node = document.querySelector('.site-modal.is-open');
+    return node ? String(node.id || '') : '';
+  }
+
+  openModal(modalId) {
+    const modal = this.getSiteModalById(modalId);
+    if (!modal) return;
+    this.closeExportMenu();
+    this.closeActionsMenu();
+    const currentlyOpen = this.getOpenSiteModalId();
+    if (currentlyOpen && currentlyOpen !== modalId) {
+      this.closeModal(currentlyOpen);
+    }
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+    if (modalId === 'quickStartModal' && typeof localStorage !== 'undefined') {
+      localStorage.setItem(this.quickStartSeenKey, 'true');
+    }
+  }
+
+  closeModal(modalId) {
+    const modal = this.getSiteModalById(modalId);
+    if (!modal) return;
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+
+  async confirmAction(options = {}) {
+    const title = String(options.title || 'Confirm Action').trim() || 'Confirm Action';
+    const message = String(options.message || 'Are you sure you want to continue?').trim() || 'Are you sure you want to continue?';
+    const confirmLabel = String(options.confirmLabel || 'Confirm').trim() || 'Confirm';
+    const cancelLabel = String(options.cancelLabel || 'Cancel').trim() || 'Cancel';
+    const danger = options.danger === true;
+
+    if (
+      !this.confirmActionModal
+      || !this.confirmActionTitle
+      || !this.confirmActionMessage
+      || !this.confirmActionCancelBtn
+      || !this.confirmActionConfirmBtn
+    ) {
+      this.showToast('Confirmation dialog is unavailable right now. Please reload and try again.', { force: true, duration: 3200 });
+      return false;
+    }
+
+    this.confirmActionTitle.textContent = title;
+    this.confirmActionMessage.textContent = message;
+    this.confirmActionCancelBtn.textContent = cancelLabel;
+    this.confirmActionConfirmBtn.textContent = confirmLabel;
+    this.confirmActionConfirmBtn.classList.toggle('btn-danger', danger);
+    this.confirmActionConfirmBtn.classList.toggle('btn-primary', !danger);
+
+    this.openModal('confirmActionModal');
+    this.confirmActionConfirmBtn.focus();
+
+    return new Promise((resolve) => {
+      let settled = false;
+      const finalize = (value) => {
+        if (settled) return;
+        settled = true;
+        this.confirmActionCancelBtn.removeEventListener('click', onCancel);
+        this.confirmActionConfirmBtn.removeEventListener('click', onConfirm);
+        this.confirmActionModal.removeEventListener('click', onBackdropClick);
+        document.removeEventListener('keydown', onKeyDown);
+        this.closeModal('confirmActionModal');
+        resolve(value);
+      };
+      const onCancel = () => finalize(false);
+      const onConfirm = () => finalize(true);
+      const onBackdropClick = (event) => {
+        if (!event?.target || !this.confirmActionModal) return;
+        if (event.target.classList && event.target.classList.contains('site-modal__backdrop')) {
+          finalize(false);
+        }
+      };
+      const onKeyDown = (event) => {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          finalize(false);
+        }
+      };
+      this.confirmActionCancelBtn.addEventListener('click', onCancel);
+      this.confirmActionConfirmBtn.addEventListener('click', onConfirm);
+      this.confirmActionModal.addEventListener('click', onBackdropClick);
+      document.addEventListener('keydown', onKeyDown);
+    });
+  }
+
+  openShareLinkModal(shareUrl) {
+    const safeUrl = String(shareUrl || '').trim();
+    if (!safeUrl || !this.shareLinkModal || !this.shareLinkInput) return;
+    this.shareLinkInput.value = safeUrl;
+    this.openModal('shareLinkModal');
+    this.shareLinkInput.focus();
+    this.shareLinkInput.select();
+  }
+
+  async copyShareLinkFromModal() {
+    const shareUrl = String(this.shareLinkInput?.value || '').trim();
+    if (!shareUrl) return;
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        await navigator.clipboard.writeText(shareUrl);
+        this.showToast('Share link copied to clipboard.', { force: true });
+        return;
+      }
+    } catch (error) {
+      console.warn('Clipboard copy from modal failed:', error);
+    }
+    if (this.shareLinkInput) {
+      this.shareLinkInput.focus();
+      this.shareLinkInput.select();
+    }
+    this.showToast('Clipboard unavailable. Copy the highlighted link manually.', { force: true, duration: 3200 });
+  }
+
+  syncProcessingToastSetting() {
+    if (!this.showProcessingToasts) return;
+    this.showProcessingToasts.checked = !!this.showToasts;
+  }
+
+  showToast(message, options = {}) {
+    const force = options.force === true;
+    if (!this.appToast) return;
+    if (!force && !this.showToasts) return;
+    const safeMessage = String(message || '').trim();
+    if (!safeMessage) return;
+    this.appToast.textContent = safeMessage;
+    this.appToast.classList.add('is-visible');
+    if (this.toastHideTimer) {
+      clearTimeout(this.toastHideTimer);
+    }
+    const duration = Number.isFinite(Number(options.duration)) ? Number(options.duration) : 2200;
+    this.toastHideTimer = setTimeout(() => {
+      this.appToast.classList.remove('is-visible');
+    }, Math.max(900, duration));
+  }
+
+  setBusyMessage(message) {
+    if (!this.appLoadingText) return;
+    const safe = String(message || '').trim() || 'Processing...';
+    this.appLoadingText.textContent = safe;
+  }
+
+  beginBusy(message) {
+    this.busyDepth = Math.max(0, Number(this.busyDepth) || 0) + 1;
+    this.setBusyMessage(message);
+    if (!this.appLoadingOverlay) return;
+    this.appLoadingOverlay.classList.add('is-visible');
+    this.appLoadingOverlay.setAttribute('aria-hidden', 'false');
+  }
+
+  endBusy() {
+    this.busyDepth = Math.max(0, (Number(this.busyDepth) || 0) - 1);
+    if (this.busyDepth > 0) return;
+    if (!this.appLoadingOverlay) return;
+    this.appLoadingOverlay.classList.remove('is-visible');
+    this.appLoadingOverlay.setAttribute('aria-hidden', 'true');
+  }
+
+  async yieldToBrowser(turn = 1) {
+    const count = Math.max(1, Number(turn) || 1);
+    for (let i = 0; i < count; i += 1) {
+      await new Promise((resolve) => {
+        if (typeof requestAnimationFrame === 'function') {
+          requestAnimationFrame(() => resolve());
+          return;
+        }
+        setTimeout(resolve, 0);
+      });
+    }
+  }
+
+  getRenderCacheValue(key) {
+    const safeKey = String(key || '');
+    if (!safeKey || !this.renderDataUrlCache) return '';
+    const value = this.renderDataUrlCache.get(safeKey);
+    if (!value) return '';
+    // Touch to keep recently-used keys alive.
+    this.renderDataUrlCache.delete(safeKey);
+    this.renderDataUrlCache.set(safeKey, value);
+    return value;
+  }
+
+  setRenderCacheValue(key, value) {
+    const safeKey = String(key || '');
+    const safeValue = String(value || '');
+    if (!safeKey || !safeValue || !this.renderDataUrlCache) return;
+    if (this.renderDataUrlCache.has(safeKey)) {
+      this.renderDataUrlCache.delete(safeKey);
+    }
+    this.renderDataUrlCache.set(safeKey, safeValue);
+    while (this.renderDataUrlCache.size > this.renderDataUrlCacheLimit) {
+      const oldestKey = this.renderDataUrlCache.keys().next().value;
+      if (!oldestKey) break;
+      this.renderDataUrlCache.delete(oldestKey);
+    }
+  }
+
+  clearRenderCache() {
+    if (!this.renderDataUrlCache) return;
+    this.renderDataUrlCache.clear();
+  }
+
+  scheduleRenderWarmup(options = {}) {
+    const immediate = options.immediate === true;
+    const delayMs = Number.isFinite(Number(options.delayMs))
+      ? Math.max(0, Number(options.delayMs))
+      : (immediate ? 30 : 220);
+
+    this.renderWarmupToken += 1;
+    const token = this.renderWarmupToken;
+    if (this.renderWarmupTimer) {
+      clearTimeout(this.renderWarmupTimer);
+      this.renderWarmupTimer = null;
+    }
+    this.renderWarmupTimer = setTimeout(() => {
+      this.renderWarmupTimer = null;
+      this.runRenderWarmup(token).catch((error) => {
+        console.warn('Render warmup failed:', error);
+      });
+    }, delayMs);
+  }
+
+  async runRenderWarmup(token) {
+    const runToken = Number.isFinite(Number(token)) ? Number(token) : this.renderWarmupToken;
+    if (this.renderWarmupInFlight) {
+      this.renderWarmupQueued = true;
+      return;
+    }
+
+    this.renderWarmupInFlight = true;
+    this.renderWarmupQueued = false;
+    try {
+      const deck = this.getSelectedDeck();
+      let entries = [];
+      if (deck && Array.isArray(deck.cards) && deck.cards.length) {
+        entries = deck.cards;
+      } else if (!deck) {
+        entries = await this.loadDefaultDeckCardsForView();
+      }
+      if (runToken !== this.renderWarmupToken) return;
+      if (!entries.length) return;
+
+      await this.ensureDeckDefaultCard();
+      if (runToken !== this.renderWarmupToken) return;
+
+      const deckColumns = Math.max(1, Number(this.deckTemplateConfig?.columns) || 10);
+      const deckRows = Math.max(1, Number(this.deckTemplateConfig?.rows) || 7);
+      const printColumns = Math.max(1, Number(this.printTemplateConfig?.columns) || 2);
+      const printRows = Math.max(1, Number(this.printTemplateConfig?.rows) || 4);
+      const warmLimit = Math.min(entries.length, Math.max(deckColumns * deckRows, printColumns * printRows, 24));
+      const printWidth = Number(this.printTemplateConfig?.columnWidth) || 1004;
+      const printHeight = Number(this.printTemplateConfig?.rowHeight) || 626;
+
+      for (let index = 0; index < warmLimit; index += 1) {
+        if (runToken !== this.renderWarmupToken) return;
+        if (index > 0 && index % 3 === 0) {
+          await this.yieldToBrowser();
+        }
+
+        const entry = entries[index];
+        const entryJson = (entry && typeof entry.json === 'string')
+          ? entry.json
+          : JSON.stringify(entry || {});
+        const cardData = this.buildCardFromJson(entryJson);
+        cardData.layers = { ...(cardData.layers || {}), cardBleed: false };
+        const name = String(cardData.name || entry?.__printName || entry?.name || `Card ${index + 1}`).trim() || `Card ${index + 1}`;
+        if (!cardData.name || cardData.name === 'Title') {
+          cardData.name = name;
+        }
+
+        const deckCacheToken = `${entryJson}|name:${name}`;
+        await this.renderDeckCardDataUrl(cardData, deckCacheToken);
+
+        const printCacheToken = `${entryJson}|printMode:${this.printMode}|name:${name}`;
+        await this.renderPrintCardDataUrl(cardData, printWidth, printHeight, printCacheToken);
+      }
+    } finally {
+      this.renderWarmupInFlight = false;
+      if (this.renderWarmupQueued || runToken !== this.renderWarmupToken) {
+        this.renderWarmupQueued = false;
+        this.scheduleRenderWarmup({ immediate: false, delayMs: 120 });
+      }
+    }
+  }
+
+  maybeShowQuickStart() {
+    if (typeof localStorage === 'undefined' || !this.quickStartModal) return;
+    if (typeof navigator !== 'undefined' && navigator.webdriver) return;
+    const seen = localStorage.getItem(this.quickStartSeenKey) === 'true';
+    if (seen) return;
+    this.openModal('quickStartModal');
+  }
+
+  loadSavedDefaultsCard() {
+    if (typeof localStorage === 'undefined') return null;
+    const raw = localStorage.getItem(this.userDefaultsKey);
+    if (!raw) return null;
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch (error) {
+      console.warn('Failed to parse saved defaults:', error);
+      return null;
+    }
+  }
+
+  applySavedDefaultsToState(options = {}) {
+    const defaultsCard = this.loadSavedDefaultsCard();
+    if (!defaultsCard) return false;
+    const loaded = gameState.fromJSON(JSON.stringify(defaultsCard));
+    if (!loaded) return false;
+    this.applyDefaultCardIdFromDeck(true);
+    this.updateUI();
+    if (!options.silent) {
+      this.showToast('Loaded your saved defaults.');
+    }
+    return true;
+  }
+
+  saveCurrentAsDefaults() {
+    if (typeof localStorage === 'undefined') return;
+    const card = gameState.getCard();
+    localStorage.setItem(this.userDefaultsKey, JSON.stringify(card));
+    this.showToast('Saved current card as your defaults.');
+  }
+
+  resetToSavedDefaults() {
+    const loaded = this.applySavedDefaultsToState({ silent: true });
+    if (!loaded) {
+      this.showToast('No saved defaults found. Save defaults first.', { force: true, duration: 2800 });
+      return;
+    }
+    this.scheduleRenderWarmup({ immediate: true });
+    this.showToast('Reset to your saved defaults.');
+  }
+
+  async restoreFactoryDefaults() {
+    const shouldRestore = await this.confirmAction({
+      title: 'Restore Factory Settings',
+      message: 'Restore factory settings and clear your saved defaults?',
+      confirmLabel: 'Restore Settings',
+      cancelLabel: 'Cancel',
+      danger: true
+    });
+    if (!shouldRestore) return;
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(this.userDefaultsKey);
+    }
+    this.clearRenderCache();
+    gameState.reset();
+    this.applyDefaultCardIdFromDeck(true);
+    this.updateUI();
+    this.scheduleRenderWarmup({ immediate: true });
+    this.showToast('Factory settings restored.', { force: true });
+  }
+
+  async resetAppData() {
+    if (typeof localStorage === 'undefined') return;
+    const shouldReset = await this.confirmAction({
+      title: 'Reset App Data',
+      message: 'Reset all local app data? This clears decks, autosave, and preferences.',
+      confirmLabel: 'Reset Data',
+      cancelLabel: 'Cancel',
+      danger: true
+    });
+    if (!shouldReset) return;
+    this.appStorageKeys.forEach((key) => {
+      if (!key) return;
+      localStorage.removeItem(key);
+    });
+    this.showToasts = true;
+    this.syncProcessingToastSetting();
+    this.clearRenderCache();
+    gameState.reset();
+    this.applyDefaultCardIdFromDeck(true);
+    this.updateUI();
+    this.refreshDeckUI();
+    this.refreshBoardAbilityOptions();
+    this.renderBoardSlotAssignments();
+    this.scheduleRenderWarmup({ immediate: true });
+    this.closeModal('settingsModal');
+    this.showToast('App data reset complete.', { force: true, duration: 2600 });
   }
 
   handleFileInput(event) {
@@ -2626,9 +3362,10 @@ class UI {
       const json = e.target.result;
       if (gameState.fromJSON(json)) {
         this.updateUI();
-        alert('Card loaded successfully!');
+        this.scheduleRenderWarmup({ immediate: true });
+        this.showToast('Card loaded successfully.', { force: true });
       } else {
-        alert('Failed to load card. Invalid JSON format.');
+        this.showToast('Failed to load card. Invalid JSON format.', { force: true, duration: 3000 });
       }
     };
     reader.readAsText(file);
@@ -2646,7 +3383,7 @@ class UI {
       imageData = await this.readFileAsDataUrl(file, 'Failed to read card art.');
     } catch (error) {
       console.warn('Failed to upload card art:', error);
-      alert('Failed to read the selected image.');
+      this.showToast('Failed to read the selected image.', { force: true, duration: 2800 });
       return false;
     }
 
@@ -2701,11 +3438,20 @@ class UI {
     renderer.setCardArt(null);
   }
 
-  resetCanvas() {
-    if (confirm('Reset the canvas to defaults? This will reset text, images, and positions.')) {
-      gameState.reset();
-      this.updateUI();
-    }
+  async resetCanvas() {
+    this.closeActionsMenu();
+    const shouldReset = await this.confirmAction({
+      title: 'Reset Canvas',
+      message: 'Reset the canvas to defaults? This will reset text, images, and positions.',
+      confirmLabel: 'Reset Canvas',
+      cancelLabel: 'Keep Editing',
+      danger: true
+    });
+    if (!shouldReset) return;
+    gameState.reset();
+    this.updateUI();
+    this.scheduleRenderWarmup({ immediate: true });
+    this.showToast('Canvas reset complete.', { force: true });
   }
 
   handleArtSelect(event) {
@@ -2944,14 +3690,101 @@ class UI {
     return currentWidth / baseWidth;
   }
 
-  setPreviewCenterGuidesVisible(visible) {
-    const shouldShow = !!visible && this.workspaceMode !== 'board';
-    const guides = [this.previewCenterGuideHorizontal, this.previewCenterGuideVertical];
-    guides.forEach((guide) => {
-      if (!guide) return;
-      guide.classList.toggle('is-visible', shouldShow);
+  requestPreviewRender() {
+    if (this.previewRenderRaf !== null) return;
+    if (typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') {
+      renderer.render(gameState.getCard());
+      return;
+    }
+    this.previewRenderRaf = window.requestAnimationFrame(() => {
+      this.previewRenderRaf = null;
+      renderer.render(gameState.getCard());
     });
   }
+
+  schedulePreviewRender(delayMs = 110) {
+    if (typeof window === 'undefined') {
+      this.requestPreviewRender();
+      return;
+    }
+    if (this.previewRenderDebounceTimer !== null) {
+      window.clearTimeout(this.previewRenderDebounceTimer);
+      this.previewRenderDebounceTimer = null;
+    }
+    this.previewRenderDebounceTimer = window.setTimeout(() => {
+      this.previewRenderDebounceTimer = null;
+      this.requestPreviewRender();
+    }, Math.max(0, Number(delayMs) || 0));
+  }
+
+  schedulePreviewZoomPersist(delayMs = 140) {
+    if (typeof localStorage === 'undefined') return;
+    if (this.previewZoomPersistTimer !== null && typeof window !== 'undefined') {
+      window.clearTimeout(this.previewZoomPersistTimer);
+      this.previewZoomPersistTimer = null;
+    }
+    if (typeof window === 'undefined') {
+      localStorage.setItem(this.previewZoomStorageKey, String(this.previewZoom));
+      return;
+    }
+    this.previewZoomPersistTimer = window.setTimeout(() => {
+      this.previewZoomPersistTimer = null;
+      localStorage.setItem(this.previewZoomStorageKey, String(this.previewZoom));
+    }, Math.max(0, Number(delayMs) || 0));
+  }
+
+  clampPreviewZoom(value) {
+    const zoom = Number(value);
+    if (!Number.isFinite(zoom)) return 1;
+    return Math.max(0.5, Math.min(3, zoom));
+  }
+
+  setPreviewZoom(value, options = {}) {
+    const zoom = this.clampPreviewZoom(value);
+    const prevZoom = Number(this.previewZoom);
+    const isSameZoom = Number.isFinite(prevZoom) && Math.abs(zoom - prevZoom) < 0.0001;
+    this.previewZoom = zoom;
+    if (this.previewZoomInput) {
+      this.previewZoomInput.value = zoom.toFixed(2);
+    }
+    if (this.previewZoomValue) {
+      this.previewZoomValue.textContent = `${Math.round(zoom * 100)}%`;
+    }
+
+    if (renderer && typeof renderer.setPreviewZoom === 'function') {
+      renderer.setPreviewZoom(zoom);
+      if (typeof renderer.reflowPreviewForZoom === 'function') {
+        renderer.reflowPreviewForZoom(gameState.getCard());
+      }
+    } else if (this.previewContainer) {
+      this.previewContainer.style.setProperty('--zoom-scale', String(zoom));
+    }
+
+    if (!isSameZoom && options.persist !== false && typeof localStorage !== 'undefined') {
+      if (this.previewZoomPersistTimer !== null && typeof window !== 'undefined') {
+        window.clearTimeout(this.previewZoomPersistTimer);
+        this.previewZoomPersistTimer = null;
+      }
+      localStorage.setItem(this.previewZoomStorageKey, String(zoom));
+    }
+
+    if (!isSameZoom) {
+      if (options.scheduleRerender === true) {
+        this.schedulePreviewRender(options.renderDebounceMs);
+      } else if (options.rerender !== false) {
+        if (this.previewRenderDebounceTimer !== null && typeof window !== 'undefined') {
+          window.clearTimeout(this.previewRenderDebounceTimer);
+          this.previewRenderDebounceTimer = null;
+        }
+        if (this.previewRenderRaf !== null && typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function') {
+          window.cancelAnimationFrame(this.previewRenderRaf);
+          this.previewRenderRaf = null;
+        }
+        renderer.render(gameState.getCard());
+      }
+    }
+  }
+
   clampLetterSpacing(value) {
     const spacing = Number(value);
     if (!Number.isFinite(spacing)) return 0;
@@ -3219,6 +4052,9 @@ class UI {
 
   updateUI() {
     let card = gameState.getCard();
+    if (this.normalizeCardTypeAndSubtypeState()) {
+      card = gameState.getCard();
+    }
     card = this.ensureTitleBlocks(card);
     card = this.ensureDescriptionBlocks(card);
     const scale = this.getPreviewScale();
@@ -3388,6 +4224,9 @@ class UI {
     if (layers.bottomNameGradient === undefined) layerUpdates['layers.bottomNameGradient'] = true;
     if (Object.keys(layerUpdates).length > 0) {
       gameState.updateProperties(layerUpdates);
+      card = gameState.getCard();
+    }
+    if (this.ensureRenderableCardLayerState()) {
       card = gameState.getCard();
     }
 
@@ -3582,15 +4421,7 @@ class UI {
     if (typeof renderer?.setLeafletSide === 'function') {
       renderer.setLeafletSide(card.leafletSide);
     }
-    const renderStart = (typeof performance !== 'undefined' && typeof performance.now === 'function')
-      ? performance.now()
-      : Date.now();
     renderer.render(card);
-    const renderEnd = (typeof performance !== 'undefined' && typeof performance.now === 'function')
-      ? performance.now()
-      : Date.now();
-    const renderMs = Math.max(0, renderEnd - renderStart);
-    this.lastRenderDurationMs = renderMs;
     renderer.updateCostBadgePosition(card);
     const activeTitleId = this.getActiveTitleId(card, this.getTitleBlocks(card));
     this.updateTitleLayerActiveState(activeTitleId);
@@ -3629,117 +4460,10 @@ class UI {
     if (this.toggleCostBadge) this.toggleCostBadge.checked = !!(card.layers && card.layers.costBadge);
     if (this.toggleAttackModifier) this.toggleAttackModifier.checked = !!(card.layers && card.layers.attackModifier);
     if (this.toggleCardText) this.toggleCardText.checked = !!(card.layers && card.layers.cardText);
-    this.updatePreviewDiagnostics(card, renderMs);
 
   }
-
-  getWorkspaceLabel(mode = this.workspaceMode) {
-    const normalized = String(mode || '').toLowerCase();
-    if (normalized === 'leaflet') return 'Leaflet Creator';
-    if (normalized === 'board') return 'Board Creator';
-    return 'Card Creator';
-  }
-
-  getStageLabel(mode = this.workspaceMode) {
-    const normalized = String(mode || '').toLowerCase();
-    if (normalized === 'leaflet') return 'Leaflet Render';
-    if (normalized === 'board') return 'Board Layout';
-    return 'Card Render';
-  }
-
-  getLayerVisibilityStats(card) {
-    const safeCard = card && typeof card === 'object' ? card : {};
-    const layers = safeCard.layers && typeof safeCard.layers === 'object' ? safeCard.layers : {};
-    const layerOrder = this.normalizeLayerOrder(safeCard.layerOrder);
-    let visibleCount = 0;
-    layerOrder.forEach((key) => {
-      let enabled;
-      if (key === 'panelUpper') {
-        enabled = layers.panelUpper ?? layers.titleBar;
-      } else if (key === 'panelLower') {
-        enabled = layers.panelLower ?? layers.bottomText;
-      } else {
-        enabled = layers[key];
-      }
-      if (enabled !== false) visibleCount += 1;
-    });
-    const hiddenCount = Array.isArray(safeCard.hiddenLayers) ? safeCard.hiddenLayers.length : 0;
-    return {
-      visibleCount,
-      totalCount: layerOrder.length,
-      hiddenCount
-    };
-  }
-
-  updatePreviewDiagnostics(card, renderMs = null) {
-    const safeCard = card && typeof card === 'object' ? card : gameState.getCard();
-    if (Number.isFinite(renderMs)) {
-      this.lastRenderDurationMs = Math.max(0, renderMs);
-    }
-    const layerStats = this.getLayerVisibilityStats(safeCard);
-    const workspaceLabel = this.getWorkspaceLabel(this.workspaceMode);
-    const stageLabel = this.getStageLabel(this.workspaceMode);
-    const cardType = String(safeCard.cardType || 'Action Cards');
-    const cardSubType = String(safeCard.cardSubType || '--');
-    const cardId = String(safeCard.cardId || '').trim() || 'Unset';
-    const artLoaded = (safeCard.artData || safeCard.artUrl) ? 'Loaded' : 'None';
-    const refEnabled = !!(this.showReferenceCheckbox && this.showReferenceCheckbox.checked);
-    const refSideBySide = !!(this.showReferenceSideBySideCheckbox && this.showReferenceSideBySideCheckbox.checked);
-    const referenceLabel = refEnabled ? (refSideBySide ? 'Side-by-side' : 'Overlay') : 'Off';
-    const renderLabel = Number.isFinite(this.lastRenderDurationMs)
-      ? `${this.lastRenderDurationMs.toFixed(1)}ms`
-      : '--';
-    const updatedLabel = new Date().toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-    const layersLabel = `${layerStats.visibleCount}/${layerStats.totalCount}`;
-
-    const setText = (el, value) => {
-      if (!el) return;
-      el.textContent = String(value);
-    };
-
-    setText(this.inspectorWorkspaceValue, workspaceLabel);
-    setText(this.inspectorStageValue, stageLabel);
-    setText(this.inspectorCardTypeValue, cardType);
-    setText(this.inspectorSubTypeValue, cardSubType);
-    setText(this.inspectorVisibleLayersValue, layersLabel);
-    setText(this.inspectorHiddenLayersValue, String(layerStats.hiddenCount));
-    setText(this.inspectorArtValue, artLoaded);
-    setText(this.inspectorReferenceValue, referenceLabel);
-    setText(this.inspectorCardIdValue, cardId);
-    setText(this.inspectorRenderMsValue, renderLabel);
-    setText(this.inspectorUpdatedValue, updatedLabel);
-    setText(this.utilityWorkspaceValue, workspaceLabel);
-    setText(this.utilityLayersValue, layersLabel);
-    setText(this.utilityRenderMsValue, renderLabel);
-    setText(this.utilityArtValue, artLoaded);
-    setText(this.utilityReferenceValue, referenceLabel);
-    setText(this.utilityUpdatedValue, updatedLabel);
-  }
-
   updateSubTypeOptions(cardType, selectedValue = null, shouldUpdateState = true) {
-    const subTypeOptions = {
-      'Hero Upgrade': [
-        'Ability Upgrade',
-        'Defense Upgrade',
-        'Passive Upgrade'
-      ],
-      'Action Cards': [
-        'Main Phase',
-        'Instant',
-        'Roll Phase'
-      ],
-      'Board Abilities': [
-        'Offensive ability',
-        'Passive Ability',
-        'Defensive ability'
-      ]
-    };
-
-    const options = subTypeOptions[cardType] || [];
+    const options = this.getSubtypeOptionsForCardType(cardType);
     this.cardSubTypeSelect.innerHTML = '';
     
     options.forEach(option => {
@@ -4941,180 +5665,6 @@ class UI {
     });
   }
 
-  initControlPanelDragAndDrop() {
-    const toolPanels = Array.from(document.querySelectorAll('.editor-panel .tool-panel'));
-    if (!toolPanels.length) return;
-    toolPanels.forEach((panel) => this.setupControlPanelDragForContainer(panel));
-  }
-
-  setupControlPanelDragForContainer(panel) {
-    if (!panel || panel.dataset.panelSectionDragInit === 'true') return;
-    panel.dataset.panelSectionDragInit = 'true';
-
-    const sections = this.getDirectPanelSections(panel);
-    if (!sections.length) return;
-
-    sections.forEach((section, index) => {
-      const key = this.getPanelSectionStorageKey(panel, section, index);
-      if (key) section.dataset.panelSectionKey = key;
-      section.classList.add('panel-section-draggable');
-      const summary = this.getDirectPanelSectionSummary(section);
-      if (summary) {
-        summary.classList.add('panel-section-drag-handle');
-        summary.setAttribute('draggable', 'true');
-      }
-    });
-
-    this.restorePanelSectionOrder(panel);
-
-    let draggingSection = null;
-    let suppressSummaryToggleUntil = 0;
-
-    const onDragStart = (e) => {
-      const handle = e.target.closest('.panel-section-drag-handle');
-      if (!handle || !panel.contains(handle)) return;
-      const section = handle.closest('.panel-section-draggable');
-      if (!section || section.parentElement !== panel) return;
-      draggingSection = section;
-      draggingSection.classList.add('dragging');
-      if (e.dataTransfer) {
-        e.dataTransfer.effectAllowed = 'move';
-        try {
-          e.dataTransfer.setData('text/plain', section.dataset.panelSectionKey || 'panel-section');
-        } catch (error) {
-          // ignore
-        }
-      }
-    };
-
-    const onDragOver = (e) => {
-      if (!draggingSection) return;
-      e.preventDefault();
-      if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
-      const afterElement = this.getPanelSectionDragAfterElement(panel, e.clientY);
-      if (!afterElement) {
-        panel.appendChild(draggingSection);
-      } else if (afterElement !== draggingSection) {
-        panel.insertBefore(draggingSection, afterElement);
-      }
-    };
-
-    const onDragEnd = () => {
-      if (!draggingSection) return;
-      draggingSection.classList.remove('dragging');
-      draggingSection = null;
-      suppressSummaryToggleUntil = Date.now() + 120;
-      this.persistPanelSectionOrder(panel);
-    };
-
-    const onClickCapture = (e) => {
-      if (Date.now() >= suppressSummaryToggleUntil) return;
-      const handle = e.target.closest('.panel-section-drag-handle');
-      if (!handle || !panel.contains(handle)) return;
-      e.preventDefault();
-      e.stopPropagation();
-    };
-
-    panel.addEventListener('dragstart', onDragStart);
-    panel.addEventListener('dragover', onDragOver);
-    panel.addEventListener('dragend', onDragEnd);
-    panel.addEventListener('click', onClickCapture, true);
-    panel.addEventListener('drop', (e) => {
-      if (draggingSection) e.preventDefault();
-    });
-  }
-
-  getDirectPanelSectionSummary(section) {
-    if (!section) return null;
-    const first = section.firstElementChild;
-    if (first && first.tagName === 'SUMMARY') return first;
-    return section.querySelector('summary');
-  }
-
-  getDirectPanelSections(panel) {
-    if (!panel) return [];
-    return Array.from(panel.children).filter((child) => (
-      child && child.classList && child.classList.contains('panel-section')
-    ));
-  }
-
-  getPanelSectionStorageKey(panel, section, index = 0) {
-    if (!panel || !section) return '';
-    if (section.dataset.panelSectionKey) return section.dataset.panelSectionKey;
-    if (section.id) return `id:${section.id}`;
-    const panelName = String(panel.dataset.toolPanel || 'default').toLowerCase();
-    const summary = this.getDirectPanelSectionSummary(section);
-    const label = String(summary?.textContent || `section-${index}`)
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-    return `label:${panelName}:${label || `section-${index}`}:${index}`;
-  }
-
-  getPanelSectionOrderStorageKey(panel) {
-    if (!panel) return '';
-    const side = panel.closest('#previewRightMenu') ? 'right' : 'left';
-    const panelName = String(panel.dataset.toolPanel || 'default').toLowerCase();
-    return `${this.panelSectionOrderKeyPrefix}:${side}:${panelName}`;
-  }
-
-  restorePanelSectionOrder(panel) {
-    if (!panel || typeof localStorage === 'undefined') return;
-    const storageKey = this.getPanelSectionOrderStorageKey(panel);
-    if (!storageKey) return;
-    let parsed;
-    try {
-      parsed = JSON.parse(localStorage.getItem(storageKey) || '[]');
-    } catch (error) {
-      parsed = [];
-    }
-    if (!Array.isArray(parsed) || !parsed.length) return;
-
-    const sections = this.getDirectPanelSections(panel);
-    const map = new Map();
-    sections.forEach((section) => {
-      const key = section.dataset.panelSectionKey;
-      if (key) map.set(key, section);
-    });
-
-    parsed.forEach((key) => {
-      const section = map.get(key);
-      if (!section) return;
-      panel.appendChild(section);
-      map.delete(key);
-    });
-
-    map.forEach((section) => panel.appendChild(section));
-  }
-
-  persistPanelSectionOrder(panel) {
-    if (!panel || typeof localStorage === 'undefined') return;
-    const storageKey = this.getPanelSectionOrderStorageKey(panel);
-    if (!storageKey) return;
-    const order = this.getDirectPanelSections(panel)
-      .map((section) => section.dataset.panelSectionKey)
-      .filter(Boolean);
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(order));
-    } catch (error) {
-      // ignore storage write failures
-    }
-  }
-
-  getPanelSectionDragAfterElement(container, y) {
-    const items = this.getDirectPanelSections(container)
-      .filter((item) => !item.classList.contains('dragging') && item.offsetParent !== null);
-    return items.reduce((closest, child) => {
-      const box = child.getBoundingClientRect();
-      const offset = y - box.top - box.height / 2;
-      if (offset < 0 && offset > closest.offset) {
-        return { offset, element: child };
-      }
-      return closest;
-    }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
-  }
-
   getDragAfterElement(container, y) {
     const items = [...container.querySelectorAll('.layer-item:not(.dragging)')]
       .filter((item) => item.offsetParent !== null);
@@ -5517,6 +6067,7 @@ class UI {
       option.textContent = card.name || `Card ${card.id}`;
       this.deckCardSelect.appendChild(option);
     });
+    this.scheduleRenderWarmup({ immediate: false });
   }
 
   isDeckViewOpen() {
@@ -5600,7 +6151,9 @@ class UI {
 
   openDeckView() {
     if (!this.deckViewModal) return;
+    this.closeActionsMenu();
     this.deckViewModal.classList.add('is-open');
+    this.scheduleRenderWarmup({ immediate: true });
     requestAnimationFrame(() => {
       this.updateDeckTemplateScale();
       this.renderDeckView();
@@ -5614,8 +6167,10 @@ class UI {
 
   openPrintSheet() {
     if (!this.printSheetModal) return;
+    this.closeActionsMenu();
     this.printSheetModal.classList.add('is-open');
     this.printSheetModal.setAttribute('aria-hidden', 'false');
+    this.scheduleRenderWarmup({ immediate: true });
     requestAnimationFrame(() => {
       this.ensurePrintSheetPages();
       this.getPrintSheetPageNodes().forEach((page) => this.applyPrintLayerAssetsToPage(page));
@@ -5848,7 +6403,7 @@ class UI {
       { label: 'R Damage', command: '{{rdmg,4}}', iconSrc: 'Assets/Icons/Rdmg/dmg_blank.png' },
       { label: 'Prevent', command: '{{prevent,6}}', iconSrc: 'Assets/Icons/Prevent/prevent_blank.png' },
       { label: 'Prevent (Half)', command: '{{prevent,half}}', iconSrc: 'Assets/Icons/Prevent/prevent_half.png' },
-      { label: 'Heal', command: '{{heal,2}}', iconSrc: 'Assets/Icons/Heal/heal_blank.png' },
+      { label: 'Heal', command: '{{heal,2}}', iconSrc: 'Assets/Icons/Heal/heal_2.png' },
       { label: 'Straight', command: '{{straight,small,#ff3333}}', iconSrc: 'Assets/Icons/Straight/small.png' },
       { label: 'Ability Trigger', command: '{{at,basic_1,#33ccff}}', iconSrc: 'Assets/Ability Trigger/basic_1.png' },
       { label: 'Ability Dice (Count)', command: '{{abilitydice,3,#33ccff}}', iconSrc: 'Assets/Icons/Ability Dice/ability_dice.png' },
@@ -5959,7 +6514,7 @@ class UI {
     if (!this.validateImageFile(file, { label: 'ability icon' })) return;
     const dataUrl = await this.readFileAsDataUrl(file, 'Failed to read ability dice icon.').catch((error) => {
       console.warn('Failed to upload ability dice icon:', error);
-      alert('Failed to read the selected ability icon.');
+      this.showToast('Failed to read the selected ability icon.', { force: true, duration: 2800 });
       return '';
     });
     if (!dataUrl) return;
@@ -6386,14 +6941,14 @@ class UI {
 
     const reserved = this.getReservedTokenKeys();
     if (reserved.has(key)) {
-      alert(`"${key}" is reserved. Choose another name.`);
+      this.showToast(`"${key}" is reserved. Choose another name.`, { force: true, duration: 2800 });
       return;
     }
 
     let card = gameState.getCard();
     const entries = this.getCustomStatusEffects(card);
     if (entries.some((entry) => entry.key === key)) {
-      alert(`Status effect "{{${key}}}" already exists.`);
+      this.showToast(`Status effect "{{${key}}}" already exists.`, { force: true, duration: 2800 });
       return;
     }
 
@@ -6428,7 +6983,7 @@ class UI {
     if (!this.validateImageFile(file, { label: 'status icon' })) return;
     const dataUrl = await this.readFileAsDataUrl(file, 'Failed to read status effect icon.').catch((error) => {
       console.warn('Failed to upload status effect icon:', error);
-      alert('Failed to read the selected status icon.');
+      this.showToast('Failed to read the selected status icon.', { force: true, duration: 2800 });
       return '';
     });
     if (!dataUrl) return;
@@ -6572,14 +7127,22 @@ class UI {
   }
 
   setDeckViewStatus(message) {
+    const safeMessage = message || '';
     if (this.deckViewStatus) {
-      this.deckViewStatus.textContent = message || '';
+      this.deckViewStatus.textContent = safeMessage;
+    }
+    if (this.busyDepth > 0 && safeMessage) {
+      this.setBusyMessage(safeMessage);
     }
   }
 
   setPrintSheetStatus(message) {
+    const safeMessage = message || '';
     if (this.printSheetStatus) {
-      this.printSheetStatus.textContent = message || '';
+      this.printSheetStatus.textContent = safeMessage;
+    }
+    if (this.busyDepth > 0 && safeMessage) {
+      this.setBusyMessage(safeMessage);
     }
   }
 
@@ -6681,9 +7244,10 @@ class UI {
     return canvas.toDataURL('image/png');
   }
 
-  async renderDeckCardDataUrl(cardData, rowHeight) {
-    const targetWidth = this.deckThumbWidth;
-    const targetHeight = rowHeight;
+  async renderDeckCardDataUrl(cardData, cacheToken = '') {
+    const cacheKey = `deck|${String(cacheToken || '')}`;
+    const cached = this.getRenderCacheValue(cacheKey);
+    if (cached) return cached;
     const renderCard = deepCloneUI(cardData || {});
     renderCard.layers = {
       ...(renderCard.layers || {}),
@@ -6700,10 +7264,20 @@ class UI {
       cropToBleedBounds: true
     });
     if (!dataUrl) return '';
+    this.setRenderCacheValue(cacheKey, dataUrl);
     return dataUrl;
   }
 
-  async renderPrintCardDataUrl(cardData, cellWidth, cellHeight) {
+  async renderPrintCardDataUrl(cardData, cellWidth, cellHeight, cacheToken = '') {
+    const rotation = Number(this.printTemplateConfig?.cardRotation) || 0;
+    const extraScale = Number.isFinite(this.printTemplateConfig?.cardScale)
+      ? this.printTemplateConfig.cardScale
+      : 1;
+    const fitMode = this.printMode === 'compact' ? 'contain' : 'cover';
+    const allowUpscale = this.printMode !== 'compact';
+    const cacheKey = `print|${Math.round(cellWidth)}|${Math.round(cellHeight)}|${rotation}|${extraScale.toFixed(3)}|${fitMode}|${allowUpscale ? 1 : 0}|${this.printMode}|${String(cacheToken || '')}`;
+    const cached = this.getRenderCacheValue(cacheKey);
+    if (cached) return cached;
     const renderCard = deepCloneUI(cardData || {});
     renderCard.layers = {
       ...(renderCard.layers || {}),
@@ -6722,17 +7296,14 @@ class UI {
       cropToBleedBounds: true
     });
     if (!dataUrl) return '';
-    const rotation = Number(this.printTemplateConfig?.cardRotation) || 0;
     if (rotation) {
       dataUrl = await this.rotateDataUrl(dataUrl, rotation);
     }
-    const extraScale = Number.isFinite(this.printTemplateConfig?.cardScale)
-      ? this.printTemplateConfig.cardScale
-      : 1;
-    // Finalize each print card to the exact grid cell size; keep compact centered in its card template window.
-    const fitMode = this.printMode === 'compact' ? 'contain' : 'cover';
-    const allowUpscale = this.printMode !== 'compact';
-    return this.scaleDeckCardDataUrl(dataUrl, cellWidth, cellHeight, fitMode, extraScale, allowUpscale);
+    const scaled = await this.scaleDeckCardDataUrl(dataUrl, cellWidth, cellHeight, fitMode, extraScale, allowUpscale);
+    if (scaled) {
+      this.setRenderCacheValue(cacheKey, scaled);
+    }
+    return scaled;
   }
 
   async loadDefaultDeckCardsForView() {
@@ -6884,18 +7455,23 @@ class UI {
     for (const entry of entries) {
       if (index >= maxCards) break;
       index += 1;
+      if (index > 1 && index % 2 === 0) {
+        await this.yieldToBrowser();
+      }
       if (renderToken !== this.deckViewRenderToken) return;
       this.setDeckViewStatus(`Rendering ${index} of ${renderTotal}...`);
-      const cardData = this.buildCardFromJson(entry && entry.json ? entry.json : entry);
+      const entryJson = (entry && typeof entry.json === 'string')
+        ? entry.json
+        : JSON.stringify(entry || {});
+      const cardData = this.buildCardFromJson(entryJson);
       cardData.layers = { ...(cardData.layers || {}), cardBleed: false };
       const name = String(cardData.name || entry?.name || `Card ${index}`).trim() || `Card ${index}`;
       if (!cardData.name || cardData.name === 'Title') {
         cardData.name = name;
       }
       const rowIndex = Math.floor((index - 1) / this.deckTemplateConfig.columns);
-      const rowHeights = this.deckTemplateConfig.rowHeights || [];
-      const rowHeight = rowHeights[rowIndex] || rowHeights[0] || Math.round(this.deckThumbWidth * (2100 / 1350));
-      const dataUrl = await this.renderDeckCardDataUrl(cardData, rowHeight);
+      const cacheToken = `${entryJson}|name:${name}`;
+      const dataUrl = await this.renderDeckCardDataUrl(cardData, cacheToken);
       if (renderToken !== this.deckViewRenderToken) return;
       const cardEl = document.createElement('div');
       cardEl.className = 'deck-card';
@@ -6980,15 +7556,22 @@ class UI {
       for (let i = start; i < end; i += 1) {
         if (renderToken !== this.printSheetRenderToken) return;
         index += 1;
+        if (index > 1 && index % 2 === 0) {
+          await this.yieldToBrowser();
+        }
         this.setPrintSheetStatus(`Rendering ${index} of ${renderTotal}...`);
         const entry = entries[i];
-        const cardData = this.buildCardFromJson(entry && entry.json ? entry.json : entry);
+        const entryJson = (entry && typeof entry.json === 'string')
+          ? entry.json
+          : JSON.stringify(entry || {});
+        const cardData = this.buildCardFromJson(entryJson);
         cardData.layers = { ...(cardData.layers || {}), cardBleed: false };
         const name = String(cardData.name || entry?.__printName || entry?.name || `Card ${index}`).trim() || `Card ${index}`;
         if (!cardData.name || cardData.name === 'Title') {
           cardData.name = name;
         }
-        const dataUrl = await this.renderPrintCardDataUrl(cardData, cellWidth, cellHeight);
+        const cacheToken = `${entryJson}|printMode:${this.printMode}|name:${name}`;
+        const dataUrl = await this.renderPrintCardDataUrl(cardData, cellWidth, cellHeight, cacheToken);
         if (renderToken !== this.printSheetRenderToken) return;
         const cardEl = document.createElement('div');
         cardEl.className = 'print-card';
@@ -7021,13 +7604,13 @@ class UI {
     if (!this.deckNameInput) return;
     const name = String(this.deckNameInput.value || '').trim();
     if (!name) {
-      alert('Please enter a deck name.');
+      this.showToast('Please enter a deck name.', { force: true, duration: 2400 });
       return;
     }
     const store = this.loadDeckStore();
     const exists = Object.values(store.decks).some((deck) => deck.name === name);
     if (exists) {
-      alert('A deck with that name already exists.');
+      this.showToast('A deck with that name already exists.', { force: true, duration: 2800 });
       return;
     }
     const id = `deck_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -7048,13 +7631,15 @@ class UI {
       this.deckCardSelect.value = deck.cards[0].id;
       this.loadCardFromDeck();
     }
+    this.scheduleRenderWarmup({ immediate: true });
+    this.showToast(`Deck "${name}" created.`, { force: true });
   }
 
-  saveBoardAbility(card = null) {
+  async saveBoardAbility(card = null) {
     const target = card && typeof card === 'object' ? card : gameState.getCard();
     const name = String(target?.name || '').trim();
     if (!name || name === 'Title') {
-      alert('Please name the Board Ability before saving it.');
+      this.showToast('Please name the Board Ability before saving it.', { force: true, duration: 2800 });
       return;
     }
 
@@ -7066,8 +7651,14 @@ class UI {
       return entry && entry.name === name;
     });
 
-    if (existingId && !confirm(`"${name}" already exists in the board ability library. Overwrite it?`)) {
-      return;
+    if (existingId) {
+      const shouldOverwrite = await this.confirmAction({
+        title: 'Overwrite Board Ability?',
+        message: `"${name}" already exists in the board ability library. Overwrite it?`,
+        confirmLabel: 'Overwrite',
+        cancelLabel: 'Cancel'
+      });
+      if (!shouldOverwrite) return;
     }
 
     const id = existingId || `board_ability_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -7084,20 +7675,20 @@ class UI {
 
     this.saveBoardAbilityStore({ abilities, order });
     this.refreshBoardAbilityOptions();
-    alert('Board Ability saved.');
+    this.showToast('Board Ability saved.', { force: true });
   }
 
-  saveCardToDeck() {
+  async saveCardToDeck() {
     const card = gameState.getCard();
     if (this.isBoardAbilityCard(card)) {
-      this.saveBoardAbility(card);
+      await this.saveBoardAbility(card);
       return;
     }
     const store = this.loadDeckStore();
     const deckId = this.deckSelect ? this.deckSelect.value : '';
     const deck = deckId ? store.decks[deckId] : null;
     if (!deck) {
-      alert('Please select a deck first.');
+      this.showToast('Please select a deck first.', { force: true, duration: 2400 });
       return;
     }
     const name = (card.name || 'Untitled').trim();
@@ -7105,7 +7696,12 @@ class UI {
     deck.cards = Array.isArray(deck.cards) ? deck.cards : [];
     const existing = deck.cards.find((entry) => entry.name === name);
     const shouldOverwrite = existing
-      ? confirm(`"${name}" already exists in this deck. Overwrite it?`)
+      ? await this.confirmAction({
+        title: 'Overwrite Deck Card?',
+        message: `"${name}" already exists in this deck. Overwrite it?`,
+        confirmLabel: 'Overwrite',
+        cancelLabel: 'Save Copy'
+      })
       : false;
     if (existing && shouldOverwrite) {
       existing.json = json;
@@ -7124,7 +7720,8 @@ class UI {
     store.decks[deckId] = deck;
     this.saveDeckStore(store);
     this.refreshDeckCards();
-    alert('Card saved to deck.');
+    this.scheduleRenderWarmup({ immediate: true });
+    this.showToast(existing && shouldOverwrite ? 'Card overwritten in deck.' : 'Card saved to deck.', { force: true });
   }
 
   duplicateCardInDeck() {
@@ -7132,7 +7729,7 @@ class UI {
     const deckId = this.deckSelect ? this.deckSelect.value : '';
     const deck = deckId ? store.decks[deckId] : null;
     if (!deck || !Array.isArray(deck.cards) || deck.cards.length === 0) {
-      alert('No cards found in this deck.');
+      this.showToast('No cards found in this deck.', { force: true, duration: 2400 });
       return;
     }
 
@@ -7140,7 +7737,7 @@ class UI {
     const sourceIndex = deck.cards.findIndex((entry) => entry.id === cardId);
     const sourceEntry = sourceIndex >= 0 ? deck.cards[sourceIndex] : null;
     if (!sourceEntry) {
-      alert('Please select a card to duplicate.');
+      this.showToast('Please select a card to duplicate.', { force: true, duration: 2400 });
       return;
     }
 
@@ -7182,32 +7779,60 @@ class UI {
     if (gameState.fromJSON(duplicateEntry.json)) {
       this.updateUI();
     }
+    this.scheduleRenderWarmup({ immediate: true });
+    this.showToast('Card duplicated in deck.', { force: true });
   }
 
-  async batchImportCardsToDeck() {
+  openDeckBatchImportModal() {
     const store = this.loadDeckStore();
     const deckId = this.deckSelect ? this.deckSelect.value : '';
     const deck = deckId ? store.decks[deckId] : null;
     if (!deck) {
-      alert('Please select a deck first.');
+      this.showToast('Please select a deck first.', { force: true, duration: 2400 });
       return;
     }
+    if (this.deckBatchImportInput) this.deckBatchImportInput.value = '';
+    if (this.deckBatchImportReplace) this.deckBatchImportReplace.checked = false;
+    this.openModal('deckBatchImportModal');
+  }
 
-    const raw = prompt(
-      'Paste card names (one per line). Supports "3x Card Name" and "Card Name x3".'
-    );
-    if (raw === null) return;
-    const names = this.parseBatchDeckNames(raw);
+  async submitDeckBatchImport() {
+    const raw = String(this.deckBatchImportInput?.value || '');
+    const replaceDeck = !!this.deckBatchImportReplace?.checked;
+    const importedCount = await this.batchImportCardsToDeck(raw, {
+      replaceDeck,
+      requireConfirm: true
+    });
+    if (!importedCount) return;
+    this.closeModal('deckBatchImportModal');
+    if (this.deckBatchImportInput) this.deckBatchImportInput.value = '';
+    if (this.deckBatchImportReplace) this.deckBatchImportReplace.checked = false;
+  }
+
+  async batchImportCardsToDeck(rawInput = '', options = {}) {
+    const store = this.loadDeckStore();
+    const deckId = this.deckSelect ? this.deckSelect.value : '';
+    const deck = deckId ? store.decks[deckId] : null;
+    if (!deck) {
+      this.showToast('Please select a deck first.', { force: true, duration: 2400 });
+      return 0;
+    }
+    const safeRaw = String(rawInput || '').trim();
+    const names = this.parseBatchDeckNames(safeRaw);
     if (!names.length) {
-      alert('No valid card names were found.');
-      return;
+      this.showToast('No valid card names were found.', { force: true, duration: 2600 });
+      return 0;
     }
-    if (!confirm(`Import ${names.length} card${names.length === 1 ? '' : 's'} into "${deck.name}"?`)) {
-      return;
+    if (options.requireConfirm !== false) {
+      const shouldImport = await this.confirmAction({
+        title: 'Import Deck Cards',
+        message: `Import ${names.length} card${names.length === 1 ? '' : 's'} into "${deck.name}"?`,
+        confirmLabel: 'Import Cards',
+        cancelLabel: 'Cancel'
+      });
+      if (!shouldImport) return 0;
     }
-    const replaceDeck = confirm(
-      'Click OK to replace existing deck cards.\nClick Cancel to append to current cards.'
-    );
+    const replaceDeck = options.replaceDeck === true;
 
     await this.ensureDeckDefaultCard();
     deck.cards = Array.isArray(deck.cards) ? deck.cards : [];
@@ -7250,8 +7875,9 @@ class UI {
         this.updateUI();
       }
     }
-
-    alert(`Imported ${addedEntries.length} card${addedEntries.length === 1 ? '' : 's'} successfully.`);
+    this.scheduleRenderWarmup({ immediate: true });
+    this.showToast(`Imported ${addedEntries.length} card${addedEntries.length === 1 ? '' : 's'} successfully.`, { force: true });
+    return addedEntries.length;
   }
 
   loadCardFromDeck() {
@@ -7259,39 +7885,47 @@ class UI {
     const deckId = this.deckSelect ? this.deckSelect.value : '';
     const deck = deckId ? store.decks[deckId] : null;
     if (!deck || !Array.isArray(deck.cards)) {
-      alert('No cards found in this deck.');
+      this.showToast('No cards found in this deck.', { force: true, duration: 2400 });
       return;
     }
     const cardId = this.deckCardSelect ? this.deckCardSelect.value : '';
     const entry = deck.cards.find((card) => card.id === cardId);
     if (!entry) {
-      alert('Please select a card to load.');
+      this.showToast('Please select a card to load.', { force: true, duration: 2400 });
       return;
     }
     if (gameState.fromJSON(entry.json)) {
       this.updateUI();
+      this.scheduleRenderWarmup({ immediate: true });
     } else {
-      alert('Failed to load card from deck.');
+      this.showToast('Failed to load card from deck.', { force: true, duration: 3000 });
     }
   }
 
-  deleteCardFromDeck() {
+  async deleteCardFromDeck() {
     const store = this.loadDeckStore();
     const deckId = this.deckSelect ? this.deckSelect.value : '';
     const deck = deckId ? store.decks[deckId] : null;
     if (!deck || !Array.isArray(deck.cards) || deck.cards.length === 0) {
-      alert('No cards to delete.');
+      this.showToast('No cards to delete.', { force: true, duration: 2400 });
       return;
     }
     const cardId = this.deckCardSelect ? this.deckCardSelect.value : '';
     if (!cardId) {
-      alert('Please select a card to delete.');
+      this.showToast('Please select a card to delete.', { force: true, duration: 2400 });
       return;
     }
     const index = deck.cards.findIndex((card) => card.id === cardId);
     const entry = index >= 0 ? deck.cards[index] : null;
     const name = entry?.name || 'this card';
-    if (!confirm(`Delete "${name}" from this deck?`)) return;
+    const shouldDelete = await this.confirmAction({
+      title: 'Delete Deck Card',
+      message: `Delete "${name}" from this deck?`,
+      confirmLabel: 'Delete Card',
+      cancelLabel: 'Cancel',
+      danger: true
+    });
+    if (!shouldDelete) return;
     deck.cards = deck.cards.filter((card) => card.id !== cardId);
     store.decks[deckId] = deck;
     this.saveDeckStore(store);
@@ -7299,6 +7933,8 @@ class UI {
     if (!deck.cards.length) {
       gameState.reset();
       this.updateUI();
+      this.scheduleRenderWarmup({ immediate: true });
+      this.showToast('Card deleted. Deck is now empty.', { force: true });
       return;
     }
     const nextIndex = Math.min(index, deck.cards.length - 1);
@@ -7307,23 +7943,34 @@ class UI {
       this.updateUI();
       if (this.deckCardSelect) this.deckCardSelect.value = nextCard.id;
     }
+    this.scheduleRenderWarmup({ immediate: true });
+    this.showToast('Card deleted from deck.', { force: true });
   }
 
-  deleteDeck() {
+  async deleteDeck() {
     const store = this.loadDeckStore();
     const deckId = this.deckSelect ? this.deckSelect.value : '';
     if (!deckId || !store.decks[deckId]) {
-      alert('Please select a deck to delete.');
+      this.showToast('Please select a deck to delete.', { force: true, duration: 2400 });
       return;
     }
     const name = store.decks[deckId].name || 'this deck';
-    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+    const shouldDelete = await this.confirmAction({
+      title: 'Delete Deck',
+      message: `Delete "${name}"? This cannot be undone.`,
+      confirmLabel: 'Delete Deck',
+      cancelLabel: 'Cancel',
+      danger: true
+    });
+    if (!shouldDelete) return;
     delete store.decks[deckId];
     if (Array.isArray(store.order)) {
       store.order = store.order.filter((id) => id !== deckId);
     }
     this.saveDeckStore(store);
     this.refreshDeckUI();
+    this.scheduleRenderWarmup({ immediate: true });
+    this.showToast(`Deck "${name}" deleted.`, { force: true });
   }
 }
 

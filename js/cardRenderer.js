@@ -1245,11 +1245,9 @@ class CardRenderer {
   }
 
   applyAssetsForCardType(cardType, cardSubType) {
-    if (!this.assetManifest || !this.assetManifest[cardType] || !this.assetManifest[cardType][cardSubType]) {
-      return;
-    }
-
-    const assets = this.assetManifest[cardType][cardSubType];
+    if (!this.assetManifest) return;
+    const assets = this.getLayerAssets({ cardType, cardSubType });
+    if (!assets || typeof assets !== 'object' || !Object.keys(assets).length) return;
     const setLayerBackground = (layer, src) => {
       if (!layer) return;
       layer.style.backgroundImage = src ? `url('${src}')` : '';
@@ -1717,8 +1715,15 @@ class CardRenderer {
   }
 
   getLayerAssets(card) {
-    if (!this.assetManifest || !this.assetManifest[card.cardType]) return {};
-    return this.assetManifest[card.cardType][card.cardSubType] || {};
+    if (!this.assetManifest || !card || typeof card !== 'object') return {};
+    const cardType = String(card.cardType || '').trim();
+    const cardSubType = String(card.cardSubType || '').trim();
+    const typeAssets = this.assetManifest[cardType];
+    const subtypeAssets = typeAssets && typeAssets[cardSubType];
+    if (subtypeAssets && typeof subtypeAssets === 'object') return subtypeAssets;
+    const fallbackAssets = this.assetManifest?.['Action Cards']?.['Main Phase'];
+    if (fallbackAssets && typeof fallbackAssets === 'object') return fallbackAssets;
+    return {};
   }
 
   getRenderLayerAssets(card, options = {}) {
