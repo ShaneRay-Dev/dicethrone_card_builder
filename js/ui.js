@@ -99,6 +99,7 @@ class UI {
     this.imagePreview = document.getElementById('imagePreview');
     this.btnClearImage = document.getElementById('btn-clear-image');
     this.artSelect = document.getElementById('artSelect');
+    this.artSearchInput = document.getElementById('artSearchInput');
     this.toggleCropperOnUpload = document.getElementById('toggleCropperOnUpload');
     this.cropModal = document.getElementById('cropModal');
     this.cropArea = document.getElementById('cropArea');
@@ -128,11 +129,14 @@ class UI {
     this.referenceImageLabel = document.getElementById('referenceImageLabel');
     this.referencePreview = document.getElementById('referencePreview');
     this.referenceSelect = document.getElementById('referenceSelect');
+    this.referenceSearchInput = document.getElementById('referenceSearchInput');
     this.showReferenceCheckbox = document.getElementById('showReference');
     this.showReferenceSideBySideCheckbox = document.getElementById('showReferenceSideBySide');
     this.referenceOverlay = document.getElementById('referenceOverlay');
     this.referenceSide = document.getElementById('referenceSide');
     this.referenceOpacity = document.getElementById('referenceOpacity');
+    this.previewZoomInput = document.getElementById('previewZoom');
+    this.previewZoomValue = document.getElementById('previewZoomValue');
 
     this.toggleExportBleed = document.getElementById('toggleExportBleed');
 
@@ -200,6 +204,8 @@ class UI {
     this.sidebarResizer = document.getElementById('sidebarResizer');
     this.sidebarWidthKey = 'dtc_sidebar_width_v1';
     this.panelSectionOrderKeyPrefix = 'dtc_panel_section_order_v1';
+    this.previewZoomStorageKey = 'dtc_preview_zoom_v1';
+    this.previewZoom = this.getStoredPreviewZoom();
     this.leafletSideSelect = document.getElementById('leafletSide');
     this.cardModeReferencePath = 'Assets/Reference/Mighty_Summon_II.png';
     this.leafletModeReferencePath = 'Assets/Reference/spiderman_leaflet.png';
@@ -227,6 +233,7 @@ class UI {
     this.btnSave = document.getElementById('btn-save');
     this.btnLoad = document.getElementById('btn-load');
     this.btnExport = document.getElementById('btn-export');
+    this.btnShareLink = document.getElementById('btn-share-link');
     this.exportMenu = document.getElementById('exportMenu');
     this.exportMenuPanel = document.getElementById('exportMenuPanel');
     this.btnResetCanvas = document.getElementById('btn-reset-canvas');
@@ -237,6 +244,8 @@ class UI {
     this.deckCardSelect = document.getElementById('deckCardSelect');
     this.deckSaveBtn = document.getElementById('deckSaveBtn');
     this.deckLoadBtn = document.getElementById('deckLoadBtn');
+    this.deckDuplicateCardBtn = document.getElementById('deckDuplicateCardBtn');
+    this.deckBatchImportBtn = document.getElementById('deckBatchImportBtn');
     this.deckDeleteCardBtn = document.getElementById('deckDeleteCardBtn');
     this.deckDeleteBtn = document.getElementById('deckDeleteBtn');
     this.deckStorageKey = 'dtc_decks_v1';
@@ -375,11 +384,15 @@ class UI {
     this.printLayerManifestPath = this.printModes.standard.layerManifestPath;
     this.printLayerBaseDir = this.printModes.standard.layerBaseDir;
     this.printLayerAssets = { ...this.printModes.standard.layerDefaults };
+    this.previewRenderRaf = null;
+    this.previewRenderDebounceTimer = null;
+    this.previewZoomPersistTimer = null;
     const savedPrintMode = this.getStoredPrintMode();
     this.setPrintMode(savedPrintMode, { persist: false, rerender: false, refreshAssets: true });
     this.applyWorkspaceMode(this.workspaceMode, { persist: false });
 
     this.initEventListeners();
+    this.setPreviewZoom(this.previewZoom, { persist: false, rerender: false });
     this.initLayerListDragAndDrop();
     this.initControlPanelDragAndDrop();
     this.loadCardArtOptions();
@@ -387,6 +400,9 @@ class UI {
     if (this.referenceManager) {
       this.referenceManager.init()
         .then(() => {
+          this.filterSelectOptions(this.referenceSelect, this.referenceSearchInput ? this.referenceSearchInput.value : '', {
+            keepValues: ['', '__upload__']
+          });
           this.applyWorkspaceReferenceDefault(this.workspaceMode, { force: true });
         })
         .catch((error) => {
@@ -404,6 +420,13 @@ class UI {
     if (typeof localStorage === 'undefined') return 'standard';
     const raw = String(localStorage.getItem(this.printModeStorageKey) || '').trim().toLowerCase();
     return this.printModes?.[raw] ? raw : 'standard';
+  }
+
+  getStoredPreviewZoom() {
+    if (typeof localStorage === 'undefined') return 1;
+    const raw = Number(localStorage.getItem(this.previewZoomStorageKey));
+    if (!Number.isFinite(raw)) return 1;
+    return Math.max(0.5, Math.min(3, raw));
   }
 
   getStoredWorkspaceMode() {
@@ -823,6 +846,151 @@ class UI {
       }
     });
     return input;
+  }
+
+  filterSelectOptions(select, query = '', options = {}) {
+    if (!select) return;
+    const normalizedQuery = String(query || '').trim().toLowerCase();
+    const keepValues = new Set(
+      (Array.isArray(options.keepValues) ? options.keepValues : [])
+        .map((value) => String(value || ''))
+    );
+    const alwaysVisibleFirst = options.alwaysVisibleFirst !== false;
+    const optionNodes = Array.from(select.options || []);
+    optionNodes.forEach((option, index) => {
+      const text = String(option.textContent || '').toLowerCase();
+      const value = String(option.value || '');
+      const keep = keepValues.has(value);
+      const visibleByIndex = alwaysVisibleFirst && index === 0;
+      const visibleByQuery = !normalizedQuery || text.includes(normalizedQuery);
+      option.hidden = !(keep || visibleByIndex || visibleByQuery);
+    });
+  }
+
+  parseBatchDeckNames(rawText) {
+    const lines = String(rawText || '')
+      .split(/\r?\n/g)
+      .map((line) => line.trim())
+      .filter(Boolean);
+    const names = [];
+
+    const pushName = (name, count = 1) => {
+      const safeName = String(name || '').trim();
+      if (!safeName) return;
+      const safeCount = Math.max(1, Math.min(100, Number(count) || 1));
+      for (let i = 0; i < safeCount; i += 1) {
+        names.push(safeName);
+      }
+    };
+
+    lines.forEach((line) => {
+      const countPrefix = line.match(/^(\d+)\s*[xX]\s+(.+)$/);
+      if (countPrefix) {
+        pushName(countPrefix[2], Number(countPrefix[1]));
+        return;
+      }
+      const countSuffix = line.match(/^(.+?)\s*[xX]\s*(\d+)$/);
+      if (countSuffix) {
+        pushName(countSuffix[1], Number(countSuffix[2]));
+        return;
+      }
+      pushName(line, 1);
+    });
+
+    return names;
+  }
+
+  buildUniqueDeckCardName(existingCards, baseName) {
+    const safeBase = String(baseName || 'Untitled').trim() || 'Untitled';
+    const existing = new Set(
+      (Array.isArray(existingCards) ? existingCards : [])
+        .map((entry) => String(entry?.name || '').trim().toLowerCase())
+        .filter(Boolean)
+    );
+    if (!existing.has(safeBase.toLowerCase())) return safeBase;
+    let copyIndex = 2;
+    while (copyIndex <= 9999) {
+      const candidate = `${safeBase} (${copyIndex})`;
+      if (!existing.has(candidate.toLowerCase())) return candidate;
+      copyIndex += 1;
+    }
+    return `${safeBase} (${Date.now()})`;
+  }
+
+  buildShareCardPayload() {
+    try {
+      const json = gameState.toJSON();
+      return btoa(unescape(encodeURIComponent(json)));
+    } catch (error) {
+      console.warn('Failed to build share payload:', error);
+      return '';
+    }
+  }
+
+  decodeShareCardPayload(payload) {
+    try {
+      const raw = decodeURIComponent(escape(atob(String(payload || ''))));
+      return raw;
+    } catch (error) {
+      console.warn('Failed to decode share payload:', error);
+      return '';
+    }
+  }
+
+  async shareCardLink() {
+    const payload = this.buildShareCardPayload();
+    if (!payload) {
+      alert('Unable to generate share link right now.');
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    url.hash = `card=${encodeURIComponent(payload)}`;
+    const shareUrl = url.toString();
+    if (shareUrl.length > 7900) {
+      alert('This card is too large for URL sharing. Save/export JSON instead.');
+      return;
+    }
+
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        await navigator.clipboard.writeText(shareUrl);
+        alert('Share link copied to clipboard.');
+        return;
+      }
+    } catch (error) {
+      console.warn('Clipboard copy failed:', error);
+    }
+
+    prompt('Copy this share link:', shareUrl);
+  }
+
+  tryLoadCardFromUrlHash(options = {}) {
+    if (typeof window === 'undefined') return false;
+    const hash = String(window.location.hash || '').trim();
+    if (!hash) return false;
+
+    const normalized = hash.startsWith('#') ? hash.slice(1) : hash;
+    let encodedPayload = '';
+    if (normalized.startsWith('card=')) {
+      encodedPayload = normalized.slice('card='.length);
+    } else {
+      const params = new URLSearchParams(normalized);
+      encodedPayload = params.get('card') || '';
+    }
+    if (!encodedPayload) return false;
+
+    const payload = decodeURIComponent(encodedPayload);
+    const json = this.decodeShareCardPayload(payload);
+    if (!json) return false;
+    const loaded = gameState.fromJSON(json);
+    if (!loaded) return false;
+
+    this.updateUI();
+    if (options.clearHash === true) {
+      window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+    }
+    return true;
   }
 
   initEventListeners() {
@@ -1320,6 +1488,38 @@ class UI {
       });
     }
 
+    if (this.btnShareLink) {
+      this.btnShareLink.addEventListener('click', () => this.shareCardLink());
+    }
+
+    if (this.previewZoomInput) {
+      this.previewZoomInput.addEventListener('input', (e) => {
+        this.setPreviewZoom(e?.target?.value, {
+          persist: false,
+          rerender: false,
+          scheduleRerender: true,
+          renderDebounceMs: 90
+        });
+      });
+      this.previewZoomInput.addEventListener('change', (e) => {
+        this.setPreviewZoom(e?.target?.value, { persist: true, rerender: true });
+      });
+    }
+
+    if (this.artSearchInput) {
+      this.artSearchInput.addEventListener('input', (e) => {
+        this.filterSelectOptions(this.artSelect, e?.target?.value || '', { keepValues: [''] });
+      });
+    }
+
+    if (this.referenceSearchInput) {
+      this.referenceSearchInput.addEventListener('input', (e) => {
+        this.filterSelectOptions(this.referenceSelect, e?.target?.value || '', {
+          keepValues: ['', '__upload__']
+        });
+      });
+    }
+
     document.addEventListener('click', (e) => {
       if (!this.exportMenu || !this.exportMenuPanel) return;
       if (!this.exportMenu.contains(e.target)) {
@@ -1335,6 +1535,12 @@ class UI {
     }
     if (this.deckLoadBtn) {
       this.deckLoadBtn.addEventListener('click', () => this.loadCardFromDeck());
+    }
+    if (this.deckDuplicateCardBtn) {
+      this.deckDuplicateCardBtn.addEventListener('click', () => this.duplicateCardInDeck());
+    }
+    if (this.deckBatchImportBtn) {
+      this.deckBatchImportBtn.addEventListener('click', () => this.batchImportCardsToDeck());
     }
     if (this.deckDeleteCardBtn) {
       this.deckDeleteCardBtn.addEventListener('click', () => this.deleteCardFromDeck());
@@ -1962,18 +2168,47 @@ class UI {
       });
 
       this.previewElement.addEventListener('wheel', (e) => {
-        if (!e.altKey) return;
-        const card = gameState.getCard();
-        if (!(card?.artData || card?.artUrl)) return;
+        const isZoomGesture = e.ctrlKey || e.metaKey;
+        if (isZoomGesture) return;
+
+        if (e.altKey) {
+          const card = gameState.getCard();
+          if (!(card?.artData || card?.artUrl)) return;
+          e.preventDefault();
+          const current = gameState.getCard().artTransform || { x: 0, y: 0, scale: 1 };
+          const delta = e.deltaY > 0 ? -0.05 : 0.05;
+          const nextScale = Math.max(0.5, Math.min(3, (current.scale || 1) + delta));
+          gameState.updateProperty('artTransform', {
+            ...current,
+            scale: nextScale
+          });
+          renderer.updateArtTransform(gameState.getCard());
+          return;
+        }
+
+        // Wheel over renderer surface controls preview zoom.
+        const isRendererMode = this.workspaceMode === 'card' || this.workspaceMode === 'leaflet' || this.workspaceMode === 'board';
+        if (!isRendererMode) return;
         e.preventDefault();
-        const current = gameState.getCard().artTransform || { x: 0, y: 0, scale: 1 };
-        const delta = e.deltaY > 0 ? -0.05 : 0.05;
-        const nextScale = Math.max(0.5, Math.min(3, (current.scale || 1) + delta));
-        gameState.updateProperty('artTransform', {
-          ...current,
-          scale: nextScale
+
+        const rawDelta = Number(e.deltaY) || 0;
+        if (!rawDelta) return;
+        const deltaInPixels = e.deltaMode === 1
+          ? rawDelta * 16
+          : e.deltaMode === 2
+            ? rawDelta * 160
+            : rawDelta;
+        const direction = deltaInPixels > 0 ? -1 : 1;
+        const intensity = Math.max(0.5, Math.min(2.5, Math.abs(deltaInPixels) / 100));
+        const step = 0.04 * intensity;
+        const nextZoom = (Number(this.previewZoom) || 1) + (direction * step);
+        this.setPreviewZoom(nextZoom, {
+          persist: false,
+          rerender: false,
+          scheduleRerender: true,
+          renderDebounceMs: 90
         });
-        renderer.updateArtTransform(gameState.getCard());
+        this.schedulePreviewZoomPersist();
       }, { passive: false });
     }
 
@@ -2050,7 +2285,9 @@ class UI {
       this.saveCard();
       return;
     }
-    renderer.exportAsImage();
+    const match = String(type || '').match(/^png-(\d+)$/i);
+    const dpi = match ? Number(match[1]) : 300;
+    renderer.exportAsImage({ dpi });
   }
 
   buildDeckViewFilename() {
@@ -2701,7 +2938,7 @@ class UI {
     const baseRaw = this.previewContainer
       ? getComputedStyle(this.previewContainer).getPropertyValue('--card-width')
       : '';
-    const baseWidth = parseFloat(baseRaw) || 520;
+    const baseWidth = parseFloat(baseRaw) || 675;
     const currentWidth = this.previewElement ? this.previewElement.clientWidth : baseWidth;
     if (!baseWidth || !currentWidth) return 1;
     return currentWidth / baseWidth;
@@ -2715,7 +2952,6 @@ class UI {
       guide.classList.toggle('is-visible', shouldShow);
     });
   }
-
   clampLetterSpacing(value) {
     const spacing = Number(value);
     if (!Number.isFinite(spacing)) return 0;
@@ -3548,6 +3784,9 @@ class UI {
         opt.textContent = label;
         this.artSelect.appendChild(opt);
       });
+      this.filterSelectOptions(this.artSelect, this.artSearchInput ? this.artSearchInput.value : '', {
+        keepValues: ['']
+      });
     } catch (error) {
       console.warn('Could not load card art options:', error);
     }
@@ -3637,6 +3876,9 @@ class UI {
   async loadReferenceOptions() {
     if (!this.referenceManager) return;
     await this.referenceManager.loadReferenceOptions();
+    this.filterSelectOptions(this.referenceSelect, this.referenceSearchInput ? this.referenceSearchInput.value : '', {
+      keepValues: ['', '__upload__']
+    });
   }
 
   resolvePrintLayerPath(value, fallbackFile) {
@@ -6883,6 +7125,133 @@ class UI {
     this.saveDeckStore(store);
     this.refreshDeckCards();
     alert('Card saved to deck.');
+  }
+
+  duplicateCardInDeck() {
+    const store = this.loadDeckStore();
+    const deckId = this.deckSelect ? this.deckSelect.value : '';
+    const deck = deckId ? store.decks[deckId] : null;
+    if (!deck || !Array.isArray(deck.cards) || deck.cards.length === 0) {
+      alert('No cards found in this deck.');
+      return;
+    }
+
+    const cardId = this.deckCardSelect ? this.deckCardSelect.value : '';
+    const sourceIndex = deck.cards.findIndex((entry) => entry.id === cardId);
+    const sourceEntry = sourceIndex >= 0 ? deck.cards[sourceIndex] : null;
+    if (!sourceEntry) {
+      alert('Please select a card to duplicate.');
+      return;
+    }
+
+    const sourceCard = this.buildCardFromJson(sourceEntry.json);
+    const sourceName = String(sourceEntry.name || sourceCard.name || 'Card').trim() || 'Card';
+    const duplicateName = this.buildUniqueDeckCardName(deck.cards, `${sourceName} Copy`);
+    sourceCard.name = duplicateName;
+    const duplicateCardId = this.buildDeckCardId(deck, deck.cards.length + 1);
+    if (duplicateCardId) {
+      sourceCard.cardId = duplicateCardId;
+    }
+    if (Array.isArray(sourceCard.titleBlocks) && sourceCard.titleBlocks.length) {
+      const activeId = sourceCard.activeTitleId;
+      let didApply = false;
+      sourceCard.titleBlocks = sourceCard.titleBlocks.map((block, index) => {
+        if (didApply) return block;
+        if ((activeId && block.id === activeId) || (!activeId && index === 0)) {
+          didApply = true;
+          return { ...block, text: duplicateName };
+        }
+        return block;
+      });
+      if (!didApply) {
+        sourceCard.titleBlocks[0].text = duplicateName;
+      }
+    }
+
+    const duplicateEntry = {
+      id: `card_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      name: duplicateName,
+      savedAt: new Date().toISOString(),
+      json: JSON.stringify(sourceCard, null, 2)
+    };
+    deck.cards.splice(sourceIndex + 1, 0, duplicateEntry);
+    store.decks[deckId] = deck;
+    this.saveDeckStore(store);
+    this.refreshDeckCards();
+    if (this.deckCardSelect) this.deckCardSelect.value = duplicateEntry.id;
+    if (gameState.fromJSON(duplicateEntry.json)) {
+      this.updateUI();
+    }
+  }
+
+  async batchImportCardsToDeck() {
+    const store = this.loadDeckStore();
+    const deckId = this.deckSelect ? this.deckSelect.value : '';
+    const deck = deckId ? store.decks[deckId] : null;
+    if (!deck) {
+      alert('Please select a deck first.');
+      return;
+    }
+
+    const raw = prompt(
+      'Paste card names (one per line). Supports "3x Card Name" and "Card Name x3".'
+    );
+    if (raw === null) return;
+    const names = this.parseBatchDeckNames(raw);
+    if (!names.length) {
+      alert('No valid card names were found.');
+      return;
+    }
+    if (!confirm(`Import ${names.length} card${names.length === 1 ? '' : 's'} into "${deck.name}"?`)) {
+      return;
+    }
+    const replaceDeck = confirm(
+      'Click OK to replace existing deck cards.\nClick Cancel to append to current cards.'
+    );
+
+    await this.ensureDeckDefaultCard();
+    deck.cards = Array.isArray(deck.cards) ? deck.cards : [];
+    if (replaceDeck) {
+      deck.cards = [];
+    }
+    const existingCards = deck.cards;
+    const startNumber = existingCards.length + 1;
+    const addedEntries = [];
+
+    names.forEach((rawName, index) => {
+      const cardName = this.buildUniqueDeckCardName(existingCards, rawName);
+      const cardData = this.getDeckDefaultCardSnapshot();
+      cardData.name = cardName;
+      if (Array.isArray(cardData.titleBlocks) && cardData.titleBlocks.length) {
+        cardData.titleBlocks[0] = { ...cardData.titleBlocks[0], text: cardName };
+      }
+      const cardId = this.buildDeckCardId(deck, startNumber + index);
+      if (cardId) {
+        cardData.cardId = cardId;
+      }
+      const entry = {
+        id: `card_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        name: cardName,
+        savedAt: new Date().toISOString(),
+        json: JSON.stringify(cardData, null, 2)
+      };
+      existingCards.push(entry);
+      addedEntries.push(entry);
+    });
+
+    store.decks[deckId] = deck;
+    this.saveDeckStore(store);
+    this.refreshDeckCards();
+
+    const firstEntry = addedEntries[0];
+    if (firstEntry) {
+      if (this.deckCardSelect) this.deckCardSelect.value = firstEntry.id;
+      if (gameState.fromJSON(firstEntry.json)) {
+        this.updateUI();
+      }
+    }
+
+    alert(`Imported ${addedEntries.length} card${addedEntries.length === 1 ? '' : 's'} successfully.`);
   }
 
   loadCardFromDeck() {

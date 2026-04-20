@@ -4,12 +4,17 @@ document.addEventListener('DOMContentLoaded', () => {
   ui.updateUI();
   // Ensure default Action Cards + Main Phase assets apply on load
   renderer.applyAssetsForCardType(gameState.card.cardType, gameState.card.cardSubType);
-  
-  // Load saved card from localStorage if available
-  const savedCard = localStorage.getItem('diceThroneSavedCard');
-  if (savedCard) {
-    gameState.fromJSON(savedCard);
-    ui.updateUI();
+
+  // Load shared card from URL hash first (if present), otherwise restore local autosave.
+  const loadedFromHash = typeof ui.tryLoadCardFromUrlHash === 'function'
+    ? ui.tryLoadCardFromUrlHash({ clearHash: true })
+    : false;
+  if (!loadedFromHash) {
+    const savedCard = localStorage.getItem('diceThroneSavedCard');
+    if (savedCard) {
+      gameState.fromJSON(savedCard);
+      ui.updateUI();
+    }
   }
 
   // Auto-save to localStorage every 30 seconds

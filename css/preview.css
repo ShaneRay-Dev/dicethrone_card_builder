@@ -83,6 +83,13 @@
   width: 120px;
 }
 
+.reference-toggle .ref-row strong {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.04em;
+}
+
 /* removed pseudo-element to avoid duplicate panel; use real .reference-side element instead */
 .preview-container.side-by-side::after {
   display: none;
@@ -98,7 +105,6 @@
   height: calc(var(--card-height) * var(--zoom-scale) * var(--card-scale));
   perspective: 1000px;
   position: relative;
-  transition: width 0.18s ease-out, height 0.18s ease-out;
   /* Bleed area padding (2.49" x 3.74") approximated */
   padding: var(--bleed-large-inset);
   box-sizing: border-box;
@@ -117,7 +123,6 @@
   border-radius: var(--radius-lg);
   background: #0a0e16;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
-  transition: width 0.18s ease-out, height 0.18s ease-out;
 }
 
 .board-layer {
