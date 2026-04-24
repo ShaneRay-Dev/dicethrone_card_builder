@@ -509,6 +509,11 @@
                   <option value="">Unassigned</option>
                 </select>
               </div>
+              <div class="form-group">
+                <label for="boardUltimateTextInput">Ultimate (Slot 9)</label>
+                <textarea id="boardUltimateTextInput" rows="4" placeholder="Enter Ultimate text..."></textarea>
+                <small class="help-text">This text appears inside the Ultimate box on the board preview.</small>
+              </div>
             </div>
           </details>
         </div>
@@ -630,8 +635,16 @@
             </div>
           </div>
           <div class="board-preview tool-panel" data-tool-panel="board-render" id="boardPreview" aria-hidden="true">
+            <!-- Board Layer 0: Base Background -->
+            <div id="boardBackgroundLayer" class="board-layer board-layer-bg"></div>
             <!-- Board Layer 1: Ability Location Guide -->
             <div id="boardAbilityLocationLayer" class="board-layer board-layer-ability-location"></div>
+            <!-- Board Layer 2: Ult Space Overlay -->
+            <div id="boardUltSpaceLayer" class="board-layer board-layer-ult-space"></div>
+            <!-- Board Layer 3: Ultimate Text -->
+            <div id="boardUltimateSlotLayer" class="board-layer board-layer-ultimate-slot" aria-hidden="true">
+              <div id="boardUltimateText" class="board-ultimate-text is-empty">Ultimate</div>
+            </div>
             <div id="boardSlotsLayer" class="board-layer board-layer-slot-grid" aria-hidden="true">
               <div class="board-slot-card board-slot-card--1" data-slot-id="1"></div>
               <div class="board-slot-card board-slot-card--2" data-slot-id="2"></div>

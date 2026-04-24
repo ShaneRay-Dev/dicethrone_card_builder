@@ -30,6 +30,11 @@ class CardState {
     this.card = this.getDefaultCard();
     this.history = [deepCloneState(this.card)];
     this.historyIndex = 0;
+    this.historyLimit = 200;
+    this.revision = 0;
+    this.transactionDepth = 0;
+    this.transactionChanged = false;
+    this.transactionSnapshot = null;
   }
 
   getDefaultLayerOrder() {
@@ -172,26 +177,87 @@ class CardState {
 
   // Update card properties
   updateProperty(key, value) {
-    if (key.includes('.')) {
-      const [parent, child] = key.split('.');
-      this.card[parent][child] = value;
-    } else {
-      this.card[key] = value;
-    }
-    this.addToHistory();
+    const changed = this.setPropertyValue(key, value);
+    if (changed) this.recordChange();
+    return changed;
   }
 
   // Batch update properties
   updateProperties(updates) {
+    let changed = false;
     Object.entries(updates).forEach(([key, value]) => {
-      if (key.includes('.')) {
-        const [parent, child] = key.split('.');
-        this.card[parent][child] = value;
-      } else {
-        this.card[key] = value;
-      }
+      changed = this.setPropertyValue(key, value) || changed;
     });
-    this.addToHistory();
+    if (changed) this.recordChange();
+    return changed;
+  }
+
+  getPropertyValue(key) {
+    if (key.includes('.')) {
+      const [parent, child] = key.split('.');
+      return this.card[parent]?.[child];
+    }
+    return this.card[key];
+  }
+
+  setPropertyValue(key, value) {
+    const current = this.getPropertyValue(key);
+    if (Object.is(current, value)) return false;
+    if (key.includes('.')) {
+      const [parent, child] = key.split('.');
+      if (!this.card[parent] || typeof this.card[parent] !== 'object') {
+        this.card[parent] = {};
+      }
+      this.card[parent][child] = value;
+    } else {
+      this.card[key] = value;
+    }
+    return true;
+  }
+
+  beginTransaction() {
+    if (this.transactionDepth === 0) {
+      this.transactionChanged = false;
+      this.transactionSnapshot = deepCloneState(this.card);
+    }
+    this.transactionDepth += 1;
+    return this.transactionDepth;
+  }
+
+  commitTransaction() {
+    if (this.transactionDepth <= 0) return false;
+    this.transactionDepth -= 1;
+    if (this.transactionDepth > 0) return false;
+    const changed = this.transactionChanged;
+    this.transactionChanged = false;
+    this.transactionSnapshot = null;
+    if (changed) {
+      this.addToHistory();
+    }
+    return changed;
+  }
+
+  rollbackTransaction() {
+    if (this.transactionDepth <= 0) return false;
+    if (this.transactionSnapshot) {
+      this.card = deepCloneState(this.transactionSnapshot);
+    }
+    this.transactionDepth = 0;
+    this.transactionChanged = false;
+    this.transactionSnapshot = null;
+    return true;
+  }
+
+  transaction(callback) {
+    this.beginTransaction();
+    try {
+      const result = callback();
+      this.commitTransaction();
+      return result;
+    } catch (error) {
+      this.rollbackTransaction();
+      throw error;
+    }
   }
 
   // Get current card state
@@ -200,17 +266,31 @@ class CardState {
   }
 
   // History management
+  recordChange() {
+    if (this.transactionDepth > 0) {
+      this.transactionChanged = true;
+      return;
+    }
+    this.addToHistory();
+  }
+
   addToHistory() {
     // Remove any history after current index (for redo)
     this.history = this.history.slice(0, this.historyIndex + 1);
     this.history.push(deepCloneState(this.card));
+    const excess = Math.max(0, this.history.length - this.historyLimit);
+    if (excess > 0) {
+      this.history.splice(0, excess);
+    }
     this.historyIndex = this.history.length - 1;
+    this.revision += 1;
   }
 
   undo() {
     if (this.historyIndex > 0) {
       this.historyIndex--;
       this.card = deepCloneState(this.history[this.historyIndex]);
+      this.revision += 1;
       return true;
     }
     return false;
@@ -220,9 +300,14 @@ class CardState {
     if (this.historyIndex < this.history.length - 1) {
       this.historyIndex++;
       this.card = deepCloneState(this.history[this.historyIndex]);
+      this.revision += 1;
       return true;
     }
     return false;
+  }
+
+  getRevision() {
+    return this.revision;
   }
 
   // Save to JSON
@@ -312,6 +397,7 @@ class CardState {
     this.card = this.getDefaultCard();
     this.history = [deepCloneState(this.card)];
     this.historyIndex = 0;
+    this.revision += 1;
   }
 }
 

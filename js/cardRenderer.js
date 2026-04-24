@@ -30,7 +30,9 @@ class CardRenderer {
     this.previewElement = document.getElementById('cardPreview');
     this.previewContainer = document.querySelector('.preview-container');
     this.boardPreviewElement = document.getElementById('boardPreview');
+    this.boardBackgroundLayer = document.getElementById('boardBackgroundLayer');
     this.boardAbilityLocationLayer = document.getElementById('boardAbilityLocationLayer');
+    this.boardUltSpaceLayer = document.getElementById('boardUltSpaceLayer');
     
     // 8-layer architecture references
     this.cardBleedLayer = document.getElementById('cardBleedLayer');
@@ -65,6 +67,9 @@ class CardRenderer {
     this.cardIdBoundsCache = {};
     this.costBadgeBoundsCache = {};
     this.costBadgeRenderCache = {};
+    this.imageCache = new Map();
+    this.imagePromises = new Map();
+    this.imageCacheLimit = 180;
     this.iconCache = {};
     this.iconPromises = {};
     this.descriptionLayerMap = new Map();
@@ -94,7 +99,9 @@ class CardRenderer {
     this.previewZoom = 1;
     this.cardBaseAspect = (Number(DTC_RENDER_EXPORT_SIZE.height) || 1050) / (Number(DTC_RENDER_EXPORT_SIZE.width) || 675);
     this.leafletBaseAspect = 1203 / 640;
+    this.boardBackgroundAsset = encodeURI('Assets/Board/Board Template_Background.png');
     this.boardAbilityLocationAsset = encodeURI('Assets/Board/Bord Template_Ability_location_guide.png');
+    this.boardUltSpaceAsset = encodeURI('Assets/Board/Board Template_ult_space.png');
     this.boardBaseSize = { width: 2020, height: 1227 };
     this.applyCardPreviewAspect(this.cardBaseAspect);
     this.applyBoardBaseSize(this.boardBaseSize.width, this.boardBaseSize.height);
@@ -485,7 +492,9 @@ class CardRenderer {
   }
 
   applyBoardAssets() {
+    this.setLayerBackground(this.boardBackgroundLayer, this.boardBackgroundAsset);
     this.setLayerBackground(this.boardAbilityLocationLayer, this.boardAbilityLocationAsset);
+    this.setLayerBackground(this.boardUltSpaceLayer, this.boardUltSpaceAsset);
   }
 
   renderBoard() {
@@ -1338,9 +1347,14 @@ class CardRenderer {
     this.cardBleedLayer.style.removeProperty('mask-position');
   }
 
+  beginContentRender() {
+    this.contentRenderNonce += 1;
+    return this.contentRenderNonce;
+  }
+
   render(card) {
     if (!card) return;
-    const renderNonce = ++this.contentRenderNonce;
+    const renderNonce = this.beginContentRender();
     this.tokenIconCardContext = card;
     this.clearPreviewOutputMask();
     this.updatePreviewViewportScale();
@@ -1416,13 +1430,53 @@ class CardRenderer {
   }
 
   async loadImage(src) {
-    return new Promise((resolve, reject) => {
+    const safeSrc = String(src || '');
+    if (!safeSrc) {
+      return Promise.reject(new Error('Image source is empty'));
+    }
+    const shouldCache = this.shouldCacheLoadedImage(safeSrc);
+    if (shouldCache) {
+      const cached = this.imageCache.get(safeSrc);
+      if (cached) {
+        this.imageCache.delete(safeSrc);
+        this.imageCache.set(safeSrc, cached);
+        return cached;
+      }
+      const pending = this.imagePromises.get(safeSrc);
+      if (pending) return pending;
+    }
+
+    const promise = new Promise((resolve, reject) => {
       const img = new Image();
       img.crossOrigin = 'anonymous';
+      img.decoding = 'async';
       img.onload = () => resolve(img);
       img.onerror = reject;
-      img.src = src;
+      img.src = safeSrc;
     });
+
+    if (!shouldCache) return promise;
+
+    this.imagePromises.set(safeSrc, promise);
+    return promise.then((img) => {
+      this.imagePromises.delete(safeSrc);
+      this.imageCache.set(safeSrc, img);
+      while (this.imageCache.size > this.imageCacheLimit) {
+        const oldestKey = this.imageCache.keys().next().value;
+        if (!oldestKey) break;
+        this.imageCache.delete(oldestKey);
+      }
+      return img;
+    }).catch((error) => {
+      this.imagePromises.delete(safeSrc);
+      throw error;
+    });
+  }
+
+  shouldCacheLoadedImage(src) {
+    const safeSrc = String(src || '').trim().toLowerCase();
+    if (!safeSrc) return false;
+    return !safeSrc.startsWith('data:') && !safeSrc.startsWith('blob:');
   }
 
   getIconCandidates(path) {
@@ -3598,6 +3652,33 @@ class CardRenderer {
     return (output || canvas).toDataURL('image/png');
   }
 
+  canvasToPngBlob(canvas) {
+    if (!canvas || typeof canvas.toBlob !== 'function') return Promise.resolve(null);
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => resolve(blob || null), 'image/png');
+    });
+  }
+
+  async downloadCanvasAsPng(canvas, filename) {
+    if (!canvas) return false;
+    const safeFilename = String(filename || 'card.png').trim() || 'card.png';
+    const link = document.createElement('a');
+    link.download = safeFilename;
+
+    const blob = await this.canvasToPngBlob(canvas);
+    if (blob && typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
+      const url = URL.createObjectURL(blob);
+      link.href = url;
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
+      return true;
+    }
+
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    return true;
+  }
+
   async exportAsImage(options = {}) {
     try {
       const card = gameState.getCard();
@@ -3710,11 +3791,8 @@ class CardRenderer {
         }
       }
 
-      const link = document.createElement('a');
-      link.href = finalOutput.toDataURL('image/png');
       const dpiSuffix = Math.round(safeDpi) === 300 ? '' : `_${Math.round(safeDpi)}dpi`;
-      link.download = `${gameState.card.name || 'card'}${dpiSuffix}.png`;
-      link.click();
+      await this.downloadCanvasAsPng(finalOutput, `${gameState.card.name || 'card'}${dpiSuffix}.png`);
 
       return true;
     } catch (error) {

@@ -33,9 +33,37 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Auto-save to localStorage every 30 seconds
+  let lastAutosaveRevision = typeof gameState.getRevision === 'function'
+    ? gameState.getRevision()
+    : -1;
+  let autosavePending = false;
+
+  const runAutosave = () => {
+    autosavePending = false;
+    const currentRevision = typeof gameState.getRevision === 'function'
+      ? gameState.getRevision()
+      : -1;
+    if (currentRevision === lastAutosaveRevision) return;
+    try {
+      localStorage.setItem('diceThroneSavedCard', gameState.toJSON());
+      lastAutosaveRevision = currentRevision;
+    } catch (error) {
+      console.warn('Autosave failed:', error);
+    }
+  };
+
+  // Auto-save only when the card changed, and push the JSON work off the hot path.
   setInterval(() => {
-    localStorage.setItem('diceThroneSavedCard', gameState.toJSON());
+    const currentRevision = typeof gameState.getRevision === 'function'
+      ? gameState.getRevision()
+      : -1;
+    if (autosavePending || currentRevision === lastAutosaveRevision) return;
+    autosavePending = true;
+    if (typeof requestIdleCallback === 'function') {
+      requestIdleCallback(runAutosave, { timeout: 2000 });
+    } else {
+      setTimeout(runAutosave, 0);
+    }
   }, 30000);
 
 });
