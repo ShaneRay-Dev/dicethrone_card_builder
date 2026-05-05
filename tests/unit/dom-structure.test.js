@@ -125,4 +125,22 @@ describe('index.html upload markup', () => {
     dom.window.close();
   });
 
+  it('includes a dismissible information alert banner', async () => {
+    const htmlPath = path.resolve(process.cwd(), 'index.html');
+    const html = await readFile(htmlPath, 'utf8');
+    const dom = new JSDOM(html);
+    const { document } = dom.window;
+
+    const banner = document.getElementById('infoBanner');
+    const dismiss = document.getElementById('infoBannerDismiss');
+
+    expect(banner).not.toBeNull();
+    expect(banner?.getAttribute('role')).toBe('status');
+    expect(banner?.textContent).toContain('Creator Notice');
+    expect(dismiss).not.toBeNull();
+    expect(dismiss?.getAttribute('aria-label')).toBe('Dismiss information alert');
+
+    dom.window.close();
+  });
+
 });

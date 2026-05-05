@@ -46,3 +46,14 @@ describe('assets manifest', () => {
     expect(defensive.border).toBe('Assets/Action Cards/Main Phase/Main Action Frame.png');
   });
 });
+
+describe('render worker asset', () => {
+  it('defines worker composition handlers', async () => {
+    const workerPath = path.resolve(process.cwd(), 'js/renderWorker.js');
+    const source = await readFile(workerPath, 'utf8');
+
+    expect(source).toContain('compose-deck');
+    expect(source).toContain('compose-print-pages');
+    expect(source).toContain('OffscreenCanvas');
+  });
+});

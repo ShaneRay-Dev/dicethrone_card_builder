@@ -49,6 +49,7 @@ class UI {
     this.descriptionLetterSpacingValue = document.getElementById('descriptionLetterSpacingValue');
     this.titleBoxAddBtn = document.getElementById('titleBoxAdd');
     this.titleBoxRemoveBtn = document.getElementById('titleBoxRemove');
+    this.titleBoxControls = document.getElementById('titleBoxControls');
     this.abilityDiceSection = document.getElementById('abilityDiceSection');
     this.defaultTitleFont = 'PHOSPHATE_FIXED_SOLID';
     this.defaultDescriptionFont = 'MYRIADPRO-BOLDCOND';
@@ -319,11 +320,16 @@ class UI {
     this.appToast = document.getElementById('appToast');
     this.appLoadingOverlay = document.getElementById('appLoadingOverlay');
     this.appLoadingText = document.getElementById('appLoadingText');
+    this.infoBanner = document.getElementById('infoBanner');
+    this.infoBannerDismissBtn = document.getElementById('infoBannerDismiss');
     this.busyDepth = 0;
     this.renderDataUrlCache = new Map();
-    this.renderDataUrlCacheLimit = 420;
+    this.renderDataUrlCacheLimit = 180;
+    this.renderDataUrlCacheBytes = 0;
+    this.renderDataUrlCacheByteLimit = 64 * 1024 * 1024;
     this.renderWarmupToken = 0;
     this.renderWarmupTimer = null;
+    this.renderWarmupIdleHandle = null;
     this.renderWarmupInFlight = false;
     this.renderWarmupQueued = false;
     this.toastHideTimer = null;
@@ -402,7 +408,6 @@ class UI {
       base: 'Assets/Deck/Deck Template_background_black.png',
       overlay: 'Assets/Deck/Deck Template.png'
     };
-    this.deckThumbWidth = this.deckTemplateConfig.columnWidth;
     this.printModes = {
       standard: {
         templateConfig: {
@@ -460,14 +465,16 @@ class UI {
     this.printLayerManifestPath = this.printModes.standard.layerManifestPath;
     this.printLayerBaseDir = this.printModes.standard.layerBaseDir;
     this.printLayerAssets = { ...this.printModes.standard.layerDefaults };
-    this.previewRenderRaf = null;
-    this.previewRenderDebounceTimer = null;
     this.previewZoomPersistTimer = null;
     this.renderQueueFlags = new Set();
     this.renderQueueRaf = null;
     this.renderQueueTimer = null;
     this.coalescedStateTimers = new Map();
     this.coalescedStateOpen = new Set();
+    this.renderWorker = null;
+    this.renderWorkerRequestId = 0;
+    this.renderWorkerRequests = new Map();
+    this.renderWorkerUnavailable = false;
     this.boardUltimateRenderTimer = null;
     this.boardUltimateRenderToken = 0;
     this.boardPan = this.getStoredBoardPan();
@@ -528,6 +535,10 @@ class UI {
     return 'card';
   }
 
+  dismissInfoBanner() {
+    if (this.infoBanner) this.infoBanner.hidden = true;
+  }
+
   getStoredBoardUltimateText() {
     if (typeof localStorage === 'undefined') return '';
     const raw = localStorage.getItem(this.boardUltimateTextStorageKey);
@@ -569,6 +580,82 @@ class UI {
       activeIdKey: isLeaflet ? 'leafletActiveDescriptionId' : 'activeDescriptionId',
       defaultFontSize: isLeaflet ? this.defaultLeafletDescriptionFontSize : this.defaultDescriptionFontSize
     };
+  }
+
+  getTitleContext(mode = this.workspaceMode) {
+    const isLeaflet = String(mode || '').toLowerCase() === 'leaflet';
+    return {
+      isLeaflet,
+      blocksKey: isLeaflet ? 'leafletTitleBlocks' : 'titleBlocks',
+      activeIdKey: isLeaflet ? 'leafletActiveTitleId' : 'activeTitleId',
+      nameKey: isLeaflet ? 'leafletName' : 'name',
+      positionKey: isLeaflet ? 'leafletTitlePosition' : 'titlePosition',
+      fontKey: isLeaflet ? 'leafletTitleFont' : 'titleFont',
+      fontSizeKey: isLeaflet ? 'leafletTitleFontSize' : 'titleFontSize',
+      letterSpacingKey: isLeaflet ? 'leafletTitleLetterSpacing' : 'titleLetterSpacing',
+      defaultPosition: isLeaflet ? { x: 0, y: 0 } : { x: 1.4874028450301893, y: -1.2779890290537477 }
+    };
+  }
+
+  getArtContext(mode = this.workspaceMode) {
+    const isLeaflet = String(mode || '').toLowerCase() === 'leaflet';
+    const prefix = isLeaflet ? 'leafletArt' : 'art';
+    return {
+      isLeaflet,
+      dataKey: `${prefix}Data`,
+      urlKey: `${prefix}Url`,
+      sourceDataKey: `${prefix}SourceData`,
+      sourceUrlKey: `${prefix}SourceUrl`,
+      cropTransformKey: `${prefix}CropTransform`,
+      transformKey: `${prefix}Transform`,
+      cropToFrameKey: `${prefix}CropToFrame`,
+      wasCroppedKey: `${prefix}WasCropped`
+    };
+  }
+
+  getModeDescriptionFont(card, mode = this.workspaceMode) {
+    const isLeaflet = String(mode || '').toLowerCase() === 'leaflet';
+    return (isLeaflet ? card?.leafletDescriptionFont : card?.descriptionFont) || this.defaultDescriptionFont;
+  }
+
+  getModeDescriptionColor(card, mode = this.workspaceMode) {
+    const isLeaflet = String(mode || '').toLowerCase() === 'leaflet';
+    return this.normalizeDescriptionColor(
+      isLeaflet ? card?.leafletDescriptionColor : card?.descriptionColor,
+      this.defaultDescriptionColor
+    );
+  }
+
+  getModeArtSource(card, mode = this.workspaceMode) {
+    const context = this.getArtContext(mode);
+    return card?.[context.dataKey] || card?.[context.urlKey] || '';
+  }
+
+  getModeArtTransform(card, mode = this.workspaceMode) {
+    const context = this.getArtContext(mode);
+    const transform = card?.[context.transformKey];
+    return transform && typeof transform === 'object'
+      ? transform
+      : { x: 0, y: 0, scale: 1 };
+  }
+
+  buildArtUpdates(values = {}, mode = this.workspaceMode) {
+    const context = this.getArtContext(mode);
+    const map = {
+      data: context.dataKey,
+      url: context.urlKey,
+      sourceData: context.sourceDataKey,
+      sourceUrl: context.sourceUrlKey,
+      cropTransform: context.cropTransformKey,
+      transform: context.transformKey,
+      cropToFrame: context.cropToFrameKey,
+      wasCropped: context.wasCroppedKey
+    };
+    return Object.entries(values).reduce((updates, [key, value]) => {
+      const target = map[key];
+      if (target) updates[target] = value;
+      return updates;
+    }, {});
   }
 
   getDefaultReferencePathForMode(mode = this.workspaceMode) {
@@ -663,6 +750,10 @@ class UI {
     });
     if (this.abilityDiceSection) {
       this.abilityDiceSection.style.display = hideForLeaflet ? 'none' : '';
+    }
+    if (this.titleBoxControls) {
+      this.titleBoxControls.style.display = hideForLeaflet ? 'none' : '';
+      this.titleBoxControls.setAttribute('aria-hidden', hideForLeaflet ? 'true' : 'false');
     }
 
     if (this.artSectionTitle) {
@@ -1221,6 +1312,10 @@ class UI {
       });
     }
 
+    if (this.infoBannerDismissBtn) {
+      this.infoBannerDismissBtn.addEventListener('click', () => this.dismissInfoBanner());
+    }
+
     if (this.referenceSelect) {
       this.referenceSelect.addEventListener('change', (e) => {
         const value = String(e?.target?.value || '').trim();
@@ -1237,6 +1332,7 @@ class UI {
 
     if (this.cardNameInput) {
       this.cardNameInput.addEventListener('input', (e) => {
+        const context = this.getTitleContext();
         const rawTitle = String(e.target.value || '');
         let card = gameState.getCard();
         card = this.ensureTitleBlocks(card);
@@ -1248,10 +1344,10 @@ class UI {
         });
         const activeBlock = updatedBlocks.find((block) => block.id === activeId) || updatedBlocks[0];
         gameState.updateProperties({
-          titleBlocks: updatedBlocks,
-          activeTitleId: activeId,
-          name: rawTitle,
-          titlePosition: activeBlock ? activeBlock.position : (card.titlePosition || { x: 0, y: 0 })
+          [context.blocksKey]: updatedBlocks,
+          [context.activeIdKey]: activeId,
+          [context.nameKey]: rawTitle,
+          [context.positionKey]: activeBlock ? activeBlock.position : (card[context.positionKey] || context.defaultPosition)
         });
         this.activeTitleId = activeId;
         this.queueRendererWork('title');
@@ -1394,7 +1490,7 @@ class UI {
 
     if (this.titleFontSelect) {
       this.titleFontSelect.addEventListener('change', (e) => {
-        gameState.updateProperty('titleFont', e.target.value || this.defaultTitleFont);
+        gameState.updateProperty(this.getTitleContext().fontKey, e.target.value || this.defaultTitleFont);
         this.queueRendererWork('title');
       });
     }
@@ -1404,7 +1500,7 @@ class UI {
         const value = Number(e.target.value);
         const size = Number.isFinite(value) ? Math.max(8, Math.min(96, value)) : this.defaultTitleFontSize;
         e.target.value = size;
-        gameState.updateProperty('titleFontSize', size);
+        gameState.updateProperty(this.getTitleContext().fontSizeKey, size);
         this.queueRendererWork('title');
       });
     }
@@ -1414,7 +1510,7 @@ class UI {
         const spacing = this.clampLetterSpacing(e.target.value);
         e.target.value = spacing;
         if (this.titleLetterSpacingValue) this.titleLetterSpacingValue.textContent = spacing;
-        gameState.updateProperty('titleLetterSpacing', spacing);
+        gameState.updateProperty(this.getTitleContext().letterSpacingKey, spacing);
         this.queueRendererWork('title');
       });
     }
@@ -1422,7 +1518,8 @@ class UI {
     if (this.descriptionFontSelect) {
       this.descriptionFontSelect.addEventListener('change', (e) => {
         const font = e.target.value || this.defaultDescriptionFont;
-        gameState.updateProperty('descriptionFont', font);
+        const key = this.getDescriptionContext().isLeaflet ? 'leafletDescriptionFont' : 'descriptionFont';
+        gameState.updateProperty(key, font);
         this.applyFontToDescriptionSelection(font);
         this.updateDescriptionStateFromEditor(true);
         this.queueRendererWork('cardId');
@@ -1460,7 +1557,8 @@ class UI {
         const spacing = this.clampLineHeightScale(value);
         e.target.value = spacing;
         if (this.descriptionLineHeightValue) this.descriptionLineHeightValue.textContent = spacing.toFixed(2);
-        gameState.updateProperty('descriptionLineHeightScale', spacing);
+        const key = this.getDescriptionContext().isLeaflet ? 'leafletDescriptionLineHeightScale' : 'descriptionLineHeightScale';
+        gameState.updateProperty(key, spacing);
         this.queueRendererWork('description');
       });
     }
@@ -1470,7 +1568,8 @@ class UI {
         const spacing = this.clampLetterSpacing(e.target.value);
         e.target.value = spacing;
         if (this.descriptionLetterSpacingValue) this.descriptionLetterSpacingValue.textContent = spacing;
-        gameState.updateProperty('descriptionLetterSpacing', spacing);
+        const key = this.getDescriptionContext().isLeaflet ? 'leafletDescriptionLetterSpacing' : 'descriptionLetterSpacing';
+        gameState.updateProperty(key, spacing);
         this.queueRendererWork('description');
       });
     }
@@ -1481,7 +1580,8 @@ class UI {
         const offset = Number.isFinite(value) ? Math.max(-5, Math.min(5, value)) : this.defaultDescriptionBaselineOffset;
         e.target.value = offset;
         if (this.descriptionBaselineOffsetValue) this.descriptionBaselineOffsetValue.textContent = offset.toFixed(1);
-        gameState.updateProperty('descriptionBaselineOffset', offset);
+        const key = this.getDescriptionContext().isLeaflet ? 'leafletDescriptionBaselineOffset' : 'descriptionBaselineOffset';
+        gameState.updateProperty(key, offset);
         this.queueRendererWork('description');
       });
     }
@@ -2653,6 +2753,118 @@ class UI {
     renderer.exportAsImage({ dpi });
   }
 
+  supportsRenderWorker() {
+    return typeof Worker !== 'undefined'
+      && typeof OffscreenCanvas !== 'undefined'
+      && typeof createImageBitmap !== 'undefined'
+      && !this.renderWorkerUnavailable;
+  }
+
+  getRenderWorker() {
+    if (!this.supportsRenderWorker()) return null;
+    if (this.renderWorker) return this.renderWorker;
+    try {
+      this.renderWorker = new Worker('js/renderWorker.js');
+      this.renderWorker.addEventListener('message', (event) => this.handleRenderWorkerMessage(event));
+      this.renderWorker.addEventListener('error', (event) => {
+        console.warn('Render worker failed:', event.message || event);
+        this.renderWorkerUnavailable = true;
+        this.rejectRenderWorkerRequests(new Error('Render worker failed'));
+        this.closeRenderWorker();
+      });
+      return this.renderWorker;
+    } catch (error) {
+      console.warn('Could not start render worker:', error);
+      this.renderWorkerUnavailable = true;
+      return null;
+    }
+  }
+
+  closeRenderWorker() {
+    if (!this.renderWorker) return;
+    try {
+      this.renderWorker.terminate();
+    } catch (error) {
+      // Ignore worker shutdown errors.
+    }
+    this.renderWorker = null;
+  }
+
+  handleRenderWorkerMessage(event) {
+    const message = event.data || {};
+    const request = this.renderWorkerRequests.get(message.id);
+    if (!request) return;
+    this.renderWorkerRequests.delete(message.id);
+    if (message.ok) {
+      request.resolve(message);
+    } else {
+      request.reject(new Error(message.error || 'Render worker request failed'));
+    }
+  }
+
+  rejectRenderWorkerRequests(error) {
+    for (const request of this.renderWorkerRequests.values()) {
+      request.reject(error);
+    }
+    this.renderWorkerRequests.clear();
+  }
+
+  runRenderWorker(type, payload, transfer = []) {
+    const worker = this.getRenderWorker();
+    if (!worker) return Promise.reject(new Error('Render worker is unavailable'));
+    const id = ++this.renderWorkerRequestId;
+    return new Promise((resolve, reject) => {
+      this.renderWorkerRequests.set(id, { resolve, reject });
+      try {
+        worker.postMessage({ id, type, payload }, transfer);
+      } catch (error) {
+        this.renderWorkerRequests.delete(id);
+        reject(error);
+      }
+    });
+  }
+
+  absoluteAssetUrl(path) {
+    const raw = String(path || '').trim();
+    if (!raw) return '';
+    try {
+      return new URL(raw, document.baseURI).href;
+    } catch (error) {
+      return raw;
+    }
+  }
+
+  async downloadBlob(blob, filename) {
+    if (!blob) return false;
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.download = String(filename || 'export.png');
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    return true;
+  }
+
+  blobToDataUrl(blob) {
+    if (!blob) return Promise.resolve('');
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(reader.error || new Error('Failed to read blob'));
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  async getImageBlobSize(blob) {
+    if (!blob || typeof createImageBitmap !== 'function') return null;
+    const bitmap = await createImageBitmap(blob);
+    try {
+      return { width: bitmap.width, height: bitmap.height };
+    } finally {
+      if (typeof bitmap.close === 'function') bitmap.close();
+    }
+  }
+
   buildDeckViewFilename() {
     const deck = this.getSelectedDeck();
     const name = deck?.name ? String(deck.name) : 'deck-view';
@@ -2660,44 +2872,11 @@ class UI {
     return safe ? `${safe}.png` : 'deck-view.png';
   }
 
-  async waitForDeckImages() {
-    if (!this.deckViewGrid) return;
-    const images = Array.from(this.deckViewGrid.querySelectorAll('img'));
-    if (!images.length) return;
-    const promises = images.map((img) => {
-      if (img.complete && img.naturalWidth > 0) return Promise.resolve();
-      if (typeof img.decode === 'function') {
-        return img.decode().catch(() => {});
-      }
-      return new Promise((resolve) => {
-        const done = () => resolve();
-        img.addEventListener('load', done, { once: true });
-        img.addEventListener('error', done, { once: true });
-      });
-    });
-    await Promise.all(promises);
-  }
-
-  async captureDeckViewCanvas(scale = 1) {
+  buildDeckViewComposition(scale = 1) {
     const cfg = this.deckTemplateConfig || {};
     const renderScale = Number.isFinite(Number(scale)) ? Math.max(1, Number(scale)) : 1;
     const outW = Math.max(1, Math.round((Number(cfg.width) || 3766) * renderScale));
     const outH = Math.max(1, Math.round((Number(cfg.height) || 4094) * renderScale));
-    const canvas = document.createElement('canvas');
-    canvas.width = outW;
-    canvas.height = outH;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
-
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, outW, outH);
-
-    if (this.deckLayerAssets?.base) {
-      await this.drawPrintLayerToContext(ctx, this.deckLayerAssets.base, outW, outH);
-    }
-
     const columns = Math.max(1, Number(cfg.columns) || 10);
     const colWidth = (Number(cfg.columnWidth) || 353) * renderScale;
     const colGap = (Number(cfg.columnGap) || 24) * renderScale;
@@ -2710,8 +2889,6 @@ class UI {
       ? cfg.rowGaps.map((g) => Number(g) * renderScale)
       : null;
     const rowGapDefault = (Number(cfg.rowGap) || 24) * renderScale;
-
-    const images = this.deckViewGrid ? Array.from(this.deckViewGrid.querySelectorAll('img')) : [];
     const cardScale = Number.isFinite(this.deckViewCardScale) ? this.deckViewCardScale : 1;
     const cardOffsetX = (Number.isFinite(this.deckViewCardOffsetX) ? this.deckViewCardOffsetX : 0) * renderScale;
     const cardOffsetY = (Number.isFinite(this.deckViewCardOffsetY) ? this.deckViewCardOffsetY : 0) * renderScale;
@@ -2726,35 +2903,41 @@ class UI {
       return y;
     };
 
-    for (let index = 0; index < images.length; index += 1) {
-      if (index > 0 && index % 4 === 0) {
-        await this.yieldToBrowser();
-      }
-      const imgEl = images[index];
+    const images = this.deckViewGrid ? Array.from(this.deckViewGrid.querySelectorAll('img')) : [];
+    const items = images.map((imgEl, index) => {
       const src = imgEl.currentSrc || imgEl.src;
-      if (!src) continue;
-      try {
-        const img = await renderer.loadImage(src);
-        const col = index % columns;
-        const row = Math.floor(index / columns);
-        const cellX = offsetX + (col * (colWidth + colGap));
-        const cellH = rowHeights[row] ?? rowHeights[rowHeights.length - 1] ?? rowHeights[0] ?? 0;
-        const cellY = rowTop(row);
-        const drawW = colWidth * cardScale;
-        const drawH = cellH * cardScale;
-        const drawX = cellX + ((colWidth - drawW) / 2) + cardOffsetX;
-        const drawY = cellY + ((cellH - drawH) / 2) + cardOffsetY;
-        ctx.drawImage(img, drawX, drawY, drawW, drawH);
-      } catch (error) {
-        console.warn('Failed to draw deck card image:', src, error);
-      }
-    }
+      const col = index % columns;
+      const row = Math.floor(index / columns);
+      const cellX = offsetX + (col * (colWidth + colGap));
+      const cellH = rowHeights[row] ?? rowHeights[rowHeights.length - 1] ?? rowHeights[0] ?? 0;
+      const cellY = rowTop(row);
+      const drawW = colWidth * cardScale;
+      const drawH = cellH * cardScale;
+      return {
+        src,
+        x: cellX + ((colWidth - drawW) / 2) + cardOffsetX,
+        y: cellY + ((cellH - drawH) / 2) + cardOffsetY,
+        width: drawW,
+        height: drawH
+      };
+    }).filter((item) => item.src);
 
-    if (this.deckLayerAssets?.overlay) {
-      await this.drawPrintLayerToContext(ctx, this.deckLayerAssets.overlay, outW, outH);
-    }
+    return {
+      width: outW,
+      height: outH,
+      background: '#000000',
+      baseLayer: this.absoluteAssetUrl(this.deckLayerAssets?.base),
+      overlayLayer: this.absoluteAssetUrl(this.deckLayerAssets?.overlay),
+      items
+    };
+  }
 
-    return canvas;
+  async captureDeckViewBlob(scale = 1) {
+    if (!this.supportsRenderWorker()) return null;
+    const payload = this.buildDeckViewComposition(scale);
+    if (!payload.items.length) return null;
+    const result = await this.runRenderWorker('compose-deck', payload);
+    return result.blob || null;
   }
 
   async exportDeckView() {
@@ -2767,16 +2950,13 @@ class UI {
         await this.yieldToBrowser(2);
       }
       await this.renderDeckView();
-      await this.waitForDeckImages();
-      const canvas = await this.captureDeckViewCanvas(1);
-      if (!canvas) {
-        this.showToast('Deck export failed. Try refreshing deck view.', { force: true });
+      const blob = await this.captureDeckViewBlob(1);
+      const didExport = blob ? await this.downloadBlob(blob, this.buildDeckViewFilename()) : false;
+
+      if (!didExport) {
+        this.showToast('Deck export requires a modern browser with worker canvas support.', { force: true, duration: 3600 });
         return;
       }
-      const link = document.createElement('a');
-      link.href = canvas.toDataURL('image/png');
-      link.download = this.buildDeckViewFilename();
-      link.click();
       this.showToast('Deck view exported as PNG.', { force: true });
     } catch (error) {
       console.error('Deck view export failed:', error);
@@ -2793,39 +2973,9 @@ class UI {
     return safe || 'print-sheet';
   }
 
-  async waitForPrintImages() {
-    const pages = this.getPrintSheetPageNodes();
-    const images = pages.flatMap((page) => Array.from(page.querySelectorAll('.print-card img')));
-    if (!images.length) return;
-    const waits = images.map((img) => {
-      if (img.complete && img.naturalWidth > 0) return Promise.resolve();
-      if (typeof img.decode === 'function') {
-        return img.decode().catch(() => {});
-      }
-      return new Promise((resolve) => {
-        const done = () => resolve();
-        img.addEventListener('load', done, { once: true });
-        img.addEventListener('error', done, { once: true });
-      });
-    });
-    await Promise.all(waits);
-  }
-
-  async drawPrintLayerToContext(ctx, path, width, height) {
-    const src = String(path || '').trim();
-    if (!src) return;
-    try {
-      const img = await renderer.loadImage(encodeURI(src));
-      ctx.drawImage(img, 0, 0, width, height);
-    } catch (error) {
-      console.warn('Failed to draw print layer:', src, error);
-    }
-  }
-
-  async capturePrintPageCanvases(scale = 1) {
+  buildPrintPageCompositions(scale = 1) {
     const pages = this.getPrintSheetPageNodes();
     if (!pages.length) return [];
-    const canvases = [];
     const layerState = this.getPrintLayerState();
     const cfg = this.printTemplateConfig || {};
     const baseW = Math.max(1, Math.round(Number(cfg.width) || 2550));
@@ -2841,50 +2991,83 @@ class UI {
     const offsetY = Math.round((Number(cfg.offsetY) || 137) * renderScale);
     const columns = Math.max(1, Number(cfg.columns) || 2);
 
-    for (const page of pages) {
-      const canvas = document.createElement('canvas');
-      canvas.width = outW;
-      canvas.height = outH;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) continue;
-
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, outW, outH);
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-
-      if (this.printLayerAssets.base) {
-        await this.drawPrintLayerToContext(ctx, this.printLayerAssets.base, outW, outH);
-      }
-      if (layerState.safe) {
-        await this.drawPrintLayerToContext(ctx, this.printLayerAssets.safe, outW, outH);
-      }
-      if (layerState.cut) {
-        await this.drawPrintLayerToContext(ctx, this.printLayerAssets.cut, outW, outH);
-      }
-
-      const imgs = Array.from(page.querySelectorAll('.print-card img'));
-      for (let index = 0; index < imgs.length; index += 1) {
-        if (index > 0 && index % 4 === 0) {
-          await this.yieldToBrowser();
-        }
-        const imgEl = imgs[index];
-        const src = imgEl.currentSrc || imgEl.src;
-        if (!src) continue;
-        try {
-          const img = await renderer.loadImage(src);
-          const col = index % columns;
-          const row = Math.floor(index / columns);
-          const x = offsetX + (col * (colWidth + colGap));
-          const y = offsetY + (row * (rowHeight + rowGap));
-          ctx.drawImage(img, x, y, colWidth, rowHeight);
-        } catch (error) {
-          console.warn('Failed to draw print card image:', src, error);
-        }
-      }
-      canvases.push(canvas);
+    const layers = [];
+    if (this.printLayerAssets.base) {
+      layers.push({ src: this.absoluteAssetUrl(this.printLayerAssets.base) });
     }
-    return canvases;
+    if (layerState.safe && this.printLayerAssets.safe) {
+      layers.push({ src: this.absoluteAssetUrl(this.printLayerAssets.safe) });
+    }
+    if (layerState.cut && this.printLayerAssets.cut) {
+      layers.push({ src: this.absoluteAssetUrl(this.printLayerAssets.cut) });
+    }
+
+    return pages.map((page) => {
+      const imgs = Array.from(page.querySelectorAll('.print-card img'));
+      const items = imgs.map((imgEl, index) => {
+        const src = imgEl.currentSrc || imgEl.src;
+        const col = index % columns;
+        const row = Math.floor(index / columns);
+        return {
+          src,
+          x: offsetX + (col * (colWidth + colGap)),
+          y: offsetY + (row * (rowHeight + rowGap)),
+          width: colWidth,
+          height: rowHeight
+        };
+      }).filter((item) => item.src);
+
+      return {
+        width: outW,
+        height: outH,
+        background: '#ffffff',
+        layers,
+        items
+      };
+    });
+  }
+
+  async capturePrintPageBlobs(scale = 1) {
+    if (!this.supportsRenderWorker()) return [];
+    const pages = this.buildPrintPageCompositions(scale);
+    if (!pages.length) return [];
+    const result = await this.runRenderWorker('compose-print-pages', { pages });
+    return Array.isArray(result.blobs) ? result.blobs : [];
+  }
+
+  async stackImageBlobsAsPng(blobs) {
+    const safeBlobs = Array.isArray(blobs) ? blobs.filter(Boolean) : [];
+    if (!safeBlobs.length) return null;
+    if (safeBlobs.length === 1) return safeBlobs[0];
+
+    const bitmaps = [];
+    try {
+      for (const blob of safeBlobs) {
+        bitmaps.push(await createImageBitmap(blob));
+      }
+      const width = Math.max(...bitmaps.map((bitmap) => bitmap.width));
+      const height = bitmaps.reduce((sum, bitmap) => sum + bitmap.height, 0);
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return null;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, width, height);
+      let y = 0;
+      bitmaps.forEach((bitmap) => {
+        ctx.drawImage(bitmap, 0, y);
+        y += bitmap.height;
+      });
+      if (renderer && typeof renderer.canvasToPngBlob === 'function') {
+        return renderer.canvasToPngBlob(canvas);
+      }
+      return await new Promise((resolve) => canvas.toBlob((blob) => resolve(blob || null), 'image/png'));
+    } finally {
+      bitmaps.forEach((bitmap) => {
+        if (bitmap && typeof bitmap.close === 'function') bitmap.close();
+      });
+    }
   }
 
   async exportPrintSheetAsPng() {
@@ -2892,36 +3075,16 @@ class UI {
     try {
       if (!this.isPrintSheetOpen()) this.openPrintSheet();
       await this.renderPrintSheet();
-      await this.waitForPrintImages();
-      const canvases = await this.capturePrintPageCanvases();
-      if (!canvases.length) {
-        this.showToast('No print pages available to export.', { force: true });
+      const blobs = await this.capturePrintPageBlobs();
+      const outputBlob = await this.stackImageBlobsAsPng(blobs);
+      const didExport = outputBlob
+        ? await this.downloadBlob(outputBlob, `${this.buildPrintSheetBaseFilename()}_print_sheet.png`)
+        : false;
+
+      if (!didExport) {
+        this.showToast('Print PNG export requires a modern browser with worker canvas support.', { force: true, duration: 3600 });
         return;
       }
-
-      let output = canvases[0];
-      if (canvases.length > 1) {
-        const width = Math.max(...canvases.map((canvas) => canvas.width));
-        const height = canvases.reduce((sum, canvas) => sum + canvas.height, 0);
-        output = document.createElement('canvas');
-        output.width = width;
-        output.height = height;
-        const ctx = output.getContext('2d');
-        if (ctx) {
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, width, height);
-          let y = 0;
-          canvases.forEach((canvas) => {
-            ctx.drawImage(canvas, 0, y);
-            y += canvas.height;
-          });
-        }
-      }
-
-      const link = document.createElement('a');
-      link.href = output.toDataURL('image/png');
-      link.download = `${this.buildPrintSheetBaseFilename()}_print_sheet.png`;
-      link.click();
       this.showToast('Print sheet PNG exported.', { force: true });
     } catch (error) {
       console.error('Print PNG export failed:', error);
@@ -2940,26 +3103,35 @@ class UI {
     try {
       if (!this.isPrintSheetOpen()) this.openPrintSheet();
       await this.renderPrintSheet();
-      await this.waitForPrintImages();
-      const canvases = await this.capturePrintPageCanvases(2);
-      if (!canvases.length) {
-        this.showToast('No print pages available to export.', { force: true });
+      const blobs = await this.capturePrintPageBlobs(2);
+      const pageImages = await Promise.all(blobs.map(async (blob) => {
+        const size = await this.getImageBlobSize(blob);
+        const dataUrl = await this.blobToDataUrl(blob);
+        return {
+          dataUrl,
+          width: size?.width || 1,
+          height: size?.height || 1
+        };
+      }));
+
+      if (!pageImages.length) {
+        this.showToast('Print PDF export requires a modern browser with worker canvas support.', { force: true, duration: 3600 });
         return;
       }
 
       const { jsPDF } = window.jspdf;
-      const first = canvases[0];
+      const first = pageImages[0];
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'px',
         format: [first.width, first.height]
       });
 
-      canvases.forEach((canvas, index) => {
+      pageImages.forEach((pageImage, index) => {
         if (index > 0) {
-          pdf.addPage([canvas.width, canvas.height], 'portrait');
+          pdf.addPage([pageImage.width, pageImage.height], 'portrait');
         }
-        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, canvas.width, canvas.height, undefined, 'FAST');
+        pdf.addImage(pageImage.dataUrl, 'PNG', 0, 0, pageImage.width, pageImage.height, undefined, 'FAST');
       });
 
       pdf.save(`${this.buildPrintSheetBaseFilename()}_print_sheet.pdf`);
@@ -2977,10 +3149,11 @@ class UI {
     try {
       if (!this.isPrintSheetOpen()) this.openPrintSheet();
       await this.renderPrintSheet();
-      await this.waitForPrintImages();
-      const canvases = await this.capturePrintPageCanvases(2);
-      if (!canvases.length) {
-        this.showToast('No print pages available.', { force: true });
+      const blobs = await this.capturePrintPageBlobs(2);
+      const imageUrls = blobs.map((blob) => URL.createObjectURL(blob));
+
+      if (!imageUrls.length) {
+        this.showToast('Printing requires a modern browser with worker canvas support.', { force: true, duration: 3600 });
         return;
       }
 
@@ -2989,7 +3162,6 @@ class UI {
         this.showToast('Unable to open print window. Please allow popups for this site.', { force: true, duration: 3400 });
         return;
       }
-      const images = canvases.map((canvas) => canvas.toDataURL('image/png'));
       const html = `
 <!doctype html>
 <html>
@@ -3004,7 +3176,7 @@ class UI {
   </style>
 </head>
 <body>
-  ${images.map((src) => `<img src="${src}" alt="Print sheet page" />`).join('')}
+  ${imageUrls.map((src) => `<img src="${src}" alt="Print sheet page" />`).join('')}
 </body>
 </html>`;
       win.document.open();
@@ -3012,6 +3184,13 @@ class UI {
       win.document.close();
       win.focus();
       win.print();
+      if (imageUrls.some((src) => src.startsWith('blob:'))) {
+        window.setTimeout(() => {
+          imageUrls.forEach((src) => {
+            if (src.startsWith('blob:')) URL.revokeObjectURL(src);
+          });
+        }, 60000);
+      }
       this.showToast('Print window opened.', { force: true });
     } catch (error) {
       console.error('Print preparation failed:', error);
@@ -3229,42 +3408,128 @@ class UI {
     }
   }
 
+  async waitForIdle(timeout = 1200) {
+    if (typeof requestIdleCallback === 'function') {
+      await new Promise((resolve) => {
+        requestIdleCallback(() => resolve(), { timeout });
+      });
+      return;
+    }
+    await this.yieldToBrowser(2);
+  }
+
+  estimateRenderCacheValueSize(value) {
+    return String(value || '').length * 2;
+  }
+
+  revokeObjectUrl(value) {
+    const url = String(value || '');
+    if (!url.startsWith('blob:') || typeof URL === 'undefined') return;
+    try {
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      // Ignore revoke failures.
+    }
+  }
+
+  releaseRenderCacheEntry(entry) {
+    if (!entry) return 0;
+    if (typeof entry === 'string') return this.estimateRenderCacheValueSize(entry);
+    if (entry.objectUrl) this.revokeObjectUrl(entry.value);
+    return Number(entry.size) || this.estimateRenderCacheValueSize(entry.value);
+  }
+
+  async canvasToImageUrl(canvas, preferObjectUrl = true) {
+    if (!canvas) return { value: '', size: 0, objectUrl: false };
+    if (
+      preferObjectUrl
+      &&
+      renderer
+      && typeof renderer.canvasToPngBlob === 'function'
+      && typeof URL !== 'undefined'
+      && typeof URL.createObjectURL === 'function'
+    ) {
+      const blob = await renderer.canvasToPngBlob(canvas);
+      if (blob) {
+        return {
+          value: URL.createObjectURL(blob),
+          size: Number(blob.size) || this.estimateRenderCacheValueSize(''),
+          objectUrl: true
+        };
+      }
+    }
+    const value = canvas.toDataURL('image/png');
+    return {
+      value,
+      size: this.estimateRenderCacheValueSize(value),
+      objectUrl: false
+    };
+  }
+
   getRenderCacheValue(key) {
     const safeKey = String(key || '');
     if (!safeKey || !this.renderDataUrlCache) return '';
-    const value = this.renderDataUrlCache.get(safeKey);
-    if (!value) return '';
+    const entry = this.renderDataUrlCache.get(safeKey);
+    if (!entry) return '';
+    const value = typeof entry === 'string' ? entry : entry.value;
+    if (!value) {
+      this.renderDataUrlCache.delete(safeKey);
+      return '';
+    }
     // Touch to keep recently-used keys alive.
     this.renderDataUrlCache.delete(safeKey);
-    this.renderDataUrlCache.set(safeKey, value);
+    this.renderDataUrlCache.set(safeKey, typeof entry === 'string'
+      ? { value, size: this.estimateRenderCacheValueSize(value) }
+      : entry);
     return value;
   }
 
-  setRenderCacheValue(key, value) {
+  setRenderCacheValue(key, value, options = {}) {
     const safeKey = String(key || '');
     const safeValue = String(value || '');
     if (!safeKey || !safeValue || !this.renderDataUrlCache) return;
-    if (this.renderDataUrlCache.has(safeKey)) {
+    const existing = this.renderDataUrlCache.get(safeKey);
+    if (existing) {
+      this.renderDataUrlCacheBytes = Math.max(
+        0,
+        this.renderDataUrlCacheBytes - this.releaseRenderCacheEntry(existing)
+      );
       this.renderDataUrlCache.delete(safeKey);
     }
-    this.renderDataUrlCache.set(safeKey, safeValue);
-    while (this.renderDataUrlCache.size > this.renderDataUrlCacheLimit) {
+    const size = Number(options.size) || this.estimateRenderCacheValueSize(safeValue);
+    this.renderDataUrlCache.set(safeKey, {
+      value: safeValue,
+      size,
+      objectUrl: options.objectUrl === true
+    });
+    this.renderDataUrlCacheBytes += size;
+    while (
+      this.renderDataUrlCache.size > this.renderDataUrlCacheLimit
+      || this.renderDataUrlCacheBytes > this.renderDataUrlCacheByteLimit
+    ) {
       const oldestKey = this.renderDataUrlCache.keys().next().value;
       if (!oldestKey) break;
+      if (oldestKey === safeKey && this.renderDataUrlCache.size === 1) break;
+      const oldest = this.renderDataUrlCache.get(oldestKey);
+      this.renderDataUrlCacheBytes = Math.max(0, this.renderDataUrlCacheBytes - this.releaseRenderCacheEntry(oldest));
       this.renderDataUrlCache.delete(oldestKey);
     }
   }
 
   clearRenderCache() {
     if (!this.renderDataUrlCache) return;
+    for (const entry of this.renderDataUrlCache.values()) {
+      this.releaseRenderCacheEntry(entry);
+    }
     this.renderDataUrlCache.clear();
+    this.renderDataUrlCacheBytes = 0;
   }
 
   scheduleRenderWarmup(options = {}) {
     const immediate = options.immediate === true;
     const delayMs = Number.isFinite(Number(options.delayMs))
       ? Math.max(0, Number(options.delayMs))
-      : (immediate ? 30 : 220);
+      : (immediate ? 120 : 900);
 
     this.renderWarmupToken += 1;
     const token = this.renderWarmupToken;
@@ -3272,18 +3537,38 @@ class UI {
       clearTimeout(this.renderWarmupTimer);
       this.renderWarmupTimer = null;
     }
+    if (this.renderWarmupIdleHandle !== null && typeof cancelIdleCallback === 'function') {
+      cancelIdleCallback(this.renderWarmupIdleHandle);
+      this.renderWarmupIdleHandle = null;
+    }
     this.renderWarmupTimer = setTimeout(() => {
       this.renderWarmupTimer = null;
+      this.startRenderWarmup(token);
+    }, delayMs);
+  }
+
+  startRenderWarmup(token) {
+    const run = () => {
+      this.renderWarmupIdleHandle = null;
       this.runRenderWarmup(token).catch((error) => {
         console.warn('Render warmup failed:', error);
       });
-    }, delayMs);
+    };
+    if (typeof requestIdleCallback === 'function') {
+      this.renderWarmupIdleHandle = requestIdleCallback(run, { timeout: 4500 });
+      return;
+    }
+    run();
   }
 
   async runRenderWarmup(token) {
     const runToken = Number.isFinite(Number(token)) ? Number(token) : this.renderWarmupToken;
     if (this.renderWarmupInFlight) {
       this.renderWarmupQueued = true;
+      return;
+    }
+    if (this.busyDepth > 0) {
+      this.scheduleRenderWarmup({ immediate: false, delayMs: 1200 });
       return;
     }
 
@@ -3303,18 +3588,20 @@ class UI {
       await this.ensureDeckDefaultCard();
       if (runToken !== this.renderWarmupToken) return;
 
-      const deckColumns = Math.max(1, Number(this.deckTemplateConfig?.columns) || 10);
-      const deckRows = Math.max(1, Number(this.deckTemplateConfig?.rows) || 7);
       const printColumns = Math.max(1, Number(this.printTemplateConfig?.columns) || 2);
       const printRows = Math.max(1, Number(this.printTemplateConfig?.rows) || 4);
-      const warmLimit = Math.min(entries.length, Math.max(deckColumns * deckRows, printColumns * printRows, 24));
+      const warmLimit = Math.min(entries.length, Math.max(printColumns * printRows, 12));
       const printWidth = Number(this.printTemplateConfig?.columnWidth) || 1004;
       const printHeight = Number(this.printTemplateConfig?.rowHeight) || 626;
 
       for (let index = 0; index < warmLimit; index += 1) {
         if (runToken !== this.renderWarmupToken) return;
-        if (index > 0 && index % 3 === 0) {
-          await this.yieldToBrowser();
+        if (this.busyDepth > 0) {
+          this.renderWarmupQueued = true;
+          return;
+        }
+        if (index > 0) {
+          await this.waitForIdle(1400);
         }
 
         const entry = entries[index];
@@ -3985,14 +4272,6 @@ class UI {
       if (options.scheduleRerender === true) {
         this.schedulePreviewRender(options.renderDebounceMs);
       } else if (options.rerender !== false) {
-        if (this.previewRenderDebounceTimer !== null && typeof window !== 'undefined') {
-          window.clearTimeout(this.previewRenderDebounceTimer);
-          this.previewRenderDebounceTimer = null;
-        }
-        if (this.previewRenderRaf !== null && typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function') {
-          window.cancelAnimationFrame(this.previewRenderRaf);
-          this.previewRenderRaf = null;
-        }
         this.queueRendererWork('full');
       }
     }
@@ -5247,20 +5526,23 @@ class UI {
   }
 
   getTitleBlocks(card) {
+    const context = this.getTitleContext();
     const fallback = {
-      text: card.name || '',
-      position: card.titlePosition || { x: 1.4874028450301893, y: -1.2779890290537477 }
+      text: card[context.nameKey] || '',
+      position: card[context.positionKey] || context.defaultPosition
     };
-    if (Array.isArray(card.titleBlocks) && card.titleBlocks.length) {
-      return card.titleBlocks.map((block, idx) => (
-        this.normalizeTitleBlock(block, idx === 0 ? fallback : null, `title-${idx + 1}`)
+    const rawBlocks = Array.isArray(card[context.blocksKey]) ? card[context.blocksKey] : [];
+    if (rawBlocks.length) {
+      return rawBlocks.map((block, idx) => (
+        this.normalizeTitleBlock(block, idx === 0 ? fallback : null, `${context.isLeaflet ? 'leaflet-title' : 'title'}-${idx + 1}`)
       ));
     }
-    return [this.normalizeTitleBlock({}, fallback, 'title-1')];
+    return [this.normalizeTitleBlock({}, fallback, context.isLeaflet ? 'leaflet-title-1' : 'title-1')];
   }
 
   ensureTitleBlocks(card) {
-    const rawBlocks = Array.isArray(card.titleBlocks) ? card.titleBlocks : [];
+    const context = this.getTitleContext();
+    const rawBlocks = Array.isArray(card[context.blocksKey]) ? card[context.blocksKey] : [];
     const normalized = this.getTitleBlocks(card);
     let needsNormalize = !rawBlocks.length || rawBlocks.some((block) => {
       if (!block || typeof block !== 'object') return true;
@@ -5272,7 +5554,7 @@ class UI {
     if (!needsNormalize && rawBlocks.length === 1) {
       const onlyBlock = rawBlocks[0] || {};
       const blockText = String(onlyBlock.text || '').trim();
-      const cardText = String(card.name || '').trim();
+      const cardText = String(card[context.nameKey] || '').trim();
       const isPlaceholder = blockText.toLowerCase() === 'title';
       if ((isPlaceholder && cardText && cardText !== blockText) || (!blockText && cardText)) {
         needsNormalize = true;
@@ -5280,23 +5562,23 @@ class UI {
     }
     const updates = {};
     if (needsNormalize) {
-      updates.titleBlocks = normalized;
+      updates[context.blocksKey] = normalized;
     }
-    const activeId = card.activeTitleId;
+    const activeId = card[context.activeIdKey];
     const resolvedActiveId = activeId && normalized.some((block) => block.id === activeId)
       ? activeId
       : (normalized[0] ? normalized[0].id : null);
-    if (resolvedActiveId && resolvedActiveId !== card.activeTitleId) {
-      updates.activeTitleId = resolvedActiveId;
+    if (resolvedActiveId && resolvedActiveId !== card[context.activeIdKey]) {
+      updates[context.activeIdKey] = resolvedActiveId;
     }
     const activeBlock = resolvedActiveId
       ? normalized.find((block) => block.id === resolvedActiveId)
       : null;
     if (activeBlock) {
-      if (card.name !== activeBlock.text) updates.name = activeBlock.text;
+      if (card[context.nameKey] !== activeBlock.text) updates[context.nameKey] = activeBlock.text;
       const pos = activeBlock.position || { x: 0, y: 0 };
-      if (!card.titlePosition || card.titlePosition.x !== pos.x || card.titlePosition.y !== pos.y) {
-        updates.titlePosition = pos;
+      if (!card[context.positionKey] || card[context.positionKey].x !== pos.x || card[context.positionKey].y !== pos.y) {
+        updates[context.positionKey] = pos;
       }
     }
     if (Object.keys(updates).length > 0) {
@@ -5307,8 +5589,9 @@ class UI {
   }
 
   getActiveTitleId(card, blocks) {
+    const context = this.getTitleContext();
     const list = blocks && blocks.length ? blocks : this.getTitleBlocks(card);
-    const activeId = card.activeTitleId;
+    const activeId = card[context.activeIdKey];
     if (activeId && list.some((block) => block.id === activeId)) return activeId;
     return list[0] ? list[0].id : null;
   }
@@ -5332,6 +5615,7 @@ class UI {
   }
 
   setActiveTitleBlock(id, options = {}) {
+    const context = this.getTitleContext();
     let card = gameState.getCard();
     card = this.ensureTitleBlocks(card);
     const blocks = this.getTitleBlocks(card);
@@ -5340,11 +5624,11 @@ class UI {
     const activeBlock = blocks.find((block) => block.id === targetId) || blocks[0];
     if (!activeBlock) return;
 
-    if (card.activeTitleId !== targetId) {
+    if (card[context.activeIdKey] !== targetId) {
       gameState.updateProperties({
-        activeTitleId: targetId,
-        name: activeBlock.text || '',
-        titlePosition: activeBlock.position || { x: 0, y: 0 }
+        [context.activeIdKey]: targetId,
+        [context.nameKey]: activeBlock.text || '',
+        [context.positionKey]: activeBlock.position || context.defaultPosition
       });
       card = gameState.getCard();
     }
@@ -5356,6 +5640,7 @@ class UI {
   }
 
   addTitleBox() {
+    const context = this.getTitleContext();
     let card = gameState.getCard();
     card = this.ensureTitleBlocks(card);
     const blocks = this.getTitleBlocks(card);
@@ -5363,14 +5648,14 @@ class UI {
     const newBlock = {
       id: newId,
       text: '',
-      position: { x: 1.4874028450301893, y: -1.2779890290537477 }
+      position: context.defaultPosition
     };
     const updatedBlocks = [...blocks, newBlock];
     gameState.updateProperties({
-      titleBlocks: updatedBlocks,
-      activeTitleId: newId,
-      name: '',
-      titlePosition: { x: 1.4874028450301893, y: -1.2779890290537477 }
+      [context.blocksKey]: updatedBlocks,
+      [context.activeIdKey]: newId,
+      [context.nameKey]: '',
+      [context.positionKey]: context.defaultPosition
     });
     const updatedCard = gameState.getCard();
     this.activeTitleId = newId;
@@ -5381,6 +5666,7 @@ class UI {
   }
 
   removeActiveTitleBox() {
+    const context = this.getTitleContext();
     let card = gameState.getCard();
     card = this.ensureTitleBlocks(card);
     const blocks = this.getTitleBlocks(card);
@@ -5389,10 +5675,10 @@ class UI {
       const onlyBlock = blocks[0];
       const clearedBlock = { ...onlyBlock, text: '' };
       gameState.updateProperties({
-        titleBlocks: [clearedBlock],
-        activeTitleId: clearedBlock.id,
-        name: '',
-        titlePosition: clearedBlock.position || { x: 0, y: 0 }
+        [context.blocksKey]: [clearedBlock],
+        [context.activeIdKey]: clearedBlock.id,
+        [context.nameKey]: '',
+        [context.positionKey]: clearedBlock.position || context.defaultPosition
       });
       const updatedCard = gameState.getCard();
       this.activeTitleId = clearedBlock.id;
@@ -5413,10 +5699,10 @@ class UI {
     if (!nextBlock) return;
 
     gameState.updateProperties({
-      titleBlocks: remainingBlocks,
-      activeTitleId: nextBlock.id,
-      name: nextBlock.text || '',
-      titlePosition: nextBlock.position || { x: 0, y: 0 }
+      [context.blocksKey]: remainingBlocks,
+      [context.activeIdKey]: nextBlock.id,
+      [context.nameKey]: nextBlock.text || '',
+      [context.positionKey]: nextBlock.position || context.defaultPosition
     });
     const updatedCard = gameState.getCard();
     this.activeTitleId = nextBlock.id;
@@ -6626,7 +6912,7 @@ class UI {
         if (!cardData.name || cardData.name === 'Title') {
           cardData.name = entry.name || `Slot ${slotId}`;
         }
-        imageSrc = await renderer.renderCardToDataUrl(cardData, {
+        const canvas = await renderer.renderCardToCanvas(cardData, {
           width: Number(DTC_UI_EXPORT_SIZE.width) || 675,
           height: Number(DTC_UI_EXPORT_SIZE.height) || 1050,
           includeBleed: false,
@@ -6636,7 +6922,10 @@ class UI {
           trimAlphaThreshold: 1,
           cropToBleedBounds: true
         });
-        if (imageSrc) {
+        if (canvas) {
+          const output = renderer.trimTransparentCanvas(canvas, 1) || canvas;
+          const imageInfo = await this.canvasToImageUrl(output, false);
+          imageSrc = imageInfo.value;
           imageSrc = await this.scaleDeckCardDataUrl(imageSrc, 314, 476, 'cover', 1, true);
         }
       } catch (error) {
@@ -7820,11 +8109,16 @@ class UI {
     }
   }
 
-  async scaleDeckCardDataUrl(src, targetWidth, targetHeight, fitMode = 'cover', extraScale = 1, allowUpscale = true) {
-    if (!src) return '';
+  async scaleDeckCardDataUrl(src, targetWidth, targetHeight, fitMode = 'cover', extraScale = 1, allowUpscale = true, returnInfo = false) {
+    if (!src) return returnInfo ? { value: '', size: 0, objectUrl: false } : '';
     const img = await renderer.loadImage(src);
     if (img.width === targetWidth && img.height === targetHeight) {
-      return src;
+      const info = {
+        value: src,
+        size: this.estimateRenderCacheValueSize(src),
+        objectUrl: String(src).startsWith('blob:')
+      };
+      return returnInfo ? info : src;
     }
     const canvas = document.createElement('canvas');
     canvas.width = Math.max(1, Math.round(targetWidth));
@@ -7844,12 +8138,20 @@ class UI {
     const dx = (canvas.width - drawW) / 2;
     const dy = (canvas.height - drawH) / 2;
     ctx.drawImage(img, dx, dy, drawW, drawH);
-    return canvas.toDataURL('image/png');
+    const info = await this.canvasToImageUrl(canvas, returnInfo);
+    return returnInfo ? info : info.value;
   }
 
-  async rotateDataUrl(src, degrees = 0) {
+  async rotateDataUrl(src, degrees = 0, returnInfo = false) {
     const rotation = Number(degrees) || 0;
-    if (!src || rotation % 360 === 0) return src;
+    if (!src || rotation % 360 === 0) {
+      const info = {
+        value: src || '',
+        size: this.estimateRenderCacheValueSize(src || ''),
+        objectUrl: String(src || '').startsWith('blob:')
+      };
+      return returnInfo ? info : (src || '');
+    }
     const img = await renderer.loadImage(src);
     const normalized = ((rotation % 360) + 360) % 360;
     const swap = normalized === 90 || normalized === 270;
@@ -7863,7 +8165,8 @@ class UI {
     ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.rotate((rotation * Math.PI) / 180);
     ctx.drawImage(img, -img.width / 2, -img.height / 2);
-    return canvas.toDataURL('image/png');
+    const info = await this.canvasToImageUrl(canvas, returnInfo);
+    return returnInfo ? info : info.value;
   }
 
   async renderDeckCardDataUrl(cardData, cacheToken = '') {
@@ -7877,7 +8180,7 @@ class UI {
     };
     const renderWidth = Number(DTC_UI_EXPORT_SIZE.width) || 675;
     const renderHeight = Number(DTC_UI_EXPORT_SIZE.height) || 1050;
-    let dataUrl = await renderer.renderCardToDataUrl(renderCard, {
+    const canvas = await renderer.renderCardToCanvas(renderCard, {
       width: renderWidth,
       height: renderHeight,
       includeBleed: false,
@@ -7885,9 +8188,11 @@ class UI {
       fitMode: 'contain',
       cropToBleedBounds: true
     });
-    if (!dataUrl) return '';
-    this.setRenderCacheValue(cacheKey, dataUrl);
-    return dataUrl;
+    if (!canvas) return '';
+    const info = await this.canvasToImageUrl(canvas, true);
+    if (!info.value) return '';
+    this.setRenderCacheValue(cacheKey, info.value, info);
+    return info.value;
   }
 
   async renderPrintCardDataUrl(cardData, cellWidth, cellHeight, cacheToken = '') {
@@ -7907,7 +8212,7 @@ class UI {
     };
     const renderWidth = Number(DTC_UI_EXPORT_SIZE.width) || 675;
     const renderHeight = Number(DTC_UI_EXPORT_SIZE.height) || 1050;
-    let dataUrl = await renderer.renderCardToDataUrl(renderCard, {
+    const canvas = await renderer.renderCardToCanvas(renderCard, {
       width: renderWidth,
       height: renderHeight,
       includeBleed: false,
@@ -7917,15 +8222,26 @@ class UI {
       trimAlphaThreshold: 1,
       cropToBleedBounds: true
     });
+    if (!canvas) return '';
+    const transientUrls = [];
+    let currentInfo = await this.canvasToImageUrl(canvas, true);
+    let dataUrl = currentInfo.value;
     if (!dataUrl) return '';
     if (rotation) {
-      dataUrl = await this.rotateDataUrl(dataUrl, rotation);
+      const rotatedInfo = await this.rotateDataUrl(dataUrl, rotation, true);
+      if (currentInfo.objectUrl) transientUrls.push(currentInfo.value);
+      currentInfo = rotatedInfo;
+      dataUrl = rotatedInfo.value;
     }
-    const scaled = await this.scaleDeckCardDataUrl(dataUrl, cellWidth, cellHeight, fitMode, extraScale, allowUpscale);
-    if (scaled) {
-      this.setRenderCacheValue(cacheKey, scaled);
+    const scaledInfo = await this.scaleDeckCardDataUrl(dataUrl, cellWidth, cellHeight, fitMode, extraScale, allowUpscale, true);
+    if (currentInfo.objectUrl && currentInfo.value !== scaledInfo.value) transientUrls.push(currentInfo.value);
+    if (scaledInfo.value) {
+      this.setRenderCacheValue(cacheKey, scaledInfo.value, scaledInfo);
+    } else if (currentInfo.objectUrl) {
+      transientUrls.push(currentInfo.value);
     }
-    return scaled;
+    transientUrls.forEach((url) => this.revokeObjectUrl(url));
+    return scaledInfo.value;
   }
 
   async loadDefaultDeckCardsForView() {
@@ -8011,6 +8327,7 @@ class UI {
     const selectedCount = entries.filter((entry) => this.printSheetSelectedIds.has(entry.__printId)).length;
     this.printSelectionSummary.textContent = `${selectedCount} selected of ${entries.length}`;
     this.printSelectionList.innerHTML = '';
+    const fragment = document.createDocumentFragment();
     entries.forEach((entry) => {
       const label = document.createElement('label');
       label.className = 'print-selection__item';
@@ -8030,8 +8347,9 @@ class UI {
       text.textContent = entry.__printName;
       label.appendChild(input);
       label.appendChild(text);
-      this.printSelectionList.appendChild(label);
+      fragment.appendChild(label);
     });
+    this.printSelectionList.appendChild(fragment);
   }
 
   async renderDeckView() {
@@ -8074,11 +8392,12 @@ class UI {
 
     const renderTotal = Math.min(entries.length, maxCards);
     let index = 0;
+    let fragment = document.createDocumentFragment();
     for (const entry of entries) {
       if (index >= maxCards) break;
       index += 1;
       if (index > 1 && index % 2 === 0) {
-        await this.yieldToBrowser();
+        await this.waitForIdle(900);
       }
       if (renderToken !== this.deckViewRenderToken) return;
       this.setDeckViewStatus(`Rendering ${index} of ${renderTotal}...`);
@@ -8113,7 +8432,14 @@ class UI {
         placeholder.style.color = 'var(--text-secondary)';
         cardEl.appendChild(placeholder);
       }
-      this.deckViewGrid.appendChild(cardEl);
+      fragment.appendChild(cardEl);
+      if (index % 8 === 0) {
+        this.deckViewGrid.appendChild(fragment);
+        fragment = document.createDocumentFragment();
+      }
+    }
+    if (fragment.childNodes.length) {
+      this.deckViewGrid.appendChild(fragment);
     }
 
     if (renderToken === this.deckViewRenderToken) {
@@ -8175,11 +8501,12 @@ class UI {
 
       const start = pageIndex * maxCards;
       const end = Math.min(start + maxCards, entries.length);
+      let pageFragment = document.createDocumentFragment();
       for (let i = start; i < end; i += 1) {
         if (renderToken !== this.printSheetRenderToken) return;
         index += 1;
         if (index > 1 && index % 2 === 0) {
-          await this.yieldToBrowser();
+          await this.waitForIdle(900);
         }
         this.setPrintSheetStatus(`Rendering ${index} of ${renderTotal}...`);
         const entry = entries[i];
@@ -8210,7 +8537,14 @@ class UI {
           placeholder.style.color = 'var(--text-secondary)';
           cardEl.appendChild(placeholder);
         }
-        if (grid) grid.appendChild(cardEl);
+        pageFragment.appendChild(cardEl);
+        if (grid && pageFragment.childNodes.length >= 4) {
+          grid.appendChild(pageFragment);
+          pageFragment = document.createDocumentFragment();
+        }
+      }
+      if (grid && pageFragment.childNodes.length) {
+        grid.appendChild(pageFragment);
       }
     }
 

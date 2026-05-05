@@ -75,6 +75,16 @@
       </div>
     </header>
 
+    <section id="infoBanner" class="info-banner" role="status" aria-live="polite" aria-label="Information alert">
+      <div class="info-banner__copy">
+        <strong>Creator Notice</strong>
+        <span>Known issue: the view of the card ID being rendered looks large, this is a visual bug and works as intended on export.</span>
+      </div>
+      <div class="info-banner__actions">
+        <button id="infoBannerDismiss" class="info-banner__dismiss" type="button" aria-label="Dismiss information alert">&times;</button>
+      </div>
+    </section>
+
     <details class="header-deck-panel">
       <summary>Project Deck</summary>
       <div class="header-deck">
@@ -137,7 +147,7 @@
               <label for="cardName">Title</label>
               <div class="title-input-row">
                 <input type="text" id="cardName" placeholder="Enter title" maxlength="50">
-                <div class="title-box-controls">
+                <div id="titleBoxControls" class="title-box-controls">
                   <button type="button" id="titleBoxAdd" class="title-box-add">+ Box</button>
                   <button type="button" id="titleBoxRemove" class="title-box-remove">- Box</button>
                 </div>
@@ -1021,7 +1031,6 @@
   </div>
 
   <!-- Scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
   <script src="js/common.js"></script>

@@ -363,6 +363,33 @@ class CardRenderer {
     this.leafletSide = String(side || '').toLowerCase() === 'back' ? 'back' : 'front';
   }
 
+  getRenderCard(card) {
+    if (!card || this.workspaceMode !== 'leaflet') return card;
+    return {
+      ...card,
+      name: card.leafletName ?? card.name,
+      titleBlocks: Array.isArray(card.leafletTitleBlocks) ? card.leafletTitleBlocks : card.titleBlocks,
+      activeTitleId: card.leafletActiveTitleId ?? card.activeTitleId,
+      titlePosition: card.leafletTitlePosition || card.titlePosition,
+      titleFont: card.leafletTitleFont || card.titleFont,
+      titleFontSize: card.leafletTitleFontSize ?? card.titleFontSize,
+      titleLetterSpacing: card.leafletTitleLetterSpacing ?? card.titleLetterSpacing,
+      descriptionFont: card.leafletDescriptionFont || card.descriptionFont,
+      descriptionColor: card.leafletDescriptionColor || card.descriptionColor,
+      descriptionLineHeightScale: card.leafletDescriptionLineHeightScale ?? card.descriptionLineHeightScale,
+      descriptionLetterSpacing: card.leafletDescriptionLetterSpacing ?? card.descriptionLetterSpacing,
+      descriptionBaselineOffset: card.leafletDescriptionBaselineOffset ?? card.descriptionBaselineOffset,
+      artData: card.leafletArtData || null,
+      artUrl: card.leafletArtUrl || null,
+      artSourceData: card.leafletArtSourceData || null,
+      artSourceUrl: card.leafletArtSourceUrl || null,
+      artCropTransform: card.leafletArtCropTransform || null,
+      artTransform: card.leafletArtTransform || { x: 0, y: 0, scale: 1 },
+      artCropToFrame: card.leafletArtCropToFrame === true,
+      artWasCropped: card.leafletArtWasCropped === true
+    };
+  }
+
   setLayerBackground(layer, src) {
     if (!layer) return;
     layer.style.backgroundImage = src ? `url('${src}')` : '';
@@ -1354,6 +1381,7 @@ class CardRenderer {
 
   render(card) {
     if (!card) return;
+    card = this.getRenderCard(card);
     const renderNonce = this.beginContentRender();
     this.tokenIconCardContext = card;
     this.clearPreviewOutputMask();
@@ -2405,6 +2433,7 @@ class CardRenderer {
   }
 
   async updateTitleImage(card, renderNonce = this.contentRenderNonce) {
+    card = this.getRenderCard(card);
     if (renderNonce !== this.contentRenderNonce) return;
     const blocks = this.getTitleBlocks(card);
     if (!blocks.length) return;
@@ -2462,6 +2491,7 @@ class CardRenderer {
   }
 
   async updateCardIdText(card, renderNonce = this.contentRenderNonce) {
+    card = this.getRenderCard(card);
     if (renderNonce !== this.contentRenderNonce) return;
     const idEl = this.cardIdTextLayer;
     if (!idEl) return;
@@ -2773,6 +2803,7 @@ class CardRenderer {
   }
 
   reflowPreviewForZoom(card) {
+    card = this.getRenderCard(card || gameState.getCard());
     const scale = this.getPreviewScale();
     if (!Number.isFinite(scale) || scale <= 0) return false;
     let didUpdate = false;
@@ -2786,11 +2817,12 @@ class CardRenderer {
         didUpdate = this.applyScaledOverlayLayout(layer, scale) || didUpdate;
       }
     }
-    this.updateCostBadgePosition(card || gameState.getCard());
+    this.updateCostBadgePosition(card);
     return didUpdate;
   }
 
   async updateDescriptionImage(card, renderNonce = this.contentRenderNonce) {
+    card = this.getRenderCard(card);
     if (renderNonce !== this.contentRenderNonce) return;
     const blocks = this.getDescriptionBlocks(card);
     if (!blocks.length) return;
@@ -2850,6 +2882,7 @@ class CardRenderer {
     }
   }
   updateArtTransform(card) {
+    card = this.getRenderCard(card);
     const artImage = document.getElementById('cardArtImage');
     if (!artImage) return;
 
@@ -2861,6 +2894,7 @@ class CardRenderer {
   }
 
   async renderArtPreview(card) {
+    card = this.getRenderCard(card);
     if (!this.artworkCanvas || !this.artworkCtx) return;
 
     const nonce = ++this.previewRenderNonce;
@@ -2950,6 +2984,7 @@ class CardRenderer {
     }
   }
   async updateCostBadge(card, renderNonce = this.contentRenderNonce) {
+    card = this.getRenderCard(card);
     if (renderNonce !== this.contentRenderNonce) return;
     if (!this.costBadgeLayer) return;
 
@@ -3041,6 +3076,7 @@ class CardRenderer {
   }
 
   updateCostBadgePosition(card) {
+    card = this.getRenderCard(card);
     if (!this.costBadgeLayer) return;
     const pos = card?.costBadgePosition || { x: 0, y: 0 };
     const scale = this.getPreviewScale();
@@ -3050,6 +3086,7 @@ class CardRenderer {
   }
 
   updateArtCrop(card) {
+    card = this.getRenderCard(card);
     const artImage = document.getElementById('cardArtImage');
     if (!artImage) return;
     const enabled = !!card?.artCropToFrame;
@@ -3110,6 +3147,7 @@ class CardRenderer {
 
   async renderCardToCanvas(card, options = {}) {
     try {
+      card = this.getRenderCard(card);
       this.tokenIconCardContext = card || null;
       if (!this.assetManifest) {
         await this.loadAssetManifest();
@@ -3639,17 +3677,6 @@ class CardRenderer {
       console.error('Error rendering card to canvas:', error);
       return null;
     }
-  }
-
-  async renderCardToDataUrl(card, options = {}) {
-    const canvas = await this.renderCardToCanvas(card, options);
-    if (!canvas) return '';
-    const shouldTrim = options.trimTransparent === true;
-    const alphaThreshold = Number.isFinite(Number(options.trimAlphaThreshold))
-      ? Number(options.trimAlphaThreshold)
-      : 1;
-    const output = shouldTrim ? this.trimTransparentCanvas(canvas, alphaThreshold) : canvas;
-    return (output || canvas).toDataURL('image/png');
   }
 
   canvasToPngBlob(canvas) {

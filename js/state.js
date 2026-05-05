@@ -78,6 +78,16 @@ class CardState {
         }
       ],
       activeTitleId: 'title-1',
+      leafletName: 'Title',
+      leafletTitleBlocks: [
+        {
+          id: 'leaflet-title-1',
+          text: 'Title',
+          position: { x: 0, y: 0 }
+        }
+      ],
+      leafletActiveTitleId: 'leaflet-title-1',
+      leafletTitlePosition: { x: 0, y: 0 },
       description: 'place holder',
       descriptionRich: [],
       descriptionHtml: '',
@@ -108,15 +118,23 @@ class CardState {
       ],
       leafletActiveDescriptionId: 'leaflet-desc-1',
       titleFont: 'PHOSPHATE_FIXED_SOLID',
+      leafletTitleFont: 'PHOSPHATE_FIXED_SOLID',
       descriptionFont: 'MYRIADPRO-BOLDCOND',
+      leafletDescriptionFont: 'MYRIADPRO-BOLDCOND',
       titleFontSize: 46,
+      leafletTitleFontSize: 46,
       descriptionFontSize: 39,
       descriptionColor: '#ffffff',
+      leafletDescriptionColor: '#ffffff',
       defaultDiceColor: '#33ccff',
       descriptionLineHeightScale: 1.2,
+      leafletDescriptionLineHeightScale: 1.2,
       titleLetterSpacing: 0.5,
+      leafletTitleLetterSpacing: 0.5,
       descriptionLetterSpacing: 0,
+      leafletDescriptionLetterSpacing: 0,
       descriptionBaselineOffset: -1,
+      leafletDescriptionBaselineOffset: -1,
       positionUnits: 'base',
       artUrl: null,
       artData: null, // Base64 encoded image
@@ -126,6 +144,14 @@ class CardState {
       artTransform: { x: 0, y: 0, scale: 1 },
       artCropToFrame: false,
       artWasCropped: false,
+      leafletArtUrl: null,
+      leafletArtData: null,
+      leafletArtSourceUrl: null,
+      leafletArtSourceData: null,
+      leafletArtCropTransform: null,
+      leafletArtTransform: { x: 0, y: 0, scale: 1 },
+      leafletArtCropToFrame: false,
+      leafletArtWasCropped: false,
       titlePosition: { x: 1.4874028450301893, y: -1.2779890290537477 },
       descriptionPosition: { x: 0, y: 0 },
       export: {
@@ -325,8 +351,10 @@ class CardState {
       const safeLayers = safeData.layers && typeof safeData.layers === 'object' ? safeData.layers : {};
       const safeCostBadge = safeData.costBadge && typeof safeData.costBadge === 'object' ? safeData.costBadge : {};
       const safeArtTransform = safeData.artTransform && typeof safeData.artTransform === 'object' ? safeData.artTransform : {};
+      const safeLeafletArtTransform = safeData.leafletArtTransform && typeof safeData.leafletArtTransform === 'object' ? safeData.leafletArtTransform : {};
       const safeCostBadgePosition = safeData.costBadgePosition && typeof safeData.costBadgePosition === 'object' ? safeData.costBadgePosition : {};
       const safeTitlePosition = safeData.titlePosition && typeof safeData.titlePosition === 'object' ? safeData.titlePosition : {};
+      const safeLeafletTitlePosition = safeData.leafletTitlePosition && typeof safeData.leafletTitlePosition === 'object' ? safeData.leafletTitlePosition : {};
       const safeDescriptionPosition = safeData.descriptionPosition && typeof safeData.descriptionPosition === 'object' ? safeData.descriptionPosition : {};
       const safeLeafletLayers = safeData.leafletLayers && typeof safeData.leafletLayers === 'object' ? safeData.leafletLayers : {};
 
@@ -335,8 +363,10 @@ class CardState {
       this.card.layers = { ...defaults.layers, ...safeLayers };
       this.card.costBadge = { ...defaults.costBadge, ...safeCostBadge };
       this.card.artTransform = { ...defaults.artTransform, ...safeArtTransform };
+      this.card.leafletArtTransform = { ...defaults.leafletArtTransform, ...safeLeafletArtTransform };
       this.card.costBadgePosition = { ...defaults.costBadgePosition, ...safeCostBadgePosition };
       this.card.titlePosition = { ...defaults.titlePosition, ...safeTitlePosition };
+      this.card.leafletTitlePosition = { ...defaults.leafletTitlePosition, ...safeLeafletTitlePosition };
       this.card.descriptionPosition = { ...defaults.descriptionPosition, ...safeDescriptionPosition };
       this.card.leafletLayers = { ...defaults.leafletLayers, ...safeLeafletLayers };
       this.card.layerOrder = this.normalizeLayerOrder(data.layerOrder || this.card.layerOrder);
@@ -353,6 +383,16 @@ class CardState {
           }
         ];
         this.card.activeTitleId = data.activeTitleId || 'title-1';
+      }
+      if (!Array.isArray(data.leafletTitleBlocks) || !data.leafletTitleBlocks.length) {
+        this.card.leafletTitleBlocks = [
+          {
+            id: 'leaflet-title-1',
+            text: data.leafletName ?? defaults.leafletName,
+            position: data.leafletTitlePosition ?? defaults.leafletTitlePosition
+          }
+        ];
+        this.card.leafletActiveTitleId = data.leafletActiveTitleId || 'leaflet-title-1';
       }
       if (!Array.isArray(data.descriptionBlocks) || !data.descriptionBlocks.length) {
         this.card.descriptionBlocks = [

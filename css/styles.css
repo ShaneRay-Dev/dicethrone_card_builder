@@ -139,6 +139,70 @@ body {
   transform: rotate(-90deg);
 }
 
+.info-banner {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid rgba(78, 205, 196, 0.35);
+  border-radius: var(--radius-md);
+  background: #101b22;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
+}
+
+.info-banner[hidden] {
+  display: none;
+}
+
+.info-banner__copy {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.info-banner__copy strong {
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.info-banner__copy code {
+  padding: 2px 5px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: #0b1018;
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.info-banner__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.info-banner__dismiss {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: #0b1018;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.info-banner__dismiss:hover {
+  color: var(--text-primary);
+  border-color: rgba(78, 205, 196, 0.45);
+}
+
 .workspace-nav {
   grid-column: 1 / -1;
   display: flex;
@@ -372,6 +436,9 @@ body {
 
 /* Buttons */
 .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 10px 16px;
   border: none;
   border-radius: var(--radius-md);
@@ -380,6 +447,7 @@ body {
   cursor: pointer;
   transition: var(--transition);
   border: 1px solid transparent;
+  text-decoration: none;
   white-space: nowrap;
 }
 
@@ -1094,6 +1162,22 @@ select:focus {
   .header-primary-actions .btn,
   .header-utility-actions .btn {
     flex: 1 1 130px;
+  }
+
+  .info-banner {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .info-banner__copy {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .info-banner__actions {
+    width: 100%;
+    justify-content: flex-end;
   }
 }
 

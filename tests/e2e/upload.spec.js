@@ -39,15 +39,6 @@ const quillStub = `
   })();
 `;
 
-const html2canvasStub = `
-  window.html2canvas = async () => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1;
-    canvas.height = 1;
-    return canvas;
-  };
-`;
-
 const jspdfStub = `
   window.jspdf = {
     jsPDF: function jsPDF() {}
@@ -60,14 +51,6 @@ test.beforeEach(async ({ page }) => {
       status: 200,
       contentType: 'application/javascript',
       body: quillStub
-    });
-  });
-
-  await page.route('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/javascript',
-      body: html2canvasStub
     });
   });
 
