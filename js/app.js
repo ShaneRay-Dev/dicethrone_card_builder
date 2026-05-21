@@ -66,5 +66,40 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }, 30000);
 
+  // Header collapse toggle
+  const headerCollapseKey = 'dtc_header_collapsed_v1';
+  const headerEl = document.getElementById('mainHeader');
+  const collapseBtn = document.getElementById('headerCollapseBtn');
+  const collapseIcon = document.querySelector('.header-collapse-icon');
+
+  if (headerEl && collapseBtn && collapseIcon) {
+    // Restore collapsed state from localStorage
+    const isCollapsed = localStorage.getItem(headerCollapseKey) === 'true';
+    if (isCollapsed) {
+      headerEl.classList.add('is-collapsed');
+      collapseBtn.setAttribute('aria-expanded', 'false');
+      collapseIcon.textContent = '+';
+    } else {
+      collapseBtn.setAttribute('aria-expanded', 'true');
+      collapseIcon.textContent = '−';
+    }
+
+    // Handle collapse button click
+    collapseBtn.addEventListener('click', () => {
+      const wasCollapsed = headerEl.classList.contains('is-collapsed');
+      if (wasCollapsed) {
+        headerEl.classList.remove('is-collapsed');
+        collapseBtn.setAttribute('aria-expanded', 'true');
+        collapseIcon.textContent = '−';
+        localStorage.setItem(headerCollapseKey, 'false');
+      } else {
+        headerEl.classList.add('is-collapsed');
+        collapseBtn.setAttribute('aria-expanded', 'false');
+        collapseIcon.textContent = '+';
+        localStorage.setItem(headerCollapseKey, 'true');
+      }
+    });
+  }
+
 });
 
