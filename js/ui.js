@@ -77,7 +77,8 @@ class UI {
       'Board Abilities': [
         'Offensive ability',
         'Passive Ability',
-        'Defensive ability'
+        'Defensive ability',
+        'Ultimate Ability'
       ]
     };
     this.descriptionColorPicker = null;
@@ -94,6 +95,8 @@ class UI {
     this.cardSubTypeGroup = document.getElementById('cardSubTypeGroup');
     this.costBadgeGroup = document.getElementById('costBadgeGroup');
     this.cardIdSection = document.getElementById('cardIdSection');
+    this.boardAbilityHeroCopyGroup = document.getElementById('boardAbilityHeroCopyGroup');
+    this.boardAbilityCopyHeroBtn = document.getElementById('boardAbilityCopyHeroBtn');
     this.cardPropertiesSummary = document.getElementById('cardPropertiesSummary');
     this.cardLayersSection = document.getElementById('cardLayersSection');
     this.descriptionLineHeightGroup = document.getElementById('descriptionLineHeightGroup');
@@ -106,12 +109,21 @@ class UI {
     this.leafletBreakAddBtn = document.getElementById('leafletBreakAddBtn');
     this.leafletBreakList = document.getElementById('leafletBreakList');
     this.leafletBreakOptions = this.buildLeafletBreakOptions();
+    this.boardCreatorModeSelect = document.getElementById('boardCreatorMode');
+    this.boardCreatorPanels = [...document.querySelectorAll('[data-board-creator-panel]')];
+    this.boardLayerWorkingArea = document.getElementById('boardLayerWorkingArea');
+    this.boardLayerAbilityPadding = document.getElementById('boardLayerAbilityPadding');
+    this.boardLayerAbilityBoundary = document.getElementById('boardLayerAbilityBoundary');
+    this.boardAddCurrentAbilityBtn = document.getElementById('boardAddCurrentAbilityBtn');
+    this.boardPlacementSelect = document.getElementById('boardPlacementSelect');
+    this.boardPlacementAddBtn = document.getElementById('boardPlacementAddBtn');
+    this.boardPlacementList = document.getElementById('boardPlacementList');
+    this.boardSlotsLayer = document.getElementById('boardSlotsLayer');
     this.boardSlotSelects = Array.from({ length: 8 }, (_, index) => document.getElementById(`boardSlot${index + 1}`));
     this.boardSlotCards = Array.from(document.querySelectorAll('.board-slot-card'));
     this.boardSlotRenderToken = 0;
+    this.boardPlacementRenderToken = 0;
     this.boardPreviewElement = document.getElementById('boardPreview');
-    this.boardUltimateTextInput = document.getElementById('boardUltimateTextInput');
-    this.boardUltimateTextEl = document.getElementById('boardUltimateText');
 
     this.imageUploadInput = document.getElementById('imageUpload');
     this.artSectionTitle = document.getElementById('artSectionTitle');
@@ -187,6 +199,7 @@ class UI {
     this.artworkLayer = document.getElementById('artworkLayer');
     this.artImage = document.getElementById('cardArtImage');
     this.descriptionImageLayer = document.getElementById('descriptionImageLayer');
+    this.cardDragGuideLayer = document.getElementById('cardDragGuideLayer');
     this.costBadgeLayer = document.getElementById('costBadgeLayer');
 
     this.previewContainer = document.querySelector('.preview-container');
@@ -201,6 +214,8 @@ class UI {
     };
     this.workspaceModeStorageKey = 'dtc_workspace_mode_v1';
     this.workspaceMode = this.getStoredWorkspaceMode();
+    this.boardCreatorModeStorageKey = 'dtc_board_creator_mode_v1';
+    this.boardCreatorMode = this.getStoredBoardCreatorMode();
     this.sidebarResizer = document.getElementById('sidebarResizer');
     this.sidebarWidthKey = 'dtc_sidebar_width_v1';
     this.previewZoomStorageKey = 'dtc_preview_zoom_v1';
@@ -262,8 +277,9 @@ class UI {
     this.deckStorageKey = 'dtc_decks_v1';
     this.boardAbilityStorageKey = 'dtc_board_abilities_v1';
     this.boardSlotStorageKey = 'dtc_board_slots_v1';
-    this.boardUltimateTextStorageKey = 'dtc_board_ultimate_text_v1';
+    this.boardPlacementStorageKey = 'dtc_board_placements_v1';
     this.boardPanStorageKey = 'dtc_board_pan_v1';
+    this.boardLayerVisibilityStorageKey = 'dtc_board_layers_v1';
     this.btnDeckView = document.getElementById('btn-deck-view');
     this.btnPrintSheet = document.getElementById('btn-print-sheet');
     this.deckViewModal = document.getElementById('deckViewModal');
@@ -371,8 +387,10 @@ class UI {
       this.deckStorageKey,
       this.boardAbilityStorageKey,
       this.boardSlotStorageKey,
-      this.boardUltimateTextStorageKey,
+      this.boardPlacementStorageKey,
       this.boardPanStorageKey,
+      this.boardLayerVisibilityStorageKey,
+      this.boardCreatorModeStorageKey,
       this.workspaceModeStorageKey,
       this.sidebarWidthKey,
       this.previewZoomStorageKey,
@@ -475,12 +493,11 @@ class UI {
     this.renderWorkerRequestId = 0;
     this.renderWorkerRequests = new Map();
     this.renderWorkerUnavailable = false;
-    this.boardUltimateRenderTimer = null;
-    this.boardUltimateRenderToken = 0;
     this.boardPan = this.getStoredBoardPan();
     this.boardPanDrag = null;
+    this.boardPlacementDrag = null;
     this.boardPanControlsInitialized = false;
-    this.boardUltimateText = this.getStoredBoardUltimateText();
+    this.boardLayerVisibility = this.getStoredBoardLayerVisibility();
     const savedPrintMode = this.getStoredPrintMode();
     this.setPrintMode(savedPrintMode, { persist: false, rerender: false, refreshAssets: true });
     this.applyWorkspaceMode(this.workspaceMode, { persist: false });
@@ -488,10 +505,7 @@ class UI {
     this.initEventListeners();
     this.initBoardPanControls();
     this.setPreviewZoom(this.previewZoom, { persist: false, rerender: false });
-    if (this.boardUltimateTextInput) {
-      this.boardUltimateTextInput.value = this.boardUltimateText;
-    }
-    this.renderBoardUltimateText(this.boardUltimateText);
+    this.applyBoardLayerVisibility(this.boardLayerVisibility, { persist: false });
     this.setBoardPan(this.boardPan?.x || 0, this.boardPan?.y || 0, { persist: false });
     this.initLayerListDragAndDrop();
     this.loadCardArtOptions();
@@ -535,15 +549,38 @@ class UI {
     return 'card';
   }
 
-  dismissInfoBanner() {
-    if (this.infoBanner) this.infoBanner.hidden = true;
+  getStoredBoardCreatorMode() {
+    if (typeof localStorage === 'undefined') return 'board';
+    const raw = String(localStorage.getItem(this.boardCreatorModeStorageKey) || '').trim().toLowerCase();
+    return raw === 'ability' ? 'ability' : 'board';
   }
 
-  getStoredBoardUltimateText() {
-    if (typeof localStorage === 'undefined') return '';
-    const raw = localStorage.getItem(this.boardUltimateTextStorageKey);
-    if (raw === null || raw === undefined) return '';
-    return String(raw).replace(/\r\n?/g, '\n');
+  setBoardCreatorMode(mode, options = {}) {
+    const nextMode = String(mode || '').trim().toLowerCase() === 'ability' ? 'ability' : 'board';
+    this.boardCreatorMode = nextMode;
+    if (this.boardCreatorModeSelect) {
+      this.boardCreatorModeSelect.value = nextMode;
+    }
+    if (options.persist !== false && typeof localStorage !== 'undefined') {
+      localStorage.setItem(this.boardCreatorModeStorageKey, nextMode);
+    }
+    if (this.workspaceMode === 'board' && options.applyWorkspace !== false) {
+      this.applyWorkspaceMode('board', { persist: false });
+    }
+  }
+
+  syncBoardCreatorPanels() {
+    const showBoardPanels = this.boardCreatorMode !== 'ability';
+    this.boardCreatorPanels.forEach((panel) => {
+      const mode = String(panel.getAttribute('data-board-creator-panel') || '').trim();
+      const show = mode === 'board' ? showBoardPanels : mode === this.boardCreatorMode;
+      panel.style.display = show ? '' : 'none';
+      panel.setAttribute('aria-hidden', show ? 'false' : 'true');
+    });
+  }
+
+  dismissInfoBanner() {
+    if (this.infoBanner) this.infoBanner.hidden = true;
   }
 
   getStoredBoardPan() {
@@ -598,10 +635,16 @@ class UI {
   }
 
   getArtContext(mode = this.workspaceMode) {
-    const isLeaflet = String(mode || '').toLowerCase() === 'leaflet';
-    const prefix = isLeaflet ? 'leafletArt' : 'art';
+    const normalizedMode = String(mode || '').toLowerCase();
+    const isLeaflet = normalizedMode === 'leaflet';
+    const isBoardAbility = normalizedMode === 'board-ability'
+      || (normalizedMode === 'board' && this.boardCreatorMode === 'ability');
+    const prefix = isLeaflet
+      ? 'leafletArt'
+      : (isBoardAbility ? 'boardAbilityArt' : 'art');
     return {
       isLeaflet,
+      isBoardAbility,
       dataKey: `${prefix}Data`,
       urlKey: `${prefix}Url`,
       sourceDataKey: `${prefix}SourceData`,
@@ -637,6 +680,126 @@ class UI {
     return transform && typeof transform === 'object'
       ? transform
       : { x: 0, y: 0, scale: 1 };
+  }
+
+  isBoardAbilityCreatorActive() {
+    return this.workspaceMode === 'board' && this.boardCreatorMode === 'ability';
+  }
+
+  isCardPreviewGuidesActive() {
+    return this.workspaceMode === 'card' || this.isBoardAbilityCreatorActive();
+  }
+
+  getGuideTargetElement(target, id = null) {
+    if (target === 'title') {
+      const layers = this.getTitleLayerElements();
+      return layers.find((layer) => !id || layer.dataset.titleId === id) || null;
+    }
+    if (target === 'description') {
+      const layers = this.getDescriptionLayerElements();
+      return layers.find((layer) => !id || layer.dataset.descriptionId === id) || null;
+    }
+    return null;
+  }
+
+  setCardDragGuideLine(orientation, value, colorClass) {
+    if (!this.cardDragGuideLayer || !Number.isFinite(value)) return;
+    const line = document.createElement('div');
+    line.className = `card-drag-guide card-drag-guide--${orientation} ${colorClass}`;
+    if (orientation === 'vertical') {
+      line.style.left = `${value}px`;
+    } else {
+      line.style.top = `${value}px`;
+    }
+    this.cardDragGuideLayer.appendChild(line);
+  }
+
+  isNearCardRenderCenter(positions = [], center = 0) {
+    const threshold = 12;
+    return (Array.isArray(positions) ? positions : []).some((position) => (
+      Number.isFinite(position) && Math.abs(position - center) <= threshold
+    ));
+  }
+
+  addNearbyCardRenderGuides(axis, positions = [], size = 0) {
+    const safeSize = Number(size);
+    if (!Number.isFinite(safeSize) || safeSize <= 0) return;
+    const orientation = axis === 'x' ? 'vertical' : 'horizontal';
+    [0.25, 0.5, 0.75].forEach((ratio) => {
+      const value = safeSize * ratio;
+      if (this.isNearCardRenderCenter(positions, value)) {
+        this.setCardDragGuideLine(orientation, value, 'card-drag-guide--render-center');
+      }
+    });
+  }
+
+  showCardDragGuides(target, id = null) {
+    if (!this.cardDragGuideLayer || !this.previewElement) return;
+    this.cardDragGuideLayer.replaceChildren();
+    if (!this.isCardPreviewGuidesActive() || (target !== 'title' && target !== 'description')) {
+      this.hideCardDragGuides();
+      return;
+    }
+
+    const element = this.getGuideTargetElement(target, id);
+    if (!element) {
+      this.hideCardDragGuides();
+      return;
+    }
+    const previewRect = this.previewElement.getBoundingClientRect();
+    const elementRect = element.getBoundingClientRect();
+    if (!previewRect.width || !previewRect.height || !elementRect.width || !elementRect.height) {
+      this.hideCardDragGuides();
+      return;
+    }
+
+    const left = elementRect.left - previewRect.left;
+    const right = elementRect.right - previewRect.left;
+    const centerX = left + elementRect.width / 2;
+    const top = elementRect.top - previewRect.top;
+    const bottom = elementRect.bottom - previewRect.top;
+    const centerY = top + elementRect.height / 2;
+
+    this.setCardDragGuideLine('vertical', left, 'card-drag-guide--edge');
+    this.setCardDragGuideLine('vertical', centerX, 'card-drag-guide--center');
+    this.setCardDragGuideLine('vertical', right, 'card-drag-guide--edge-alt');
+    this.setCardDragGuideLine('horizontal', top, 'card-drag-guide--edge-alt');
+    this.setCardDragGuideLine('horizontal', centerY, 'card-drag-guide--center');
+    this.setCardDragGuideLine('horizontal', bottom, 'card-drag-guide--edge');
+    this.addNearbyCardRenderGuides('x', [left, centerX, right], previewRect.width);
+    this.addNearbyCardRenderGuides('y', [top, centerY, bottom], previewRect.height);
+    this.cardDragGuideLayer.classList.add('is-visible');
+  }
+
+  showCardDragGuidesFromRect(rect = null) {
+    if (!this.cardDragGuideLayer || !this.previewElement || !rect) return;
+    const left = Number(rect.left);
+    const top = Number(rect.top);
+    const width = Number(rect.width);
+    const height = Number(rect.height);
+    if (![left, top, width, height].every(Number.isFinite) || width <= 0 || height <= 0) {
+      this.hideCardDragGuides();
+      return;
+    }
+    const right = left + width;
+    const bottom = top + height;
+    const previewRect = this.previewElement.getBoundingClientRect();
+    this.cardDragGuideLayer.replaceChildren();
+    this.setCardDragGuideLine('vertical', left, 'card-drag-guide--edge');
+    this.setCardDragGuideLine('vertical', left + width / 2, 'card-drag-guide--center');
+    this.setCardDragGuideLine('vertical', right, 'card-drag-guide--edge-alt');
+    this.setCardDragGuideLine('horizontal', top, 'card-drag-guide--edge-alt');
+    this.setCardDragGuideLine('horizontal', top + height / 2, 'card-drag-guide--center');
+    this.setCardDragGuideLine('horizontal', bottom, 'card-drag-guide--edge');
+    this.addNearbyCardRenderGuides('x', [left, left + width / 2, right], previewRect.width);
+    this.addNearbyCardRenderGuides('y', [top, top + height / 2, bottom], previewRect.height);
+    this.cardDragGuideLayer.classList.add('is-visible');
+  }
+
+  hideCardDragGuides() {
+    if (!this.cardDragGuideLayer) return;
+    this.cardDragGuideLayer.classList.remove('is-visible');
+    this.cardDragGuideLayer.replaceChildren();
   }
 
   buildArtUpdates(values = {}, mode = this.workspaceMode) {
@@ -713,31 +876,55 @@ class UI {
       tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
     });
 
-    const showShared = nextMode === 'card' || nextMode === 'leaflet';
+    if (nextMode !== 'board' && this.isBoardAbilityCard()) {
+      gameState.updateProperties({
+        cardType: 'Action Cards',
+        cardSubType: 'Main Phase'
+      });
+      if (this.cardTypeSelect) this.cardTypeSelect.value = 'Action Cards';
+      this.updateSubTypeLabel('Action Cards');
+      this.updateSubTypeOptions('Action Cards', 'Main Phase', false);
+      renderer.applyAssetsForCardType('Action Cards', 'Main Phase');
+    }
+
+    const showBoard = nextMode === 'board';
+    const showBoardAbilityCreator = showBoard && this.boardCreatorMode === 'ability';
+    const showBoardLayout = showBoard && !showBoardAbilityCreator;
+    const showShared = nextMode === 'card' || nextMode === 'leaflet' || showBoardAbilityCreator;
     (this.workspacePanels.shared || []).forEach((panel) => {
-      panel.classList.toggle('is-active', showShared);
-      panel.setAttribute('aria-hidden', showShared ? 'false' : 'true');
+      const panelName = panel.getAttribute('data-tool-panel') || '';
+      const showPanel = panelName === 'card-settings'
+        ? showShared
+        : (nextMode === 'card' || nextMode === 'leaflet' || showBoardAbilityCreator);
+      panel.classList.toggle('is-active', showPanel);
+      panel.setAttribute('aria-hidden', showPanel ? 'false' : 'true');
     });
     const showLeaflet = nextMode === 'leaflet';
     (this.workspacePanels.leaflet || []).forEach((panel) => {
       panel.classList.toggle('is-active', showLeaflet);
       panel.setAttribute('aria-hidden', showLeaflet ? 'false' : 'true');
     });
-    const showBoard = nextMode === 'board';
     (this.workspacePanels.board || []).forEach((panel) => {
-      panel.classList.toggle('is-active', showBoard);
-      panel.setAttribute('aria-hidden', showBoard ? 'false' : 'true');
+      const panelName = panel.getAttribute('data-tool-panel') || '';
+      const showPanel = panelName === 'board-render' ? showBoardLayout : showBoard;
+      panel.classList.toggle('is-active', showPanel);
+      panel.setAttribute('aria-hidden', showPanel ? 'false' : 'true');
     });
     if (showBoard) {
-      this.renderBoardUltimateText();
+      if (this.boardCreatorModeSelect) this.boardCreatorModeSelect.value = this.boardCreatorMode;
+      this.syncBoardCreatorPanels();
+      if (showBoardAbilityCreator) {
+        this.activateBoardAbilityCreator();
+      }
       this.setBoardPan(this.boardPan?.x || 0, this.boardPan?.y || 0, { persist: false });
+      this.renderBoardAbilityPlacements();
     }
 
     // Leaflet mode reuses title/description controls but hides card-only fields.
     const hideForLeaflet = showLeaflet;
+    const hideForBoardAbility = showBoardAbilityCreator;
     [
       this.cardTypeGroup,
-      this.cardSubTypeGroup,
       this.costBadgeGroup,
       this.cardIdSection,
       this.cardLayersSection,
@@ -746,8 +933,11 @@ class UI {
       this.descriptionBaselineOffsetGroup
     ].forEach((el) => {
       if (!el) return;
-      el.style.display = hideForLeaflet ? 'none' : '';
+      el.style.display = (hideForLeaflet || hideForBoardAbility) ? 'none' : '';
     });
+    if (this.cardSubTypeGroup) {
+      this.cardSubTypeGroup.style.display = hideForLeaflet ? 'none' : '';
+    }
     if (this.abilityDiceSection) {
       this.abilityDiceSection.style.display = hideForLeaflet ? 'none' : '';
     }
@@ -757,10 +947,18 @@ class UI {
     }
 
     if (this.artSectionTitle) {
-      this.artSectionTitle.textContent = hideForLeaflet ? 'Leaflet Art' : 'Card Art';
+      this.artSectionTitle.textContent = hideForLeaflet
+        ? 'Leaflet Art'
+        : (showBoardAbilityCreator ? 'Board Ability Art' : 'Card Art');
     }
     if (this.cardPropertiesSummary) {
-      this.cardPropertiesSummary.textContent = hideForLeaflet ? 'Leaflet Properties' : 'Card Properties';
+      this.cardPropertiesSummary.textContent = hideForLeaflet
+        ? 'Leaflet Properties'
+        : (showBoardAbilityCreator ? 'Board Ability Creator' : 'Card Properties');
+    }
+    if (this.boardAbilityHeroCopyGroup) {
+      this.boardAbilityHeroCopyGroup.hidden = !showBoardAbilityCreator;
+      this.boardAbilityHeroCopyGroup.style.display = showBoardAbilityCreator ? '' : 'none';
     }
     if (this.imageUploadLabel) {
       this.imageUploadLabel.textContent = hideForLeaflet
@@ -783,8 +981,10 @@ class UI {
         this.applyCropMask(this.getSelectedCropMaskPath(), null, false);
       }
     }
+    this.syncArtControls(gameState.getCard());
+    const renderWorkspaceMode = showBoardAbilityCreator ? 'card' : nextMode;
     if (this.referenceManager && this.referenceSelect && previousMode !== nextMode) {
-      this.applyWorkspaceReferenceDefault(nextMode, { force: true });
+      this.applyWorkspaceReferenceDefault(renderWorkspaceMode, { force: true });
     }
 
     if (options.persist !== false && typeof localStorage !== 'undefined') {
@@ -793,7 +993,7 @@ class UI {
 
     if (typeof renderer?.setWorkspaceMode === 'function') {
       try {
-        renderer.setWorkspaceMode(nextMode);
+        renderer.setWorkspaceMode(renderWorkspaceMode);
         const normalizedCard = this.ensureDescriptionBlocks(gameState.getCard());
         renderer.render(normalizedCard);
         const activeId = this.getActiveDescriptionId(normalizedCard, this.getDescriptionBlocks(normalizedCard));
@@ -890,7 +1090,8 @@ class UI {
   normalizeCardTypeAndSubtypeState(options = {}) {
     const card = gameState.getCard();
     const rawType = String(card?.cardType || '').trim();
-    const validTypes = this.cardSubTypeOptions ? Object.keys(this.cardSubTypeOptions) : [];
+    const validTypes = (this.cardSubTypeOptions ? Object.keys(this.cardSubTypeOptions) : [])
+      .filter((type) => this.workspaceMode === 'board' || type !== 'Board Abilities');
     const fallbackType = validTypes.includes('Action Cards')
       ? 'Action Cards'
       : (validTypes[0] || rawType || 'Action Cards');
@@ -1390,6 +1591,35 @@ class UI {
         this.queueRendererWork('full');
       });
     }
+    if (this.boardLayerWorkingArea) {
+      this.boardLayerWorkingArea.addEventListener('change', (e) => {
+        this.applyBoardLayerVisibility({
+          ...this.boardLayerVisibility,
+          workingArea: !!e.target.checked
+        });
+      });
+    }
+    if (this.boardLayerAbilityPadding) {
+      this.boardLayerAbilityPadding.addEventListener('change', (e) => {
+        this.applyBoardLayerVisibility({
+          ...this.boardLayerVisibility,
+          abilityPadding: !!e.target.checked
+        });
+      });
+    }
+    if (this.boardLayerAbilityBoundary) {
+      this.boardLayerAbilityBoundary.addEventListener('change', (e) => {
+        this.applyBoardLayerVisibility({
+          ...this.boardLayerVisibility,
+          abilityBoundary: !!e.target.checked
+        });
+      });
+    }
+    if (this.boardCreatorModeSelect) {
+      this.boardCreatorModeSelect.addEventListener('change', (e) => {
+        this.setBoardCreatorMode(e.target.value || 'board');
+      });
+    }
     this.boardSlotSelects.forEach((selectEl) => {
       if (!selectEl) return;
       selectEl.addEventListener('change', () => {
@@ -1397,12 +1627,19 @@ class UI {
         this.renderBoardSlotAssignments();
       });
     });
-    if (this.boardUltimateTextInput) {
-      this.boardUltimateTextInput.addEventListener('input', (e) => {
-        const value = String(e?.target?.value || '').replace(/\r\n?/g, '\n');
-        this.saveBoardUltimateText(value);
-        this.renderBoardUltimateText(value);
+    if (this.boardAddCurrentAbilityBtn) {
+      this.boardAddCurrentAbilityBtn.addEventListener('click', () => {
+        this.addCurrentBoardAbilityToBoard();
       });
+    }
+    if (this.boardPlacementAddBtn) {
+      this.boardPlacementAddBtn.addEventListener('click', () => {
+        const abilityId = String(this.boardPlacementSelect?.value || '').trim();
+        this.addBoardAbilityPlacement(abilityId);
+      });
+    }
+    if (this.boardAbilityCopyHeroBtn) {
+      this.boardAbilityCopyHeroBtn.addEventListener('click', () => this.copyBoardAbilityToHeroCard());
     }
 
     if (this.titleBoxAddBtn) {
@@ -1748,7 +1985,6 @@ class UI {
         this.updatePrintTemplateScale();
       }
       this.setBoardPan(this.boardPan?.x || 0, this.boardPan?.y || 0, { persist: false });
-      this.renderBoardUltimateText();
     });
     if (this.deckViewRefreshBtn) {
       this.deckViewRefreshBtn.addEventListener('click', () => this.renderDeckView());
@@ -1998,7 +2234,7 @@ class UI {
         localStorage.setItem(this.cropMaskKey, value);
         this.disableCropPreview();
         if (this.cropModal && this.cropModal.classList.contains('is-open')) {
-          this.applyCropMask(value, null, false);
+          this.applyCropMask(this.getSelectedCropMaskPath(), null, false);
         }
       });
     }
@@ -2245,8 +2481,41 @@ class UI {
       let activeLeafletBreakEl = null;
       let pendingLeafletBreakPosition = null;
       let dragBounds = null;
+      let dragGuideRect = null;
       let dragScale = 1;
       let dragUsesStateTransaction = false;
+
+      const getRelativePreviewRect = (el) => {
+        if (!el || !this.previewElement) return null;
+        const previewRect = this.previewElement.getBoundingClientRect();
+        const targetRect = el.getBoundingClientRect();
+        if (!targetRect.width || !targetRect.height) return null;
+        return {
+          left: targetRect.left - previewRect.left,
+          top: targetRect.top - previewRect.top,
+          width: targetRect.width,
+          height: targetRect.height
+        };
+      };
+
+      const beginDragGuides = (target, id) => {
+        dragGuideRect = null;
+        if (!this.isCardPreviewGuidesActive()) return;
+        const element = this.getGuideTargetElement(target, id);
+        dragGuideRect = getRelativePreviewRect(element);
+        if (dragGuideRect) {
+          this.showCardDragGuidesFromRect(dragGuideRect);
+        }
+      };
+
+      const updateDragGuides = (dx, dy) => {
+        if (!dragGuideRect) return;
+        this.showCardDragGuidesFromRect({
+          ...dragGuideRect,
+          left: dragGuideRect.left + dx,
+          top: dragGuideRect.top + dy
+        });
+      };
 
       const setActiveTarget = (target, descriptionId = null, titleId = null) => {
         activeTarget = target;
@@ -2323,6 +2592,9 @@ class UI {
           activeLeafletBreakEl.style.left = `${nextX}%`;
           activeLeafletBreakEl.style.top = `${nextY}%`;
         }
+        if (activeTarget === 'description' || activeTarget === 'title') {
+          updateDragGuides(dx, dy);
+        }
       };
 
       const onUp = () => {
@@ -2340,6 +2612,8 @@ class UI {
         activeLeafletBreakIndex = null;
         pendingLeafletBreakPosition = null;
         dragBounds = null;
+        dragGuideRect = null;
+        this.hideCardDragGuides();
         if (activeLeafletBreakEl) {
           activeLeafletBreakEl.classList.remove('is-dragging');
           activeLeafletBreakEl = null;
@@ -2436,6 +2710,7 @@ class UI {
         startY = e.clientY;
         const current = block.position || { x: 0, y: 0 };
         startPos = { x: current.x || 0, y: current.y || 0 };
+        beginDragGuides('title', titleId);
         pointerId = e.pointerId;
         window.addEventListener('pointermove', onMove);
         window.addEventListener('pointerup', onUp);
@@ -2469,6 +2744,7 @@ class UI {
         startY = e.clientY;
         const current = block.position || { x: 0, y: 0 };
         startPos = { x: current.x || 0, y: current.y || 0 };
+        beginDragGuides('description', descriptionId);
         pointerId = e.pointerId;
         window.addEventListener('pointermove', onMove);
         window.addEventListener('pointerup', onUp);
@@ -2531,6 +2807,7 @@ class UI {
             startTextDrag('costBadge', 'costBadge', 'costBadgePosition', e);
             return;
           }
+          this.hideCardDragGuides();
           setActiveTarget(null);
         });
       }
@@ -2571,8 +2848,10 @@ class UI {
         const dy = e.clientY - startY;
         const newX = startPos.x + dx;
         const newY = startPos.y + dy;
-        gameState.updateProperty('artTransform', {
-          ...gameState.getCard().artTransform,
+        const context = this.getArtContext();
+        const currentCard = gameState.getCard();
+        gameState.updateProperty(context.transformKey, {
+          ...(currentCard[context.transformKey] || { x: 0, y: 0, scale: 1 }),
           x: newX,
           y: newY
         });
@@ -2593,7 +2872,8 @@ class UI {
       this.previewElement.addEventListener('mousedown', (e) => {
         if (!e.altKey) return;
         const card = gameState.getCard();
-        if (!(card?.artData || card?.artUrl)) return;
+        const context = this.getArtContext();
+        if (!(card?.[context.dataKey] || card?.[context.urlKey])) return;
         isAltDragging = true;
         if (typeof gameState.beginTransaction === 'function') {
           gameState.beginTransaction();
@@ -2601,7 +2881,7 @@ class UI {
         }
         startX = e.clientX;
         startY = e.clientY;
-        const current = gameState.getCard().artTransform || { x: 0, y: 0, scale: 1 };
+        const current = gameState.getCard()[context.transformKey] || { x: 0, y: 0, scale: 1 };
         startPos = { x: current.x || 0, y: current.y || 0 };
         window.addEventListener('mousemove', onAltMove);
         window.addEventListener('mouseup', onAltUp);
@@ -2613,12 +2893,13 @@ class UI {
 
         if (e.altKey) {
           const card = gameState.getCard();
-          if (!(card?.artData || card?.artUrl)) return;
+          const context = this.getArtContext();
+          if (!(card?.[context.dataKey] || card?.[context.urlKey])) return;
           e.preventDefault();
-          const current = gameState.getCard().artTransform || { x: 0, y: 0, scale: 1 };
+          const current = gameState.getCard()[context.transformKey] || { x: 0, y: 0, scale: 1 };
           const delta = e.deltaY > 0 ? -0.05 : 0.05;
           const nextScale = Math.max(0.5, Math.min(3, (current.scale || 1) + delta));
-          gameState.updateProperty('artTransform', {
+          gameState.updateProperty(context.transformKey, {
             ...current,
             scale: nextScale
           });
@@ -3718,13 +3999,6 @@ class UI {
     this.showToasts = true;
     this.syncProcessingToastSetting();
     this.clearRenderCache();
-    if (this.boardUltimateRenderTimer !== null && typeof window !== 'undefined') {
-      window.clearTimeout(this.boardUltimateRenderTimer);
-      this.boardUltimateRenderTimer = null;
-    }
-    this.boardUltimateRenderToken += 1;
-    this.boardUltimateText = '';
-    this.renderBoardUltimateText('');
     this.boardPan = { x: 0, y: 0 };
     this.setBoardPan(0, 0, { persist: false });
     gameState.reset();
@@ -3777,16 +4051,16 @@ class UI {
     const openCropperOnUpload = !!(this.toggleCropperOnUpload && this.toggleCropperOnUpload.checked);
     const defaultTransform = { x: 0, y: 0, scale: 1 };
 
-    gameState.updateProperties({
-      artData: openCropperOnUpload ? null : imageData,
-      artUrl: null,
-      artSourceData: openCropperOnUpload ? imageData : null,
-      artSourceUrl: null,
-      artCropTransform: null,
-      artTransform: defaultTransform,
-      artCropToFrame: false,
-      artWasCropped: false
-    });
+    gameState.updateProperties(this.buildArtUpdates({
+      data: openCropperOnUpload ? null : imageData,
+      url: null,
+      sourceData: openCropperOnUpload ? imageData : null,
+      sourceUrl: null,
+      cropTransform: null,
+      transform: defaultTransform,
+      cropToFrame: false,
+      wasCropped: false
+    }));
 
     this.setImagePreviewSource(imageData);
     renderer.setCardArt(openCropperOnUpload ? null : imageData);
@@ -3810,15 +4084,15 @@ class UI {
   }
 
   clearImage() {
-    gameState.updateProperties({
-      artData: null,
-      artUrl: null,
-      artSourceData: null,
-      artSourceUrl: null,
-      artCropTransform: null,
-      artCropToFrame: false,
-      artWasCropped: false
-    });
+    gameState.updateProperties(this.buildArtUpdates({
+      data: null,
+      url: null,
+      sourceData: null,
+      sourceUrl: null,
+      cropTransform: null,
+      cropToFrame: false,
+      wasCropped: false
+    }));
     this.imageUploadInput.value = '';
     this.setImagePreviewSource('');
     renderer.setCardArt(null);
@@ -3842,16 +4116,16 @@ class UI {
 
   handleArtSelect(event) {
     const value = event.target.value || '';
-    gameState.updateProperties({
-      artUrl: value,
-      artData: null,
-      artSourceData: null,
-      artSourceUrl: null,
-      artCropTransform: null,
-      artTransform: { x: 0, y: 0, scale: 1 },
-      artCropToFrame: false,
-      artWasCropped: false
-    });
+    gameState.updateProperties(this.buildArtUpdates({
+      url: value,
+      data: null,
+      sourceData: null,
+      sourceUrl: null,
+      cropTransform: null,
+      transform: { x: 0, y: 0, scale: 1 },
+      cropToFrame: false,
+      wasCropped: false
+    }));
     if (value) {
       renderer.setCardArt(value);
       this.setImagePreviewSource(value);
@@ -3874,6 +4148,43 @@ class UI {
     if (this.btnClearImage) {
       this.btnClearImage.style.display = safeSrc ? 'inline-block' : 'none';
     }
+  }
+
+  syncArtControls(card = gameState.getCard()) {
+    const context = this.getArtContext();
+    let currentCard = card && typeof card === 'object' ? card : gameState.getCard();
+    const updates = {};
+    if (!currentCard[context.transformKey]) {
+      updates[context.transformKey] = { x: 0, y: 0, scale: 1 };
+    }
+    if (currentCard[context.sourceDataKey] === undefined) {
+      updates[context.sourceDataKey] = null;
+    }
+    if (currentCard[context.sourceUrlKey] === undefined) {
+      updates[context.sourceUrlKey] = null;
+    }
+    if (currentCard[context.cropTransformKey] === undefined) {
+      updates[context.cropTransformKey] = null;
+    }
+    if (currentCard[context.cropToFrameKey] === undefined) {
+      updates[context.cropToFrameKey] = false;
+    }
+    if (currentCard[context.wasCroppedKey] === undefined) {
+      updates[context.wasCroppedKey] = false;
+    }
+    if (Object.keys(updates).length > 0) {
+      gameState.updateProperties(updates);
+      currentCard = gameState.getCard();
+    }
+
+    const artData = currentCard[context.dataKey] || '';
+    const artUrl = currentCard[context.urlKey] || '';
+    const artSource = artData || artUrl;
+    this.setImagePreviewSource(artSource);
+    if (this.artSelect) this.artSelect.value = artUrl || '';
+    renderer.setCardArt(artSource || null);
+    this.queueRendererWork('artCrop');
+    return currentCard;
   }
 
   openCropper(imageSrc, transform = { x: 0, y: 0, scale: 1 }) {
@@ -3900,9 +4211,87 @@ class UI {
 
   getSelectedCropMaskPath() {
     const fallback = this.defaultCropMask || 'Assets/images/Card Art/Common Loot.png';
-    if (!this.cropMaskSelect) return fallback;
-    const value = String(this.cropMaskSelect.value || '').trim();
-    return value || fallback;
+    return this.getSelectedCropMaskConfig().path || fallback;
+  }
+
+  getSelectedCropMaskConfig() {
+    const fallback = this.defaultCropMask || 'Assets/images/Card Art/Common Loot.png';
+    if (!this.cropMaskSelect) return { path: fallback, mode: 'alpha' };
+    const option = this.cropMaskSelect.selectedOptions && this.cropMaskSelect.selectedOptions[0]
+      ? this.cropMaskSelect.selectedOptions[0]
+      : null;
+    const rawValue = String(this.cropMaskSelect.value || '').trim();
+    let path = rawValue || fallback;
+    let mode = String(option?.dataset?.maskMode || '').trim() || 'alpha';
+    const encodedModeMatch = path.match(/^([a-z-]+)\|(.*)$/i);
+    if (encodedModeMatch) {
+      mode = encodedModeMatch[1] || mode;
+      path = encodedModeMatch[2] || fallback;
+    }
+    return {
+      path: path || fallback,
+      mode: mode || 'alpha'
+    };
+  }
+
+  buildInsideFrameMask(maskImg) {
+    if (!maskImg || !maskImg.width || !maskImg.height) return null;
+    const canvas = document.createElement('canvas');
+    canvas.width = maskImg.width;
+    canvas.height = maskImg.height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    ctx.drawImage(maskImg, 0, 0);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    const w = canvas.width;
+    const h = canvas.height;
+    const outside = new Uint8Array(w * h);
+    const queueX = new Int32Array(w * h);
+    const queueY = new Int32Array(w * h);
+    let qh = 0;
+    let qt = 0;
+    const isTransparent = (idx) => data[idx * 4 + 3] === 0;
+    const push = (x, y) => {
+      const i = y * w + x;
+      if (outside[i] || !isTransparent(i)) return;
+      outside[i] = 1;
+      queueX[qt] = x;
+      queueY[qt] = y;
+      qt += 1;
+    };
+    for (let x = 0; x < w; x += 1) {
+      push(x, 0);
+      push(x, h - 1);
+    }
+    for (let y = 0; y < h; y += 1) {
+      push(0, y);
+      push(w - 1, y);
+    }
+    while (qh < qt) {
+      const x = queueX[qh];
+      const y = queueY[qh];
+      qh += 1;
+      if (x > 0) push(x - 1, y);
+      if (x < w - 1) push(x + 1, y);
+      if (y > 0) push(x, y - 1);
+      if (y < h - 1) push(x, y + 1);
+    }
+    const mask = ctx.createImageData(w, h);
+    const output = mask.data;
+    let hasInside = false;
+    for (let i = 0; i < w * h; i += 1) {
+      const inside = isTransparent(i) && outside[i] !== 1;
+      if (inside) hasInside = true;
+      const idx = i * 4;
+      output[idx] = 255;
+      output[idx + 1] = 255;
+      output[idx + 2] = 255;
+      output[idx + 3] = inside ? 255 : 0;
+    }
+    if (!hasInside) return null;
+    ctx.putImageData(mask, 0, 0);
+    return canvas;
   }
 
   applyCropMask(frame, transform = null, resetTransform = true) {
@@ -3951,16 +4340,16 @@ class UI {
     }
 
     gameState.updateProperty('artCroppedData', null);
-    gameState.updateProperties({
-      artData: cropped,
-      artUrl: null,
-      artSourceData: null,
-      artSourceUrl: null,
-      artCropTransform: null,
-      artTransform: { x: 0, y: 0, scale: 1 },
-      artCropToFrame: false,
-      artWasCropped: true
-    });
+    gameState.updateProperties(this.buildArtUpdates({
+      data: cropped,
+      url: null,
+      sourceData: null,
+      sourceUrl: null,
+      cropTransform: null,
+      transform: { x: 0, y: 0, scale: 1 },
+      cropToFrame: false,
+      wasCropped: true
+    }));
     if (this.artSelect) this.artSelect.value = '';
     this.setImagePreviewSource(cropped);
     renderer.setCardArt(cropped);
@@ -4019,7 +4408,8 @@ class UI {
     try {
       const img = await this.loadImageLocal(source);
       if (!img) return null;
-      const maskPath = this.getSelectedCropMaskPath();
+      const maskConfig = this.getSelectedCropMaskConfig();
+      const maskPath = maskConfig.path;
       let maskImg = null;
       try {
         maskImg = await this.loadImageLocal(maskPath);
@@ -4055,8 +4445,11 @@ class UI {
       ctx.restore();
 
       if (this.workspaceMode !== 'leaflet') {
+        const activeMask = maskConfig.mode === 'inside-frame'
+          ? (this.buildInsideFrameMask(maskImg) || maskImg)
+          : maskImg;
         ctx.globalCompositeOperation = 'destination-in';
-        ctx.drawImage(maskImg, 0, 0, frameW, frameH);
+        ctx.drawImage(activeMask, 0, 0, frameW, frameH);
         ctx.globalCompositeOperation = 'source-over';
       }
 
@@ -4077,8 +4470,9 @@ class UI {
   }
 
   getPreviewScale() {
-    const baseRaw = this.previewContainer
-      ? getComputedStyle(this.previewContainer).getPropertyValue('--card-width')
+    const styles = this.previewContainer ? getComputedStyle(this.previewContainer) : null;
+    const baseRaw = styles
+      ? (styles.getPropertyValue('--template-card-width') || styles.getPropertyValue('--card-width'))
       : '';
     const baseWidth = parseFloat(baseRaw) || 675;
     const currentWidth = this.previewElement ? this.previewElement.clientWidth : baseWidth;
@@ -4266,7 +4660,6 @@ class UI {
       localStorage.setItem(this.previewZoomStorageKey, String(zoom));
     }
     this.setBoardPan(this.boardPan?.x || 0, this.boardPan?.y || 0, { persist: false });
-    this.renderBoardUltimateText();
 
     if (!isSameZoom) {
       if (options.scheduleRerender === true) {
@@ -4353,13 +4746,18 @@ class UI {
       updates['layers.bottomNameGradient'] = true;
       updates['layers.cardId'] = true;
     }
-    if (cardType === 'Board Abilities' && cardSubType === 'Offensive ability') {
+    if (cardType === 'Board Abilities') {
+      updates['layers.cardBleed'] = false;
       updates['layers.imageFrame'] = false;
       updates['layers.attackModifier'] = false;
       updates['layers.secondAbilityFrame'] = false;
       updates['layers.topNameGradient'] = true;
       updates['layers.bottomNameGradient'] = false;
       updates['layers.cardId'] = false;
+      updates['layers.costBadge'] = false;
+      updates['layers.panelBleed'] = false;
+      updates['layers.panelLower'] = false;
+      updates['layers.panelUpper'] = true;
     }
     if (!Object.keys(updates).length) return;
     gameState.updateProperties(updates);
@@ -4846,59 +5244,8 @@ class UI {
       this.leafletSideSelect.value = (card.leafletSide === 'back') ? 'back' : 'front';
     }
 
-    // Update image preview
-    if (card.artData) {
-      if (!card.artTransform) {
-        gameState.updateProperty('artTransform', { x: 0, y: 0, scale: 1 });
-      }
-      if (card.artSourceData === undefined) {
-        gameState.updateProperty('artSourceData', null);
-      }
-      if (card.artSourceUrl === undefined) {
-        gameState.updateProperty('artSourceUrl', null);
-      }
-      if (card.artCropTransform === undefined) {
-        gameState.updateProperty('artCropTransform', null);
-      }
-      if (card.artCropToFrame === undefined) {
-        gameState.updateProperty('artCropToFrame', false);
-      }
-      if (card.artWasCropped === undefined) {
-        gameState.updateProperty('artWasCropped', false);
-      }
-      this.setImagePreviewSource(card.artData);
-      if (this.artSelect) this.artSelect.value = '';
-      renderer.setCardArt(card.artData);
-      this.queueRendererWork('artCrop');
-    } else if (card.artUrl) {
-      if (!card.artTransform) {
-        gameState.updateProperty('artTransform', { x: 0, y: 0, scale: 1 });
-      }
-      if (card.artSourceData === undefined) {
-        gameState.updateProperty('artSourceData', null);
-      }
-      if (card.artSourceUrl === undefined) {
-        gameState.updateProperty('artSourceUrl', null);
-      }
-      if (card.artCropTransform === undefined) {
-        gameState.updateProperty('artCropTransform', null);
-      }
-      if (card.artCropToFrame === undefined) {
-        gameState.updateProperty('artCropToFrame', false);
-      }
-      if (card.artWasCropped === undefined) {
-        gameState.updateProperty('artWasCropped', false);
-      }
-      this.setImagePreviewSource(card.artUrl);
-      if (this.artSelect) this.artSelect.value = card.artUrl;
-      renderer.setCardArt(card.artUrl);
-      this.queueRendererWork('artCrop');
-    } else {
-      this.setImagePreviewSource('');
-      if (this.artSelect) this.artSelect.value = '';
-      renderer.setCardArt(null);
-      this.queueRendererWork('artCrop');
-    }
+    // Update image preview for the active creator context.
+    card = this.syncArtControls(card);
     if (!card.titlePosition) {
       const activeBlock = this.getActiveTitleBlock(card);
       const fallbackPosition = activeBlock ? activeBlock.position : { x: 0, y: 0 };
@@ -4915,7 +5262,10 @@ class UI {
 
     // Update renderer
     if (typeof renderer?.setWorkspaceMode === 'function') {
-      renderer.setWorkspaceMode(this.workspaceMode);
+      const renderWorkspaceMode = (this.workspaceMode === 'board' && this.boardCreatorMode === 'ability')
+        ? 'card'
+        : this.workspaceMode;
+      renderer.setWorkspaceMode(renderWorkspaceMode);
     }
     if (typeof renderer?.setLeafletSide === 'function') {
       renderer.setLeafletSide(card.leafletSide);
@@ -6443,6 +6793,65 @@ class UI {
     }
   }
 
+  getStoredBoardLayerVisibility() {
+    const fallback = {
+      workingArea: true,
+      abilityPadding: true,
+      abilityBoundary: true
+    };
+    if (typeof localStorage === 'undefined') return fallback;
+    try {
+      const raw = localStorage.getItem(this.boardLayerVisibilityStorageKey);
+      if (!raw) return fallback;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') return fallback;
+      return {
+        workingArea: parsed.workingArea !== false,
+        abilityPadding: parsed.abilityPadding !== false,
+        abilityBoundary: parsed.abilityBoundary !== false
+      };
+    } catch (error) {
+      console.warn('Failed to load board layer visibility:', error);
+      return fallback;
+    }
+  }
+
+  saveBoardLayerVisibility(visibility = this.boardLayerVisibility) {
+    if (typeof localStorage === 'undefined') return;
+    const payload = {
+      workingArea: visibility?.workingArea !== false,
+      abilityPadding: visibility?.abilityPadding !== false,
+      abilityBoundary: visibility?.abilityBoundary !== false
+    };
+    try {
+      localStorage.setItem(this.boardLayerVisibilityStorageKey, JSON.stringify(payload));
+    } catch (error) {
+      console.warn('Failed to save board layer visibility:', error);
+    }
+  }
+
+  applyBoardLayerVisibility(visibility = this.boardLayerVisibility, options = {}) {
+    this.boardLayerVisibility = {
+      workingArea: visibility?.workingArea !== false,
+      abilityPadding: visibility?.abilityPadding !== false,
+      abilityBoundary: visibility?.abilityBoundary !== false
+    };
+
+    if (this.boardLayerWorkingArea) this.boardLayerWorkingArea.checked = this.boardLayerVisibility.workingArea;
+    if (this.boardLayerAbilityPadding) this.boardLayerAbilityPadding.checked = this.boardLayerVisibility.abilityPadding;
+    if (this.boardLayerAbilityBoundary) this.boardLayerAbilityBoundary.checked = this.boardLayerVisibility.abilityBoundary;
+
+    if (typeof renderer?.updateBoardLayerVisibility === 'function') {
+      renderer.updateBoardLayerVisibility(this.boardLayerVisibility);
+    }
+
+    if (options.persist !== false) {
+      this.saveBoardLayerVisibility(this.boardLayerVisibility);
+    }
+
+    return this.boardLayerVisibility;
+  }
+
   clampBoardPanAxis(value, maxAbs = 0) {
     const next = Number(value);
     const limit = Math.max(0, Number(maxAbs) || 0);
@@ -6590,175 +6999,591 @@ class UI {
     });
   }
 
-  saveBoardUltimateText(value = '') {
-    const normalized = String(value || '').replace(/\r\n?/g, '\n');
-    this.boardUltimateText = normalized;
-    if (typeof localStorage !== 'undefined') {
-      try {
-        localStorage.setItem(this.boardUltimateTextStorageKey, normalized);
-      } catch (error) {
-        console.warn('Failed to save board Ultimate text:', error);
-      }
-    }
-    return normalized;
-  }
-
-  clearBoardUltimateRenderedImage() {
-    if (!this.boardUltimateTextEl) return;
-    this.boardUltimateTextEl.style.removeProperty('background-image');
-    this.boardUltimateTextEl.style.removeProperty('background-size');
-    this.boardUltimateTextEl.style.removeProperty('background-position');
-    this.boardUltimateTextEl.style.removeProperty('background-repeat');
-  }
-
-  async renderBoardUltimateTextImage(text, renderToken = this.boardUltimateRenderToken, attempt = 0) {
-    if (!this.boardUltimateTextEl) return;
-    if (renderToken !== this.boardUltimateRenderToken) return;
-    if (!renderer) return;
-
-    const target = this.boardUltimateTextEl;
-    const rect = target.getBoundingClientRect();
-    const width = Math.max(1, Math.round(rect.width));
-    const height = Math.max(1, Math.round(rect.height));
-    if ((width <= 2 || height <= 2) && attempt < 2) {
-      if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
-        window.requestAnimationFrame(() => {
-          this.renderBoardUltimateTextImage(text, renderToken, attempt + 1).catch((error) => {
-            console.warn('Failed to render board Ultimate text image:', error);
-          });
-        });
-      }
-      return;
-    }
-    if (width <= 2 || height <= 2) return;
-
-    const cleanText = String(text || '').trim();
-    if (!cleanText) return;
-
-    const card = gameState.getCard ? gameState.getCard() : {};
-    if (renderer && Object.prototype.hasOwnProperty.call(renderer, 'tokenIconCardContext')) {
-      renderer.tokenIconCardContext = card || null;
-    }
-    const fontFamily = String(card?.descriptionFont || this.defaultDescriptionFont || 'Arial');
-    const lineHeightScale = Number(card?.descriptionLineHeightScale) || 1;
-    const letterSpacing = Number(card?.descriptionLetterSpacing) || 0;
-    const textColor = this.normalizeDescriptionColor(
-      card?.descriptionColor,
-      this.defaultDescriptionColor
-    );
-
-    await renderer.ensureFontLoaded(fontFamily, 700);
-    await renderer.preloadIconsForText(cleanText);
-    if (renderToken !== this.boardUltimateRenderToken) return;
-
-    const dpr = (typeof window !== 'undefined' && Number.isFinite(Number(window.devicePixelRatio)))
-      ? Math.max(1, Math.min(2, Number(window.devicePixelRatio)))
-      : 1;
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.max(1, Math.round(width * dpr));
-    canvas.height = Math.max(1, Math.round(height * dpr));
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    ctx.scale(dpr, dpr);
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.fillStyle = textColor;
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.42)';
-    ctx.shadowBlur = 2;
-    ctx.shadowOffsetY = 1;
-
-    let fontSize = Math.max(12, Math.round(height * 0.42));
-    const maxWidth = Math.max(1, width * 0.96);
-    let iconSize = Math.max(1, Math.round(fontSize * 1.386));
-    let layout = null;
-    for (let i = 0; i < 10; i += 1) {
-      ctx.font = `700 ${fontSize}px ${renderer.getFontFamily(fontFamily)}`;
-      iconSize = Math.max(1, Math.round(fontSize * 1.386));
-      layout = renderer.layoutTextWithIcons(
-        ctx,
-        cleanText,
-        maxWidth,
-        Math.max(1, fontSize * lineHeightScale),
-        iconSize,
-        letterSpacing,
-        1.0
-      );
-      if (layout.width <= width * 0.98 && layout.height <= height * 0.96) break;
-      if (fontSize <= 10) break;
-      fontSize = Math.max(10, Math.round(fontSize * 0.9));
-    }
-    if (!layout || !layout.lines || !layout.lines.length) return;
-
-    const originX = Math.max(0, Math.round((width - layout.width) / 2));
-    const originY = Math.max(0, Math.round((height - layout.height) / 2));
-    renderer.drawLaidOutTextWithIcons(
-      ctx,
-      layout,
-      originX,
-      originY,
-      iconSize,
-      'center',
-      letterSpacing
-    );
-    if (renderToken !== this.boardUltimateRenderToken) return;
-
-    const dataUrl = canvas.toDataURL('image/png');
-    target.textContent = '';
-    target.classList.remove('is-empty');
-    target.style.backgroundImage = `url('${dataUrl}')`;
-    target.style.backgroundSize = '100% 100%';
-    target.style.backgroundPosition = 'center';
-    target.style.backgroundRepeat = 'no-repeat';
-  }
-
-  renderBoardUltimateText(value = null) {
-    const normalized = (value === null || value === undefined)
-      ? String(this.boardUltimateText || '').replace(/\r\n?/g, '\n')
-      : String(value).replace(/\r\n?/g, '\n');
-    this.boardUltimateText = normalized;
-
-    if (this.boardUltimateTextInput && this.boardUltimateTextInput.value !== normalized) {
-      this.boardUltimateTextInput.value = normalized;
-    }
-
-    if (!this.boardUltimateTextEl) return;
-    const hasContent = normalized.trim().length > 0;
-    if (!hasContent) {
-      if (this.boardUltimateRenderTimer !== null && typeof window !== 'undefined') {
-        window.clearTimeout(this.boardUltimateRenderTimer);
-        this.boardUltimateRenderTimer = null;
-      }
-      this.boardUltimateRenderToken += 1;
-      this.clearBoardUltimateRenderedImage();
-      this.boardUltimateTextEl.textContent = 'Ultimate';
-      this.boardUltimateTextEl.classList.add('is-empty');
-      return;
-    }
-
-    this.boardUltimateTextEl.classList.remove('is-empty');
-    this.boardUltimateTextEl.textContent = '';
-    if (this.boardUltimateRenderTimer !== null && typeof window !== 'undefined') {
-      window.clearTimeout(this.boardUltimateRenderTimer);
-      this.boardUltimateRenderTimer = null;
-    }
-    const renderToken = ++this.boardUltimateRenderToken;
-    const triggerRender = () => {
-      this.renderBoardUltimateTextImage(normalized, renderToken).catch((error) => {
-        if (renderToken !== this.boardUltimateRenderToken) return;
-        this.clearBoardUltimateRenderedImage();
-        this.boardUltimateTextEl.textContent = normalized;
-        this.boardUltimateTextEl.classList.remove('is-empty');
-        console.warn('Failed to render board Ultimate text:', error);
-      });
+  getBoardPlacementGrid() {
+    const boardWidth = Number(renderer?.boardBaseSize?.width) || 4408;
+    const boardHeight = Number(renderer?.boardBaseSize?.height) || 2683;
+    const cardWidth = 687;
+    const cardHeight = 1041;
+    const paddingX = 26;
+    const paddingY = 541;
+    const horizontalGap = 30;
+    const verticalGap = 35;
+    const standardToUltimateGap = 55;
+    const rightPairLeft = boardWidth - paddingX - (cardWidth * 2) - horizontalGap;
+    const leftPairRight = paddingX + (cardWidth * 2) + horizontalGap;
+    const ultimateWidth = Math.max(1, rightPairLeft - leftPairRight - (standardToUltimateGap * 2));
+    const ultimateHeight = Math.round(ultimateWidth * (2116 / 1410));
+    const ultimateX = leftPairRight + standardToUltimateGap;
+    const ultimateY = Math.max(0, boardHeight - paddingX - ultimateHeight);
+    return {
+      boardWidth,
+      boardHeight,
+      cardWidth,
+      cardHeight,
+      ultimateWidth,
+      ultimateHeight,
+      ultimateX,
+      ultimateY,
+      ultimateMinX: 0,
+      ultimateMaxX: Math.max(0, boardWidth - ultimateWidth),
+      xPositions: [
+        paddingX,
+        paddingX + cardWidth + horizontalGap,
+        rightPairLeft,
+        rightPairLeft + cardWidth + horizontalGap
+      ],
+      yPositions: [
+        paddingY,
+        paddingY + cardHeight + verticalGap
+      ]
     };
-    if (typeof window !== 'undefined') {
-      this.boardUltimateRenderTimer = window.setTimeout(() => {
-        this.boardUltimateRenderTimer = null;
-        triggerRender();
-      }, 40);
+  }
+
+  isUltimateBoardAbilityEntry(entry = null) {
+    return String(entry?.subType || entry?.cardSubType || '').trim() === 'Ultimate Ability';
+  }
+
+  isUltimatePlacement(placement = null, entry = null) {
+    return placement?.kind === 'ultimate' || this.isUltimateBoardAbilityEntry(entry);
+  }
+
+  clampBoardPlacementX(value, min, max) {
+    const raw = Number(value);
+    const low = Number.isFinite(Number(min)) ? Number(min) : 0;
+    const high = Number.isFinite(Number(max)) ? Math.max(low, Number(max)) : low;
+    if (!Number.isFinite(raw)) return low;
+    return Math.max(low, Math.min(high, raw));
+  }
+
+  normalizeBoardPlacementPosition(x, y, entry = null, placement = null) {
+    const grid = this.getBoardPlacementGrid();
+    if (this.isUltimatePlacement(placement, entry)) {
+      return {
+        x: Math.round(this.clampBoardPlacementX(
+          Number.isFinite(Number(x)) ? Number(x) : grid.ultimateX,
+          grid.ultimateMinX,
+          grid.ultimateMaxX
+        )),
+        y: grid.ultimateY
+      };
+    }
+    const nearest = (value, positions) => positions.reduce((best, current) => (
+      Math.abs(current - value) < Math.abs(best - value) ? current : best
+    ), positions[0] || 0);
+    return {
+      x: nearest(Number(x) || 0, grid.xPositions),
+      y: nearest(Number(y) || 0, grid.yPositions)
+    };
+  }
+
+  snapBoardPlacementPosition(x, y) {
+    return this.normalizeBoardPlacementPosition(x, y);
+  }
+
+  getBoardPlacementMetrics(entry = null) {
+    const grid = this.getBoardPlacementGrid();
+    if (this.isUltimateBoardAbilityEntry(entry)) {
+      return {
+        width: grid.ultimateWidth,
+        height: grid.ultimateHeight
+      };
+    }
+    return {
+      width: grid.cardWidth,
+      height: grid.cardHeight
+    };
+  }
+
+  getBoardPlacementStyle(position = {}, entry = null) {
+    const grid = this.getBoardPlacementGrid();
+    const snapped = this.normalizeBoardPlacementPosition(position.x, position.y, entry, position);
+    const metrics = this.getBoardPlacementMetrics(entry);
+    return {
+      left: `${(snapped.x / grid.boardWidth) * 100}%`,
+      top: `${(snapped.y / grid.boardHeight) * 100}%`,
+      width: `${(metrics.width / grid.boardWidth) * 100}%`,
+      height: `${(metrics.height / grid.boardHeight) * 100}%`
+    };
+  }
+
+  getStoredBoardPlacements(deckId = null) {
+    const selectedDeckId = String(deckId || this.getSelectedDeckId() || '').trim();
+    if (!selectedDeckId || typeof localStorage === 'undefined') return [];
+    try {
+      const raw = localStorage.getItem(this.boardPlacementStorageKey);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      const byDeck = parsed && typeof parsed === 'object' && parsed.byDeck && typeof parsed.byDeck === 'object'
+        ? parsed.byDeck
+        : {};
+      const placements = byDeck[selectedDeckId];
+      if (!Array.isArray(placements)) return [];
+      return placements
+        .map((placement) => {
+          if (!placement || typeof placement !== 'object') return null;
+          const id = String(placement.id || '').trim();
+          const abilityId = String(placement.abilityId || '').trim();
+          if (!id || !abilityId) return null;
+          const x = Number(placement.x);
+          const y = Number(placement.y);
+          const kind = String(placement.kind || '').trim();
+          return {
+            id,
+            abilityId,
+            x: Number.isFinite(x) ? x : 0,
+            y: Number.isFinite(y) ? y : 0,
+            ...(kind ? { kind } : {})
+          };
+        })
+        .filter(Boolean);
+    } catch (error) {
+      console.warn('Failed to load board placements:', error);
+      return [];
+    }
+  }
+
+  saveBoardPlacements(placements = [], deckId = null) {
+    const selectedDeckId = String(deckId || this.getSelectedDeckId() || '').trim();
+    if (!selectedDeckId || typeof localStorage === 'undefined') return;
+    const normalized = (Array.isArray(placements) ? placements : [])
+      .map((placement) => {
+        if (!placement || typeof placement !== 'object') return null;
+        const id = String(placement.id || '').trim();
+        const abilityId = String(placement.abilityId || '').trim();
+        if (!id || !abilityId) return null;
+        const x = Number(placement.x);
+        const y = Number(placement.y);
+        const kind = String(placement.kind || '').trim();
+        return {
+          id,
+          abilityId,
+          x: Number.isFinite(x) ? x : 0,
+          y: Number.isFinite(y) ? y : 0,
+          ...(kind ? { kind } : {})
+        };
+      })
+      .filter(Boolean);
+    try {
+      const raw = localStorage.getItem(this.boardPlacementStorageKey);
+      const parsed = raw ? JSON.parse(raw) : {};
+      const byDeck = parsed && typeof parsed === 'object' && parsed.byDeck && typeof parsed.byDeck === 'object'
+        ? parsed.byDeck
+        : {};
+      byDeck[selectedDeckId] = normalized;
+      localStorage.setItem(this.boardPlacementStorageKey, JSON.stringify({ byDeck }));
+    } catch (error) {
+      console.warn('Failed to save board placements:', error);
+    }
+  }
+
+  removeBoardPlacementsForDeck(deckId = null) {
+    const selectedDeckId = String(deckId || '').trim();
+    if (!selectedDeckId || typeof localStorage === 'undefined') return;
+    try {
+      const raw = localStorage.getItem(this.boardPlacementStorageKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      const byDeck = parsed && typeof parsed === 'object' && parsed.byDeck && typeof parsed.byDeck === 'object'
+        ? parsed.byDeck
+        : {};
+      if (!Object.prototype.hasOwnProperty.call(byDeck, selectedDeckId)) return;
+      delete byDeck[selectedDeckId];
+      localStorage.setItem(this.boardPlacementStorageKey, JSON.stringify({ byDeck }));
+    } catch (error) {
+      console.warn('Failed to update board placements:', error);
+    }
+  }
+
+  getBoardAbilityEntries(deckId = null) {
+    const selectedDeckId = String(deckId || this.getSelectedDeckId() || '').trim();
+    if (!selectedDeckId) return [];
+    const store = this.loadBoardAbilityStore(selectedDeckId);
+    const abilities = store.abilities && typeof store.abilities === 'object' ? store.abilities : {};
+    const order = Array.isArray(store.order) ? store.order : [];
+    return order.map((id) => abilities[id]).filter(Boolean);
+  }
+
+  getNextBoardPlacementPosition(placements = [], entry = null) {
+    const grid = this.getBoardPlacementGrid();
+    if (this.isUltimateBoardAbilityEntry(entry)) {
+      return { x: grid.ultimateX, y: grid.ultimateY };
+    }
+    const occupied = new Set((Array.isArray(placements) ? placements : []).map((placement) => (
+      `${Number(placement?.x) || 0},${Number(placement?.y) || 0}`
+    )));
+    for (const y of grid.yPositions) {
+      for (const x of grid.xPositions) {
+        const key = `${x},${y}`;
+        if (!occupied.has(key)) return { x, y };
+      }
+    }
+    return { x: grid.xPositions[0] || 0, y: grid.yPositions[0] || 0 };
+  }
+
+  applyBoardPlacementElementPosition(element, placement, entry = null) {
+    if (!element) return;
+    const style = this.getBoardPlacementStyle(placement, entry);
+    element.style.left = style.left;
+    element.style.top = style.top;
+    element.style.width = style.width;
+    element.style.height = style.height;
+  }
+
+  async renderBoardAbilityImage(entry) {
+    if (!entry) return '';
+    try {
+      const cardData = this.buildCardFromJson(entry.json);
+      if (!cardData.name || cardData.name === 'Title') {
+        cardData.name = entry.name || 'Board Ability';
+      }
+      const metrics = this.getBoardPlacementMetrics(entry);
+      const canvas = await renderer.renderCardToCanvas(cardData, {
+        width: metrics.width,
+        height: metrics.height,
+        includeBleed: false,
+        usePreviewMetrics: false,
+        fitMode: 'contain',
+        trimTransparent: true,
+        trimAlphaThreshold: 1,
+        cropToBleedBounds: true
+      });
+      if (!canvas) return '';
+      const output = renderer.trimTransparentCanvas(canvas, 1) || canvas;
+      const imageInfo = await this.canvasToImageUrl(output, false);
+      return this.scaleDeckCardDataUrl(imageInfo.value, metrics.width, metrics.height, 'cover', 1, true);
+    } catch (error) {
+      console.warn('Failed to render board ability preview:', error);
+      return '';
+    }
+  }
+
+  renderBoardPlacementList(placements = [], abilities = {}) {
+    if (!this.boardPlacementList) return;
+    this.boardPlacementList.replaceChildren();
+    const deckId = this.getSelectedDeckId();
+    if (!deckId) {
+      const empty = document.createElement('div');
+      empty.className = 'board-placement-empty';
+      empty.textContent = 'Select a deck to place abilities.';
+      this.boardPlacementList.appendChild(empty);
       return;
     }
-    triggerRender();
+    if (!placements.length) {
+      const empty = document.createElement('div');
+      empty.className = 'board-placement-empty';
+      empty.textContent = 'No abilities placed yet.';
+      this.boardPlacementList.appendChild(empty);
+      return;
+    }
+    placements.forEach((placement, index) => {
+      const entry = abilities[placement.abilityId] || null;
+      const row = document.createElement('div');
+      row.className = 'board-placement-row';
+      row.dataset.placementId = placement.id;
+
+      const name = document.createElement('span');
+      name.className = 'board-placement-row__name';
+      name.textContent = entry
+        ? `${index + 1}. ${entry.name}${entry.subType ? ` (${entry.subType})` : ''}`
+        : `${index + 1}. Missing ability`;
+      row.appendChild(name);
+
+      const loadBtn = document.createElement('button');
+      loadBtn.type = 'button';
+      loadBtn.className = 'btn btn-secondary btn-small';
+      loadBtn.textContent = 'Load';
+      loadBtn.disabled = !entry;
+      loadBtn.addEventListener('click', () => {
+        if (!entry) return;
+        if (gameState.fromJSON(entry.json)) {
+          this.updateUI();
+          this.applyWorkspaceMode('board');
+          this.queueRendererWork('full');
+        }
+      });
+      row.appendChild(loadBtn);
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'btn btn-secondary btn-small';
+      removeBtn.textContent = 'Remove';
+      removeBtn.addEventListener('click', () => this.removeBoardAbilityPlacement(placement.id));
+      row.appendChild(removeBtn);
+
+      this.boardPlacementList.appendChild(row);
+    });
+  }
+
+  startBoardPlacementDrag(event, placementEl) {
+    if (!this.boardSlotsLayer || !placementEl || event.button !== 0) return;
+    const deckId = this.getSelectedDeckId();
+    if (!deckId) return;
+    const placementId = String(placementEl.dataset.placementId || '').trim();
+    if (!placementId) return;
+    const abilityId = String(placementEl.dataset.abilityId || '').trim();
+    const entry = abilityId
+      ? this.getBoardAbilityEntries(deckId).find((item) => item.id === abilityId)
+      : null;
+
+    const layerRect = this.boardSlotsLayer.getBoundingClientRect();
+    const elementRect = placementEl.getBoundingClientRect();
+    const grid = this.getBoardPlacementGrid();
+    const scaleX = layerRect.width / grid.boardWidth || 1;
+    const scaleY = layerRect.height / grid.boardHeight || 1;
+
+    this.boardPlacementDrag = {
+      pointerId: event.pointerId,
+      placementId,
+      abilityId,
+      deckId,
+      isUltimate: this.isUltimateBoardAbilityEntry(entry),
+      offsetX: (event.clientX - elementRect.left) / scaleX,
+      offsetY: (event.clientY - elementRect.top) / scaleY,
+      moved: false
+    };
+    placementEl.classList.add('is-dragging');
+    if (typeof placementEl.setPointerCapture === 'function') {
+      try {
+        placementEl.setPointerCapture(event.pointerId);
+      } catch (error) {
+        // Ignore pointer capture failures.
+      }
+    }
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  updateBoardPlacementDrag(event, placementEl) {
+    const drag = this.boardPlacementDrag;
+    if (!drag || drag.pointerId !== event.pointerId || !this.boardSlotsLayer || !placementEl) return;
+
+    const layerRect = this.boardSlotsLayer.getBoundingClientRect();
+    const grid = this.getBoardPlacementGrid();
+    const scaleX = layerRect.width / grid.boardWidth || 1;
+    const scaleY = layerRect.height / grid.boardHeight || 1;
+    const rawX = ((event.clientX - layerRect.left) / scaleX) - drag.offsetX;
+    const rawY = ((event.clientY - layerRect.top) / scaleY) - drag.offsetY;
+    const entry = drag.abilityId
+      ? this.getBoardAbilityEntries(drag.deckId).find((item) => item.id === drag.abilityId)
+      : null;
+    const snapped = this.normalizeBoardPlacementPosition(rawX, rawY, entry, drag.isUltimate ? { kind: 'ultimate' } : null);
+    this.applyBoardPlacementElementPosition(placementEl, snapped, entry);
+    drag.nextPosition = snapped;
+    drag.moved = true;
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  finishBoardPlacementDrag(event, placementEl) {
+    const drag = this.boardPlacementDrag;
+    if (!drag || (event && drag.pointerId !== event.pointerId)) return;
+    this.boardPlacementDrag = null;
+    if (placementEl) {
+      placementEl.classList.remove('is-dragging');
+      if (typeof placementEl.hasPointerCapture === 'function'
+        && typeof placementEl.releasePointerCapture === 'function') {
+        try {
+          if (placementEl.hasPointerCapture(drag.pointerId)) {
+            placementEl.releasePointerCapture(drag.pointerId);
+          }
+        } catch (error) {
+          // Ignore pointer capture release failures.
+        }
+      }
+    }
+    if (drag.nextPosition) {
+      const placements = this.getStoredBoardPlacements(drag.deckId).map((placement) => (
+        placement.id === drag.placementId
+          ? {
+            ...placement,
+            x: drag.nextPosition.x,
+            y: drag.nextPosition.y,
+            ...(drag.isUltimate ? { kind: 'ultimate' } : {})
+          }
+          : placement
+      ));
+      this.saveBoardPlacements(placements, drag.deckId);
+      this.renderBoardPlacementList(
+        placements,
+        this.getBoardAbilityEntries(drag.deckId).reduce((map, entry) => {
+          map[entry.id] = entry;
+          return map;
+        }, {})
+      );
+    }
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }
+
+  async renderBoardAbilityPlacements() {
+    if (!this.boardSlotsLayer) return;
+    const renderToken = ++this.boardPlacementRenderToken;
+    const deckId = this.getSelectedDeckId();
+    const entries = this.getBoardAbilityEntries(deckId);
+    const abilities = entries.reduce((map, entry) => {
+      map[entry.id] = entry;
+      return map;
+    }, {});
+    const placements = this.getStoredBoardPlacements(deckId)
+      .filter((placement) => abilities[placement.abilityId])
+      .map((placement) => {
+        const entry = abilities[placement.abilityId];
+        const normalized = this.normalizeBoardPlacementPosition(placement.x, placement.y, entry, placement);
+        return {
+          ...placement,
+          ...normalized,
+          ...(this.isUltimateBoardAbilityEntry(entry) ? { kind: 'ultimate' } : {})
+        };
+      });
+
+    if (deckId) this.saveBoardPlacements(placements, deckId);
+    this.boardSlotsLayer.replaceChildren();
+    this.renderBoardPlacementList(placements, abilities);
+
+    if (!deckId || !placements.length) return;
+    await this.ensureDeckDefaultCard();
+    if (renderToken !== this.boardPlacementRenderToken) return;
+
+    for (const placement of placements) {
+      if (renderToken !== this.boardPlacementRenderToken) return;
+      const entry = abilities[placement.abilityId];
+      const placementEl = document.createElement('div');
+      placementEl.className = 'board-slot-card board-slot-card--placement is-empty';
+      placementEl.classList.toggle('board-slot-card--ultimate', this.isUltimateBoardAbilityEntry(entry));
+      placementEl.dataset.placementId = placement.id;
+      placementEl.dataset.abilityId = placement.abilityId;
+      if (this.isUltimateBoardAbilityEntry(entry)) placementEl.dataset.placementKind = 'ultimate';
+      this.applyBoardPlacementElementPosition(placementEl, placement, entry);
+      this.setBoardSlotCardContent(placementEl, placement.id, entry, '');
+      placementEl.addEventListener('pointerdown', (event) => this.startBoardPlacementDrag(event, placementEl));
+      placementEl.addEventListener('pointermove', (event) => this.updateBoardPlacementDrag(event, placementEl));
+      placementEl.addEventListener('pointerup', (event) => this.finishBoardPlacementDrag(event, placementEl));
+      placementEl.addEventListener('pointercancel', (event) => this.finishBoardPlacementDrag(event, placementEl));
+      placementEl.addEventListener('lostpointercapture', (event) => this.finishBoardPlacementDrag(event, placementEl));
+      this.boardSlotsLayer.appendChild(placementEl);
+
+      const imageSrc = await this.renderBoardAbilityImage(entry);
+      if (renderToken !== this.boardPlacementRenderToken) return;
+      this.setBoardSlotCardContent(placementEl, placement.id, entry, imageSrc);
+    }
+  }
+
+  addBoardAbilityPlacement(abilityId = '') {
+    const deckId = this.getSelectedDeckId();
+    if (!deckId) {
+      this.showToast('Select a deck before placing Board Abilities.', { force: true, duration: 2600 });
+      return;
+    }
+    const id = String(abilityId || '').trim();
+    if (!id) {
+      this.showToast('Select a saved Board Ability to add.', { force: true, duration: 2400 });
+      return;
+    }
+    const entries = this.getBoardAbilityEntries(deckId);
+    const entry = entries.find((item) => item.id === id);
+    if (!entry) {
+      this.showToast('That Board Ability is no longer available.', { force: true, duration: 2600 });
+      this.refreshBoardAbilityOptions();
+      return;
+    }
+    let placements = this.getStoredBoardPlacements(deckId);
+    if (this.isUltimateBoardAbilityEntry(entry)) {
+      const byId = entries.reduce((map, item) => {
+        map[item.id] = item;
+        return map;
+      }, {});
+      placements = placements.filter((placement) => !this.isUltimateBoardAbilityEntry(byId[placement.abilityId]));
+    }
+    const position = this.getNextBoardPlacementPosition(placements, entry);
+    placements.push({
+      id: `board_place_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      abilityId: id,
+      x: position.x,
+      y: position.y,
+      ...(this.isUltimateBoardAbilityEntry(entry) ? { kind: 'ultimate' } : {})
+    });
+    this.saveBoardPlacements(placements, deckId);
+    this.renderBoardAbilityPlacements();
+  }
+
+  async addCurrentBoardAbilityToBoard() {
+    this.activateBoardAbilityCreator();
+    const entry = await this.saveBoardAbility(gameState.getCard());
+    if (!entry || !entry.id) return;
+    this.addBoardAbilityPlacement(entry.id);
+  }
+
+  removeBoardAbilityPlacement(placementId = '') {
+    const deckId = this.getSelectedDeckId();
+    const id = String(placementId || '').trim();
+    if (!deckId || !id) return;
+    const placements = this.getStoredBoardPlacements(deckId).filter((placement) => placement.id !== id);
+    this.saveBoardPlacements(placements, deckId);
+    this.renderBoardAbilityPlacements();
+  }
+
+  activateBoardAbilityCreator() {
+    const card = gameState.getCard();
+    const subtypeOptions = this.getSubtypeOptionsForCardType('Board Abilities');
+    const nextSubtype = subtypeOptions.includes(String(card?.cardSubType || ''))
+      ? card.cardSubType
+      : (subtypeOptions[0] || 'Offensive ability');
+    const updates = {};
+    if (card.cardType !== 'Board Abilities') updates.cardType = 'Board Abilities';
+    if (card.cardSubType !== nextSubtype) updates.cardSubType = nextSubtype;
+    if (Object.keys(updates).length) {
+      gameState.updateProperties(updates);
+    }
+    if (this.cardTypeSelect) this.cardTypeSelect.value = 'Board Abilities';
+    this.updateSubTypeLabel('Board Abilities');
+    this.updateSubTypeOptions('Board Abilities', nextSubtype, false);
+    renderer.applyAssetsForCardType('Board Abilities', nextSubtype);
+    this.applyLayerPresetForCard('Board Abilities', nextSubtype);
+    this.updateDeckSaveAvailability(gameState.getCard());
+  }
+
+  copyBoardAbilityToHeroCard() {
+    const source = this.ensureDescriptionBlocks(this.ensureTitleBlocks(gameState.getCard()));
+    const heroCard = deepCloneUI(source);
+    heroCard.cardType = 'Hero Upgrade';
+    heroCard.cardSubType = 'Ability Upgrade';
+    heroCard.cardId = '';
+    heroCard.artData = source.boardAbilityArtData || null;
+    heroCard.artUrl = source.boardAbilityArtUrl || null;
+    heroCard.artSourceData = source.boardAbilityArtSourceData || null;
+    heroCard.artSourceUrl = source.boardAbilityArtSourceUrl || null;
+    heroCard.artCropTransform = source.boardAbilityArtCropTransform || null;
+    heroCard.artTransform = source.boardAbilityArtTransform || { x: 0, y: 0, scale: 1 };
+    heroCard.artCropToFrame = source.boardAbilityArtCropToFrame === true;
+    heroCard.artWasCropped = source.boardAbilityArtWasCropped === true;
+    heroCard.export = {
+      ...(heroCard.export && typeof heroCard.export === 'object' ? heroCard.export : {}),
+      includeBleed: true
+    };
+    heroCard.layers = {
+      ...(heroCard.layers && typeof heroCard.layers === 'object' ? heroCard.layers : {}),
+      cardBleed: false,
+      imageFrame: false,
+      attackModifier: false,
+      secondAbilityFrame: true,
+      topNameGradient: true,
+      bottomNameGradient: true,
+      cardId: true,
+      costBadge: true,
+      panelBleed: true,
+      panelLower: true,
+      panelUpper: true
+    };
+    if (gameState.fromJSON(JSON.stringify(heroCard, null, 2))) {
+      this.applyWorkspaceMode('card');
+      this.applyLayerPresetForCard('Hero Upgrade', 'Ability Upgrade');
+      this.updateUI();
+      renderer.applyAssetsForCardType('Hero Upgrade', 'Ability Upgrade');
+      this.scheduleRenderWarmup({ immediate: true });
+      this.showToast('Copied Board Ability into a Hero Ability Upgrade card.', { force: true, duration: 2800 });
+    }
   }
 
   getStoredBoardSlotAssignments(deckId = null) {
@@ -6817,13 +7642,9 @@ class UI {
   }
 
   refreshBoardAbilityOptions() {
-    if (!this.boardSlotSelects.length) return;
     const deckId = this.getSelectedDeckId();
     const hasDeck = !!deckId;
-    const store = this.loadBoardAbilityStore();
-    const orderedIds = (Array.isArray(store.order) ? store.order : [])
-      .filter((id) => id && store.abilities && store.abilities[id]);
-    const abilities = hasDeck ? orderedIds.map((id) => store.abilities[id]).filter(Boolean) : [];
+    const abilities = hasDeck ? this.getBoardAbilityEntries(deckId) : [];
     const storedSelections = this.getStoredBoardSlotAssignments(deckId);
 
     this.boardSlotSelects.forEach((selectEl, index) => {
@@ -6853,7 +7674,37 @@ class UI {
     if (hasDeck) {
       this.saveBoardSlotAssignments(this.boardSlotSelects.map((selectEl) => (selectEl ? selectEl.value : '')), deckId);
     }
-    this.renderBoardSlotAssignments();
+
+    if (this.boardPlacementSelect) {
+      const currentValue = hasDeck ? String(this.boardPlacementSelect.value || '') : '';
+      this.boardPlacementSelect.innerHTML = '';
+      const emptyOption = document.createElement('option');
+      emptyOption.value = '';
+      emptyOption.textContent = hasDeck
+        ? (abilities.length ? 'Select saved ability' : 'No saved abilities')
+        : 'No deck selected';
+      this.boardPlacementSelect.appendChild(emptyOption);
+      abilities.forEach((entry) => {
+        const option = document.createElement('option');
+        option.value = entry.id;
+        option.textContent = entry.subType
+          ? `${entry.name} (${entry.subType})`
+          : entry.name;
+        this.boardPlacementSelect.appendChild(option);
+      });
+      this.boardPlacementSelect.disabled = !hasDeck || !abilities.length;
+      this.boardPlacementSelect.value = abilities.some((entry) => entry.id === currentValue) ? currentValue : '';
+    }
+    if (this.boardPlacementAddBtn) {
+      this.boardPlacementAddBtn.disabled = !hasDeck || !abilities.length;
+    }
+    if (this.boardAddCurrentAbilityBtn) {
+      this.boardAddCurrentAbilityBtn.disabled = !hasDeck;
+      this.boardAddCurrentAbilityBtn.title = hasDeck
+        ? 'Save and place the current Board Ability.'
+        : 'Select a deck before placing abilities.';
+    }
+    this.renderBoardAbilityPlacements();
   }
 
   setBoardSlotCardContent(slotEl, slotId, entry = null, imageSrc = '') {
@@ -6878,7 +7729,10 @@ class UI {
   }
 
   async renderBoardSlotAssignments() {
-    if (!this.boardSlotCards.length) return;
+    if (!this.boardSlotCards.length) {
+      await this.renderBoardAbilityPlacements();
+      return;
+    }
     const renderToken = ++this.boardSlotRenderToken;
     const deckId = this.getSelectedDeckId();
     const store = this.loadBoardAbilityStore();
@@ -6926,7 +7780,7 @@ class UI {
           const output = renderer.trimTransparentCanvas(canvas, 1) || canvas;
           const imageInfo = await this.canvasToImageUrl(output, false);
           imageSrc = imageInfo.value;
-          imageSrc = await this.scaleDeckCardDataUrl(imageSrc, 314, 476, 'cover', 1, true);
+          imageSrc = await this.scaleDeckCardDataUrl(imageSrc, 687, 1041, 'cover', 1, true);
         }
       } catch (error) {
         console.warn('Failed to render board slot preview:', slotId, error);
@@ -7249,6 +8103,7 @@ class UI {
         entries.push({
           label: this.formatStatusEffectLabel(base),
           command: `{{${key}}}`,
+          leafletCommand: `{{${key},leaflet}}`,
           iconSrc: `Assets/Status effects/${file}`
         });
       });
@@ -8582,6 +9437,7 @@ class UI {
     // New decks should start with no board abilities or slot assignments.
     this.saveBoardAbilityStore({ abilities: {}, order: [] }, id);
     this.saveBoardSlotAssignments(Array.from({ length: this.boardSlotSelects.length }, () => ''), id);
+    this.saveBoardPlacements([], id);
     this.deckNameInput.value = '';
     this.refreshDeckUI();
     if (this.deckSelect) this.deckSelect.value = id;
@@ -8601,12 +9457,12 @@ class UI {
     const deck = this.getSelectedDeck();
     if (!deckId || !deck) {
       this.showToast('Select a deck before saving Board Abilities.', { force: true, duration: 2800 });
-      return;
+      return null;
     }
     const rawName = String(target?.name || '').trim();
     if (!rawName || rawName === 'Title') {
       this.showToast('Please name the Board Ability before saving it.', { force: true, duration: 2800 });
-      return;
+      return null;
     }
 
     const store = this.loadBoardAbilityStore(deckId);
@@ -8639,13 +9495,14 @@ class UI {
     const id = (existingId && shouldOverwrite)
       ? existingId
       : `board_ability_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    abilities[id] = {
+    const entry = {
       id,
       name: finalName,
       subType: String(target?.cardSubType || ''),
       savedAt: new Date().toISOString(),
       json: gameState.toJSON()
     };
+    abilities[id] = entry;
     if (!(existingId && shouldOverwrite)) {
       order.push(id);
     }
@@ -8653,6 +9510,7 @@ class UI {
     this.saveBoardAbilityStore({ abilities, order }, deckId);
     this.refreshBoardAbilityOptions();
     this.showToast(`Board Ability "${finalName}" saved to "${deck.name}".`, { force: true });
+    return entry;
   }
 
   async saveCardToDeck() {
@@ -8942,6 +9800,7 @@ class UI {
     if (!shouldDelete) return;
     this.removeBoardAbilityStoreForDeck(deckId);
     this.removeBoardSlotAssignmentsForDeck(deckId);
+    this.removeBoardPlacementsForDeck(deckId);
     delete store.decks[deckId];
     if (Array.isArray(store.order)) {
       store.order = store.order.filter((id) => id !== deckId);

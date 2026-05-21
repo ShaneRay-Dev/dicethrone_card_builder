@@ -112,4 +112,45 @@ describe('CardState', () => {
     expect(card.leafletLayers.title).toBe(false);
     expect(card.leafletLayers.text).toBe(true);
   });
+
+  it('keeps Board Ability art separate from Card Creator art', () => {
+    const { CardState } = loadStateModule();
+    const state = new CardState();
+    const card = state.getCard();
+
+    expect(card.artData).toBeNull();
+    expect(card.boardAbilityArtData).toBeNull();
+    expect(card.boardAbilityArtTransform).toEqual({ x: 0, y: 0, scale: 1 });
+
+    const ok = state.fromJSON(JSON.stringify({
+      artData: 'card-art',
+      boardAbilityArtData: 'board-art',
+      boardAbilityArtTransform: { x: 12, y: -4, scale: 1.5 }
+    }));
+
+    expect(ok).toBe(true);
+    const loaded = state.getCard();
+    expect(loaded.artData).toBe('card-art');
+    expect(loaded.boardAbilityArtData).toBe('board-art');
+    expect(loaded.boardAbilityArtTransform).toEqual({ x: 12, y: -4, scale: 1.5 });
+  });
+
+  it('migrates older Board Ability art into the dedicated art fields', () => {
+    const { CardState } = loadStateModule();
+    const state = new CardState();
+    const ok = state.fromJSON(JSON.stringify({
+      cardType: 'Board Abilities',
+      cardSubType: 'Offensive ability',
+      artData: 'legacy-board-art',
+      artTransform: { x: 3, y: 4, scale: 1.2 },
+      artWasCropped: true
+    }));
+
+    expect(ok).toBe(true);
+    const loaded = state.getCard();
+    expect(loaded.artData).toBe('legacy-board-art');
+    expect(loaded.boardAbilityArtData).toBe('legacy-board-art');
+    expect(loaded.boardAbilityArtTransform).toEqual({ x: 3, y: 4, scale: 1.2 });
+    expect(loaded.boardAbilityArtWasCropped).toBe(true);
+  });
 });

@@ -19,7 +19,8 @@
   --zoom-scale: 1;
   --card-scale: 1;
   --board-scale: 1;
-  --card-width: 675px;
+  --template-card-width: 675px;
+  --card-width: var(--template-card-width);
   --board-width: 2020px;
   --board-height: 1227px;
   --asset-aspect: 1.555555556;
@@ -159,32 +160,43 @@
   background-size: contain;
 }
 
-.board-layer-bg {
+.board-layer-working-area {
   z-index: 1;
 }
 
-.board-layer-ability-location {
+.board-layer-ability-padding {
   z-index: 2;
 }
 
-.board-layer-ult-space {
+.board-layer-ability-boundary {
   z-index: 3;
 }
 
-.board-layer-ultimate-slot {
-  z-index: 4;
-  pointer-events: none;
-}
-
 .board-layer-slot-grid {
-  z-index: 5;
-  pointer-events: none;
+  z-index: 4;
+  pointer-events: auto;
 }
 
 .board-slot-card {
   position: absolute;
   box-sizing: border-box;
   z-index: 1;
+  cursor: grab;
+  touch-action: none;
+}
+
+.board-slot-card.is-dragging {
+  cursor: grabbing;
+  z-index: 3;
+}
+
+.board-slot-card--placement {
+  width: 15.5853%;
+  height: 38.7999%;
+}
+
+.board-slot-card--ultimate {
+  z-index: 0;
 }
 
 .board-slot-card--1,
@@ -195,18 +207,18 @@
 .board-slot-card--6,
 .board-slot-card--7,
 .board-slot-card--8 {
-  width: 15.5446%;
-  height: 38.7938%;
+  width: 15.5853%;
+  height: 38.7999%;
 }
 
-.board-slot-card--1 { left: 1.0396%; top: 19.8859%; }
-.board-slot-card--4 { left: 17.2772%; top: 19.8859%; }
-.board-slot-card--5 { left: 67.5248%; top: 19.8859%; }
-.board-slot-card--8 { left: 83.8119%; top: 19.8859%; }
-.board-slot-card--2 { left: 1.0396%; top: 59.9837%; }
-.board-slot-card--3 { left: 17.2772%; top: 59.9837%; }
-.board-slot-card--6 { left: 67.5248%; top: 59.9837%; }
-.board-slot-card--7 { left: 83.8119%; top: 59.9837%; }
+.board-slot-card--1 { left: 0.5898%; top: 20.1640%; }
+.board-slot-card--4 { left: 16.8784%; top: 20.1640%; }
+.board-slot-card--5 { left: 67.4456%; top: 20.1640%; }
+.board-slot-card--8 { left: 83.7341%; top: 20.1640%; }
+.board-slot-card--2 { left: 0.5898%; top: 60.3429%; }
+.board-slot-card--3 { left: 16.8784%; top: 60.3429%; }
+.board-slot-card--6 { left: 67.4456%; top: 60.3429%; }
+.board-slot-card--7 { left: 83.7341%; top: 60.3429%; }
 
 .board-slot-card.is-empty {
   padding: 0;
@@ -221,6 +233,7 @@
   position: relative;
   z-index: 2;
   filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.28));
+  pointer-events: none;
 }
 
 .board-slot-card__placeholder {
@@ -236,32 +249,6 @@
   letter-spacing: 0.03em;
   color: rgba(232, 236, 242, 0.55);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
-}
-
-.board-ultimate-text {
-  position: absolute;
-  left: 34.7%;
-  top: 85.6%;
-  width: 30.9%;
-  height: 12.9%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.2% 1.8%;
-  box-sizing: border-box;
-  text-align: center;
-  color: #eef4ff;
-  font-size: calc(28px * var(--zoom-scale) * var(--board-scale));
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: 0.02em;
-  white-space: pre-wrap;
-  word-break: break-word;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.42);
-}
-
-.board-ultimate-text.is-empty {
-  color: rgba(238, 244, 255, 0.62);
 }
 
 .card-art-image.crop-to-frame {
@@ -367,6 +354,57 @@
   left: 50%;
   border-left: 1px dashed rgba(115, 196, 255, 0.95);
   box-shadow: 0 0 0 1px rgba(18, 28, 44, 0.35);
+}
+
+.card-drag-guide-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 29;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.06s ease-out;
+}
+
+.card-drag-guide-layer.is-visible {
+  opacity: 1;
+}
+
+.card-drag-guide {
+  position: absolute;
+  pointer-events: none;
+}
+
+.card-drag-guide--vertical {
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 1px dashed var(--guide-color);
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.72));
+}
+
+.card-drag-guide--horizontal {
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 1px dashed var(--guide-color);
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.72));
+}
+
+.card-drag-guide--edge {
+  --guide-color: rgba(90, 216, 255, 0.95);
+}
+
+.card-drag-guide--center {
+  --guide-color: rgba(255, 213, 79, 0.96);
+}
+
+.card-drag-guide--edge-alt {
+  --guide-color: rgba(255, 106, 166, 0.95);
+}
+
+.card-drag-guide--render-center {
+  --guide-color: rgba(95, 255, 173, 0.98);
+  border-style: solid;
 }
 
 .card-title-text.dragging {
@@ -545,7 +583,7 @@
   }
 
   .preview-container {
-    --card-width: 240px;
+    --card-width: calc(var(--template-card-width) * 0.355555556);
   }
 
   .card-header h3 {

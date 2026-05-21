@@ -36,22 +36,34 @@ describe('index.html upload markup', () => {
     const { document } = dom.window;
 
     const boardPreview = document.getElementById('boardPreview');
-    const boardLayer = document.getElementById('boardAbilityLocationLayer');
-    const boardSlotCards = Array.from(document.querySelectorAll('.board-slot-card'));
+    const cardDragGuideLayer = document.getElementById('cardDragGuideLayer');
+    const boardLayer = document.getElementById('boardWorkingAreaLayer');
+    const boardLayerToggles = [
+      document.getElementById('boardLayerWorkingArea'),
+      document.getElementById('boardLayerAbilityPadding'),
+      document.getElementById('boardLayerAbilityBoundary')
+    ];
+    const boardSlotsLayer = document.getElementById('boardSlotsLayer');
 
     expect(boardPreview).not.toBeNull();
+    expect(cardDragGuideLayer).not.toBeNull();
+    expect(cardDragGuideLayer?.classList.contains('card-drag-guide-layer')).toBe(true);
     expect(boardPreview?.classList.contains('board-preview')).toBe(true);
     expect(boardPreview?.getAttribute('data-tool-panel')).toBe('board-render');
 
     expect(boardLayer).not.toBeNull();
     expect(boardLayer?.classList.contains('board-layer')).toBe(true);
-    expect(boardLayer?.classList.contains('board-layer-ability-location')).toBe(true);
-    expect(boardSlotCards).toHaveLength(8);
+    expect(boardLayer?.classList.contains('board-layer-working-area')).toBe(true);
+    boardLayerToggles.forEach((toggle) => {
+      expect(toggle).not.toBeNull();
+      expect(toggle?.getAttribute('type')).toBe('checkbox');
+    });
+    expect(boardSlotsLayer).not.toBeNull();
 
     dom.window.close();
   });
 
-  it('offers Board Abilities as a card type option', async () => {
+  it('keeps Board Abilities out of the Card Creator type selector', async () => {
     const htmlPath = path.resolve(process.cwd(), 'index.html');
     const html = await readFile(htmlPath, 'utf8');
     const dom = new JSDOM(html);
@@ -62,23 +74,64 @@ describe('index.html upload markup', () => {
 
     expect(options).toContain('Hero Upgrade');
     expect(options).toContain('Action Cards');
-    expect(options).toContain('Board Abilities');
+    expect(options).not.toContain('Board Abilities');
 
     dom.window.close();
   });
 
-  it('renders eight board slot dropdowns in the board creator panel', async () => {
+  it('offers separate custom border and full card art crop masks', async () => {
     const htmlPath = path.resolve(process.cwd(), 'index.html');
     const html = await readFile(htmlPath, 'utf8');
     const dom = new JSDOM(html);
     const { document } = dom.window;
 
-    const boardSlots = Array.from(document.querySelectorAll('.board-slot-select'));
+    const cropMaskSelect = document.getElementById('cropMaskSelect');
+    const options = Array.from(cropMaskSelect?.querySelectorAll('option') || []).map((node) => ({
+      value: node.getAttribute('value'),
+      text: node.textContent?.trim(),
+      mode: node.getAttribute('data-mask-mode')
+    }));
 
-    expect(boardSlots).toHaveLength(8);
-    boardSlots.forEach((selectEl, index) => {
-      expect(selectEl.id).toBe(`boardSlot${index + 1}`);
+    expect(options).toContainEqual({
+      value: 'Assets/Action Cards/Main Phase/Main Action Frame.png',
+      text: 'Custom Boarder',
+      mode: 'alpha'
     });
+    expect(options).toContainEqual({
+      value: 'inside-frame|Assets/Action Cards/Main Phase/Main Action Frame.png',
+      text: 'Full Card Art',
+      mode: 'inside-frame'
+    });
+
+    dom.window.close();
+  });
+
+  it('renders board ability placement controls in the board creator panel', async () => {
+    const htmlPath = path.resolve(process.cwd(), 'index.html');
+    const html = await readFile(htmlPath, 'utf8');
+    const dom = new JSDOM(html);
+    const { document } = dom.window;
+
+    const addCurrent = document.getElementById('boardAddCurrentAbilityBtn');
+    const boardCreatorMode = document.getElementById('boardCreatorMode');
+    const placementSelect = document.getElementById('boardPlacementSelect');
+    const addSaved = document.getElementById('boardPlacementAddBtn');
+    const placementList = document.getElementById('boardPlacementList');
+    const oldUltimateInput = document.getElementById('boardUltimateTextInput');
+    const oldUltimateLayer = document.getElementById('boardUltimateSlotLayer');
+
+    expect(boardCreatorMode).not.toBeNull();
+    expect(boardCreatorMode?.tagName).toBe('SELECT');
+    expect(Array.from(boardCreatorMode?.querySelectorAll('option') || []).map((node) => node.value)).toEqual(['board', 'ability']);
+    expect(addCurrent).not.toBeNull();
+    expect(addCurrent?.tagName).toBe('BUTTON');
+    expect(placementSelect).not.toBeNull();
+    expect(placementSelect?.tagName).toBe('SELECT');
+    expect(addSaved).not.toBeNull();
+    expect(addSaved?.tagName).toBe('BUTTON');
+    expect(placementList).not.toBeNull();
+    expect(oldUltimateInput).toBeNull();
+    expect(oldUltimateLayer).toBeNull();
 
     dom.window.close();
   });

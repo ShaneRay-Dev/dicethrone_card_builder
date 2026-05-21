@@ -22,7 +22,7 @@ describe('assets manifest', () => {
     const manifestPath = path.resolve(process.cwd(), 'Assets/manifest.json');
     const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
     const boardAbilities = manifest?.['Board Abilities'];
-    const expectedKeys = ['Offensive ability', 'Passive Ability', 'Defensive ability'];
+    const expectedKeys = ['Offensive ability', 'Passive Ability', 'Defensive ability', 'Ultimate Ability'];
 
     expectedKeys.forEach((key) => {
       const entry = boardAbilities?.[key];
@@ -30,20 +30,40 @@ describe('assets manifest', () => {
     });
 
     const offensive = boardAbilities?.['Offensive ability'];
+    expect(offensive.templateSize).toEqual({ width: 687, height: 1041 });
+    expect(offensive.workingZone).toBe('Assets/Board Abilities/working_zone.png');
+    expect(offensive.bleedRatio).toBe(0);
     expect(offensive.cardBleed).toBe('');
-    expect(offensive.border).toBe('Assets/Board/Offensive Ability/Standard_ability_border.png');
-    expect(offensive.backgroundLower).toBe('Assets/Board/Offensive Ability/Standard_ability_background.png');
-    expect(offensive.backgroundUpper).toBe('Assets/Board/Offensive Ability/Standard_ability_corner.png');
-    expect(offensive.topNameGradient).toBe('Assets/Board/Offensive Ability/Standard_ability_graident.png');
+    expect(offensive.border).toBe('Assets/Board Abilities/ability_boarder.png');
+    expect(offensive.backgroundLower).toBe('Assets/Board Abilities/basic_backgound.png');
+    expect(offensive.backgroundUpper).toBe('');
+    expect(offensive.topNameGradient).toBe('Assets/Board Abilities/color_boarder.png');
     expect(offensive.cardId).toBe('');
 
     const passive = boardAbilities?.['Passive Ability'];
-    expect(passive.cardBleed).toBe('Assets/Action Cards/card_bleed.png');
-    expect(passive.border).toBe('Assets/Action Cards/Main Phase/Main Action Frame.png');
+    expect(passive.templateSize).toEqual({ width: 687, height: 1041 });
+    expect(passive.workingZone).toBe('Assets/Board Abilities/working_zone.png');
+    expect(passive.cardBleed).toBe('');
+    expect(passive.border).toBe('Assets/Board Abilities/ability_boarder.png');
+    expect(passive.backgroundLower).toBe('Assets/Board Abilities/basic_backgound.png');
+    expect(passive.backgroundUpper).toBe('Assets/Board Abilities/Passive Abilities/passive_icon.png');
+    expect(passive.topNameGradient).toBe('Assets/Board Abilities/color_boarder.png');
 
     const defensive = boardAbilities?.['Defensive ability'];
-    expect(defensive.cardBleed).toBe('Assets/Action Cards/card_bleed.png');
-    expect(defensive.border).toBe('Assets/Action Cards/Main Phase/Main Action Frame.png');
+    expect(defensive.templateSize).toEqual({ width: 687, height: 1041 });
+    expect(defensive.workingZone).toBe('Assets/Board Abilities/working_zone.png');
+    expect(defensive.cardBleed).toBe('');
+    expect(defensive.border).toBe('Assets/Board Abilities/ability_boarder.png');
+    expect(defensive.backgroundLower).toBe('Assets/Board Abilities/Defensive Abilities/Defensive_background.png');
+    expect(defensive.backgroundUpper).toBe('');
+    expect(defensive.topNameGradient).toBe('Assets/Board Abilities/color_boarder.png');
+
+    const ultimate = boardAbilities?.['Ultimate Ability'];
+    expect(ultimate.templateSize).toEqual({ width: 1410, height: 2116 });
+    expect(ultimate.workingZone).toBe('Assets/Board Abilities/Ultimate Ability/Ult_frame.png');
+    expect(ultimate.border).toBe('Assets/Board Abilities/Ultimate Ability/Ult_frame.png');
+    expect(ultimate.backgroundLower).toBe('Assets/Board Abilities/Ultimate Ability/Ult_background.png');
+    expect(ultimate.topNameGradient).toBe('Assets/Board Abilities/Ultimate Ability/Ult_color_boarder.png');
   });
 });
 
@@ -55,5 +75,17 @@ describe('render worker asset', () => {
     expect(source).toContain('compose-deck');
     expect(source).toContain('compose-print-pages');
     expect(source).toContain('OffscreenCanvas');
+  });
+});
+
+describe('status effect commands', () => {
+  it('supports leaflet status commands at 5.1 times normal status scale', async () => {
+    const rendererPath = path.resolve(process.cwd(), 'js/cardRenderer.js');
+    const uiPath = path.resolve(process.cwd(), 'js/ui.js');
+    const rendererSource = await readFile(rendererPath, 'utf8');
+    const uiSource = await readFile(uiPath, 'utf8');
+
+    expect(rendererSource).toContain("if (modifier === 'leaflet') return this.statusEffectIconScale * 5.1;");
+    expect(uiSource).toContain("leafletCommand: `{{${key},leaflet}}`");
   });
 });

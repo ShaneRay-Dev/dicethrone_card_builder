@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="css/editor-panel.css">
   <link rel="stylesheet" href="css/preview.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css">
+  <link rel="stylesheet" href="css/theme-command-center.css">
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -105,6 +106,22 @@
     <div class="container">
       <!-- Left Panel: Editor -->
       <aside class="editor-panel">
+        <div class="tool-panel" data-tool-panel="leaflet-settings" aria-hidden="true">
+          <details class="panel-section" open>
+            <summary>Custom Status Effects</summary>
+            <div class="panel-content">
+              <div class="title-input-row">
+                <input type="text" id="customStatusNameInput" placeholder="e.g. Power Punch" maxlength="40">
+                <div class="title-box-controls">
+                  <button type="button" id="customStatusAddBtn" class="title-box-add">+ Add Effect</button>
+                </div>
+              </div>
+              <small class="help-text">Creates command like <code>{{power_punch}}</code>.</small>
+              <div id="customStatusList" class="ability-dice-list"></div>
+            </div>
+          </details>
+        </div>
+
         <div class="tool-panel is-active" data-tool-panel="card-settings">
         <details class="panel-section panel-section--primary" open>
           <summary id="cardPropertiesSummary">Card Properties</summary>
@@ -114,7 +131,6 @@
               <select id="cardType">
                 <option>Hero Upgrade</option>
                 <option selected>Action Cards</option>
-                <option>Board Abilities</option>
               </select>
             </div>
 
@@ -131,6 +147,9 @@
               <label for="costInput">Cost Badge</label>
               <input type="text" id="costInput" maxlength="6">
               <small class="help-text">Type any value (e.g. 0, 3, 10).</small>
+              <label for="costDoubleDigitGap">Double Digit CP Tightness</label>
+              <input type="range" id="costDoubleDigitGap" min="0.00" max="1.00" step="0.01" value="0.28">
+              <small class="help-text">Double digit gap: <span id="costDoubleDigitGapValue">0.28</span></small>
             </div>
             <details class="panel-subsection" id="cardIdSection" open>
               <summary>Card ID</summary>
@@ -164,7 +183,7 @@
               <input type="number" id="titleFontSize" min="8" max="96" step="1" value="38">
             </div>
 
-            <div class="form-group">
+            <div class="form-group" hidden>
               <label for="titleLetterSpacing">Title Spacing (px)</label>
               <input type="range" id="titleLetterSpacing" min="-10" max="10" step="0.5" value="0.5">
               <small class="help-text">Spacing: <span id="titleLetterSpacingValue">0.5</span>px</small>
@@ -176,7 +195,7 @@
               <div id="descriptionEditor" class="description-editor"></div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" hidden>
               <label for="descriptionBoxScale">Description Box Scale</label>
               <input type="range" id="descriptionBoxScale" min="-3" max="3" step="0.01" value="1">
               <small class="help-text">Scale: <span id="descriptionBoxScaleValue">1.00</span></small>
@@ -192,19 +211,19 @@
               <input type="number" id="descriptionFontSize" min="8" max="96" step="1" value="30">
             </div>
 
-            <div class="form-group" id="descriptionLineHeightGroup">
+            <div class="form-group" id="descriptionLineHeightGroup" hidden>
               <label for="descriptionLineHeight">Description Line Spacing</label>
               <input type="range" id="descriptionLineHeight" min="0.8" max="1.6" step="0.02" value="1.2">
               <small class="help-text">Line spacing: <span id="descriptionLineHeightValue">1.2</span></small>
             </div>
 
-            <div class="form-group" id="descriptionLetterSpacingGroup">
+            <div class="form-group" id="descriptionLetterSpacingGroup" hidden>
               <label for="descriptionLetterSpacing">Description Spacing (px)</label>
               <input type="range" id="descriptionLetterSpacing" min="-10" max="10" step="0.5" value="0">
               <small class="help-text">Spacing: <span id="descriptionLetterSpacingValue">0</span>px</small>
             </div>
 
-            <div class="form-group" id="descriptionBaselineOffsetGroup">
+            <div class="form-group" id="descriptionBaselineOffsetGroup" hidden>
               <label for="descriptionBaselineOffset">Description Baseline (px)</label>
               <input type="range" id="descriptionBaselineOffset" min="-5" max="5" step="0.5" value="-1">
               <small class="help-text">Baseline: <span id="descriptionBaselineOffsetValue">-1</span>px</small>
@@ -231,6 +250,9 @@
                 <div id="abilityDiceList" class="ability-dice-list"></div>
               </div>
             </details>
+            <div class="form-group" id="boardAbilityHeroCopyGroup" hidden>
+              <button type="button" id="boardAbilityCopyHeroBtn" class="btn btn-secondary btn-small">Copy to Hero Card</button>
+            </div>
           </div>
         </details>
 
@@ -253,10 +275,17 @@
               <label for="cropMaskSelect">Crop Mask</label>
               <select id="cropMaskSelect">
                 <option value="Assets/images/Card Art/Common Loot.png">Common Loot (Default)</option>
+                <option value="Assets/Action Cards/Main Phase/Main Action Frame.png" data-mask-mode="alpha">Custom Boarder</option>
+                <option value="inside-frame|Assets/Action Cards/Main Phase/Main Action Frame.png" data-mask-mode="inside-frame">Full Card Art</option>
                 <option value="Assets/Hero Upgrade/Ability Upgrade/hero_upgrade_Ability_background_upper.png">Ability Upgrade Upper</option>
                 <option value="Assets/Board/Offensive Ability/Standard_ability_background.png">Offensive Ability Background</option>
                 <option value="Assets/Leaflet/Front/Leaflet_front_background.png">Leaflet Front</option>
               </select>
+            </div>
+            <div class="form-group">
+              <label for="artOpacity">Card Art Opacity</label>
+              <input type="range" id="artOpacity" min="0" max="100" step="1" value="100">
+              <small class="help-text">Opacity: <span id="artOpacityValue">100</span>%</small>
             </div>
             <div class="form-group">
               <label for="artSelect">Default Art</label>
@@ -435,20 +464,6 @@
           </details>
 
           <details class="panel-section" open>
-            <summary>Custom Status Effects</summary>
-            <div class="panel-content">
-              <div class="title-input-row">
-                <input type="text" id="customStatusNameInput" placeholder="e.g. Power Punch" maxlength="40">
-                <div class="title-box-controls">
-                  <button type="button" id="customStatusAddBtn" class="title-box-add">+ Add Effect</button>
-                </div>
-              </div>
-              <small class="help-text">Creates command like <code>{{power_punch}}</code>.</small>
-              <div id="customStatusList" class="ability-dice-list"></div>
-            </div>
-          </details>
-
-          <details class="panel-section" open>
             <summary>Leaflet Layers</summary>
             <div class="panel-content">
               <div class="form-group">
@@ -468,62 +483,48 @@
         </div>
 
         <div class="tool-panel" data-tool-panel="board-settings" aria-hidden="true">
-          <details class="panel-section" open>
-            <summary>Ability Slots</summary>
+          <details class="panel-section panel-section--primary" open>
+            <summary>Board Tool</summary>
             <div class="panel-content">
               <div class="form-group">
-                <label for="boardSlot1">Slot 1</label>
-                <select id="boardSlot1" class="board-slot-select">
-                  <option value="">Unassigned</option>
+                <label for="boardCreatorMode">Creator</label>
+                <select id="boardCreatorMode">
+                  <option value="board" selected>Board Creator</option>
+                  <option value="ability">Ability Creator</option>
+                </select>
+              </div>
+            </div>
+          </details>
+          <details class="panel-section" data-board-creator-panel="board" open>
+            <summary>Board Layers</summary>
+            <div class="panel-content">
+              <div class="form-group">
+                <label><input type="checkbox" id="boardLayerWorkingArea" checked> Working Area</label>
+              </div>
+              <div class="form-group">
+                <label><input type="checkbox" id="boardLayerAbilityPadding" checked> Ability Padding</label>
+              </div>
+              <div class="form-group">
+                <label><input type="checkbox" id="boardLayerAbilityBoundary" checked> Ability Boundary</label>
+              </div>
+            </div>
+          </details>
+          <details class="panel-section" data-board-creator-panel="board" open>
+            <summary>Placed Abilities</summary>
+            <div class="panel-content">
+              <div class="form-group">
+                <button type="button" id="boardAddCurrentAbilityBtn" class="btn btn-primary btn-small">Add Current Ability</button>
+              </div>
+              <div class="form-group">
+                <label for="boardPlacementSelect">Saved Ability</label>
+                <select id="boardPlacementSelect">
+                  <option value="">No saved abilities</option>
                 </select>
               </div>
               <div class="form-group">
-                <label for="boardSlot2">Slot 2</label>
-                <select id="boardSlot2" class="board-slot-select">
-                  <option value="">Unassigned</option>
-                </select>
+                <button type="button" id="boardPlacementAddBtn" class="btn btn-secondary btn-small">Add Saved Ability</button>
               </div>
-              <div class="form-group">
-                <label for="boardSlot3">Slot 3</label>
-                <select id="boardSlot3" class="board-slot-select">
-                  <option value="">Unassigned</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="boardSlot4">Slot 4</label>
-                <select id="boardSlot4" class="board-slot-select">
-                  <option value="">Unassigned</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="boardSlot5">Slot 5</label>
-                <select id="boardSlot5" class="board-slot-select">
-                  <option value="">Unassigned</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="boardSlot6">Slot 6</label>
-                <select id="boardSlot6" class="board-slot-select">
-                  <option value="">Unassigned</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="boardSlot7">Slot 7</label>
-                <select id="boardSlot7" class="board-slot-select">
-                  <option value="">Unassigned</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="boardSlot8">Slot 8</label>
-                <select id="boardSlot8" class="board-slot-select">
-                  <option value="">Unassigned</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="boardUltimateTextInput">Ultimate (Slot 9)</label>
-                <textarea id="boardUltimateTextInput" rows="4" placeholder="Enter Ultimate text..."></textarea>
-                <small class="help-text">This text appears inside the Ultimate box on the board preview.</small>
-              </div>
+              <div id="boardPlacementList" class="ability-dice-list"></div>
             </div>
           </details>
         </div>
@@ -634,6 +635,8 @@
             <div id="cardTextLayer" class="card-layer card-layer-card-text">
               <div id="descriptionImageLayer" class="card-description-image"></div>
             </div>
+
+            <div id="cardDragGuideLayer" class="card-drag-guide-layer" aria-hidden="true"></div>
             
             <!-- Reference Overlay -->
             <div id="referenceOverlay" class="reference-overlay"></div>
@@ -645,26 +648,13 @@
             </div>
           </div>
           <div class="board-preview tool-panel" data-tool-panel="board-render" id="boardPreview" aria-hidden="true">
-            <!-- Board Layer 0: Base Background -->
-            <div id="boardBackgroundLayer" class="board-layer board-layer-bg"></div>
-            <!-- Board Layer 1: Ability Location Guide -->
-            <div id="boardAbilityLocationLayer" class="board-layer board-layer-ability-location"></div>
-            <!-- Board Layer 2: Ult Space Overlay -->
-            <div id="boardUltSpaceLayer" class="board-layer board-layer-ult-space"></div>
-            <!-- Board Layer 3: Ultimate Text -->
-            <div id="boardUltimateSlotLayer" class="board-layer board-layer-ultimate-slot" aria-hidden="true">
-              <div id="boardUltimateText" class="board-ultimate-text is-empty">Ultimate</div>
-            </div>
-            <div id="boardSlotsLayer" class="board-layer board-layer-slot-grid" aria-hidden="true">
-              <div class="board-slot-card board-slot-card--1" data-slot-id="1"></div>
-              <div class="board-slot-card board-slot-card--2" data-slot-id="2"></div>
-              <div class="board-slot-card board-slot-card--3" data-slot-id="3"></div>
-              <div class="board-slot-card board-slot-card--4" data-slot-id="4"></div>
-              <div class="board-slot-card board-slot-card--5" data-slot-id="5"></div>
-              <div class="board-slot-card board-slot-card--6" data-slot-id="6"></div>
-              <div class="board-slot-card board-slot-card--7" data-slot-id="7"></div>
-              <div class="board-slot-card board-slot-card--8" data-slot-id="8"></div>
-            </div>
+            <!-- Board Layer 0: Working Area -->
+            <div id="boardWorkingAreaLayer" class="board-layer board-layer-working-area"></div>
+            <!-- Board Layer 1: Ability Padding -->
+            <div id="boardAbilityPaddingLayer" class="board-layer board-layer-ability-padding"></div>
+            <!-- Board Layer 2: Ability Boundary -->
+            <div id="boardAbilityBoundaryLayer" class="board-layer board-layer-ability-boundary"></div>
+            <div id="boardSlotsLayer" class="board-layer board-layer-slot-grid" aria-hidden="false"></div>
           </div>
           <!-- Reference Side (for side-by-side view) -->
           <div id="referenceSide" class="reference-side" aria-hidden="true"></div>
@@ -681,7 +671,7 @@
     <div class="crop-modal__backdrop"></div>
     <div class="crop-modal__panel" role="dialog" aria-label="Crop Artwork">
       <div class="crop-modal__header">
-        <h2>Crop Artwork</h2>
+        <h2 id="cropModalTitle">Crop Artwork</h2>
         <button id="cropCloseBtn" class="btn btn-secondary btn-small" type="button">Close</button>
       </div>
       <div class="crop-modal__body">
@@ -694,6 +684,7 @@
       <div class="crop-modal__footer">
         <label for="cropZoom">Zoom</label>
         <input type="range" id="cropZoom" min="0.6" max="3" step="0.02" value="1">
+        <button id="cropCenterBtn" class="btn btn-secondary btn-small" type="button">Center</button>
         <button id="cropPreviewBtn" class="btn btn-secondary btn-small" type="button">Preview Crop</button>
         <button id="cropApplyBtn" class="btn btn-primary btn-small" type="button">Apply Crop</button>
       </div>

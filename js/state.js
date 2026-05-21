@@ -142,6 +142,7 @@ class CardState {
       artSourceData: null,
       artCropTransform: null,
       artTransform: { x: 0, y: 0, scale: 1 },
+      artOpacity: 1,
       artCropToFrame: false,
       artWasCropped: false,
       leafletArtUrl: null,
@@ -152,6 +153,14 @@ class CardState {
       leafletArtTransform: { x: 0, y: 0, scale: 1 },
       leafletArtCropToFrame: false,
       leafletArtWasCropped: false,
+      boardAbilityArtUrl: null,
+      boardAbilityArtData: null,
+      boardAbilityArtSourceUrl: null,
+      boardAbilityArtSourceData: null,
+      boardAbilityArtCropTransform: null,
+      boardAbilityArtTransform: { x: 0, y: 0, scale: 1 },
+      boardAbilityArtCropToFrame: false,
+      boardAbilityArtWasCropped: false,
       titlePosition: { x: 1.4874028450301893, y: -1.2779890290537477 },
       descriptionPosition: { x: 0, y: 0 },
       export: {
@@ -185,7 +194,8 @@ class CardState {
       font: 'Arial',
       costBadge: {
         value: '',
-        fontSize: 33
+        fontSize: 33,
+        doubleDigitGap: 0.28
       },
       costBadgePosition: { x: -1.5999755859375, y: 2.399993896484375 },
       abilityDiceEntries: [],
@@ -352,6 +362,7 @@ class CardState {
       const safeCostBadge = safeData.costBadge && typeof safeData.costBadge === 'object' ? safeData.costBadge : {};
       const safeArtTransform = safeData.artTransform && typeof safeData.artTransform === 'object' ? safeData.artTransform : {};
       const safeLeafletArtTransform = safeData.leafletArtTransform && typeof safeData.leafletArtTransform === 'object' ? safeData.leafletArtTransform : {};
+      const safeBoardAbilityArtTransform = safeData.boardAbilityArtTransform && typeof safeData.boardAbilityArtTransform === 'object' ? safeData.boardAbilityArtTransform : {};
       const safeCostBadgePosition = safeData.costBadgePosition && typeof safeData.costBadgePosition === 'object' ? safeData.costBadgePosition : {};
       const safeTitlePosition = safeData.titlePosition && typeof safeData.titlePosition === 'object' ? safeData.titlePosition : {};
       const safeLeafletTitlePosition = safeData.leafletTitlePosition && typeof safeData.leafletTitlePosition === 'object' ? safeData.leafletTitlePosition : {};
@@ -364,6 +375,21 @@ class CardState {
       this.card.costBadge = { ...defaults.costBadge, ...safeCostBadge };
       this.card.artTransform = { ...defaults.artTransform, ...safeArtTransform };
       this.card.leafletArtTransform = { ...defaults.leafletArtTransform, ...safeLeafletArtTransform };
+      this.card.boardAbilityArtTransform = { ...defaults.boardAbilityArtTransform, ...safeBoardAbilityArtTransform };
+      if (
+        String(this.card.cardType || '') === 'Board Abilities'
+        && safeData.boardAbilityArtData === undefined
+        && safeData.boardAbilityArtUrl === undefined
+      ) {
+        this.card.boardAbilityArtData = safeData.artData || null;
+        this.card.boardAbilityArtUrl = safeData.artUrl || null;
+        this.card.boardAbilityArtSourceData = safeData.artSourceData || null;
+        this.card.boardAbilityArtSourceUrl = safeData.artSourceUrl || null;
+        this.card.boardAbilityArtCropTransform = safeData.artCropTransform || null;
+        this.card.boardAbilityArtTransform = { ...defaults.boardAbilityArtTransform, ...safeArtTransform };
+        this.card.boardAbilityArtCropToFrame = safeData.artCropToFrame === true;
+        this.card.boardAbilityArtWasCropped = safeData.artWasCropped === true;
+      }
       this.card.costBadgePosition = { ...defaults.costBadgePosition, ...safeCostBadgePosition };
       this.card.titlePosition = { ...defaults.titlePosition, ...safeTitlePosition };
       this.card.leafletTitlePosition = { ...defaults.leafletTitlePosition, ...safeLeafletTitlePosition };

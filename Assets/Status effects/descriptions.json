@@ -1,0 +1,611 @@
+{
+  "source": "https://dice-throne.rulepop.com/",
+  "generatedFrom": "Rulepop token search payload",
+  "entries": {
+    "accuracy": {
+      "label": "Accuracy",
+      "description": "Accuracy Tokens Paladin Positive Status Effect Stack limit 1 Spend to make your Attack undefendable A player with this token may spend it at the conclusion of their Offensive Roll Phase to make their Attack undefendable Attack Modifier",
+      "url": "https://dice-throne.rulepop.com/#token/accuracy"
+    },
+    "acuity": {
+      "label": "Acuity",
+      "description": "Acuity Tokens Jean Grey Positive Status Effect Stack limit 4 A player with these tokens may spend them for a variety of effects 1 token Re-roll 1 of your dice at any time 2 tokens Gain 4 tokens Inflict Phoenix Burn on a chosen opponent",
+      "url": "https://dice-throne.rulepop.com/#token/acuity"
+    },
+    "agility": {
+      "label": "Agility",
+      "description": "Agility Tokens Black Widow Psylocke Positive Status Effect Stack limit 2 Spend roll 1–3 to avoid damage When a player with this token receives damage they may spend it and roll 1 If the outcome is 1–3 prevent incoming damage rounded up",
+      "url": "https://dice-throne.rulepop.com/#token/agility"
+    },
+    "alpha": {
+      "label": "Alpha",
+      "description": "Alpha Tokens Wolverine Unique Status Effect Stack limit 1 Roll 1 and possibly skip Income Phase When a player is inflicted with this token as a result of an Attack they and their Attacker each immediately roll 1 If the Attacker’s roll is less this token is removed A player afflicted with this token must skip their Income Phase and then remove this token This token may not be transferred by any means but can be rem...",
+      "url": "https://dice-throne.rulepop.com/#token/alpha"
+    },
+    "back_strike": {
+      "label": "Back Strike",
+      "description": "Back Strike Tokens Samurai Positive Status Effect Stack limit 1 Spend to deal of 1 dmg When a player with Back Strike has incoming damage as a result of an opponent’s Offensive Roll Phase they may choose to spend this token If spent roll 1 Then deal the value as dmg rounded up to that opponent",
+      "url": "https://dice-throne.rulepop.com/#token/back-strike"
+    },
+    "bag_of_tricks": {
+      "label": "Bag of Tricks",
+      "description": "Bag of Tricks Tokens Loki Positive Status Effect Stack limit 2 Roll and gain a surprise During their Upkeep Phase a player with this token removes it and rolls 1 On 1 lose On 2–5 Loki chooses whether the player heals gains or receives dmg On 6 gain",
+      "url": "https://dice-throne.rulepop.com/#token/bag-of-tricks"
+    },
+    "barbed_vine": {
+      "label": "Barbed Vine",
+      "description": "Barbed Vine Tokens Treant Negative Status Effect Stack limit 1 Receive dmg for additional Roll Attempts A player afflicted with this token receives dmg for each Roll Attempt beyond the first during their Offensive Roll Phase up to a maximum of dmg per turn This token is removed and then this dmg is applied at the conclusion of the Roll Phase",
+      "url": "https://dice-throne.rulepop.com/#token/barbed-vine"
+    },
+    "battle_plan": {
+      "label": "Battle Plan",
+      "description": "Battle Plan Tokens Cyclops Positive Status Effect Stack limit 4 A player with these tokens may spend them to activate each effect once per turn 1 token Examine a chosen opponent’s hand 3 tokens Look at the top three cards of your deck If any of them are Leadership Cards you may reveal one of them to your opponent and add it to your hand Each remaining card may be discarded or put back in any order 3 tokens Inflict...",
+      "url": "https://dice-throne.rulepop.com/#token/battle-plan"
+    },
+    "bleed": {
+      "label": "Bleed",
+      "description": "Bleed Tokens Huntress Pale Lady Vampire Lord Negative Status Effect Stack limit 2 Roll 1 in Upkeep Phase On 1–4 receive dmg otherwise remove token A player afflicted with this token must roll 1 during their Upkeep Phase On 1–4 they are dealt dmg On 5–6 remove this token",
+      "url": "https://dice-throne.rulepop.com/#token/bleed"
+    },
+    "blessing_of_divinity": {
+      "label": "Blessing of Divinity",
+      "description": "Blessing of Divinity Tokens Paladin Seraph Unique Status Effect Stack limit 1 Prevent being defeated The next time a player or team with this token would have their health reduced to remove this token and set their health to instead This token may not be removed or transferred by any other means",
+      "url": "https://dice-throne.rulepop.com/#token/blessing-of-divinity"
+    },
+    "blind": {
+      "label": "Blind",
+      "description": "Blind Tokens Moon Elf Negative Status Effect Stack limit 1 On 1–2 fail your Offensive Roll Phase The next time a player afflicted with this token activates an Offensive Ability they must remove it and roll 1 On 1-2 their Offensive Ability fails to activate and has no effect of any kind If a player concludes their Offensive Roll Phase without activating an Offensive Ability remove this token",
+      "url": "https://dice-throne.rulepop.com/#token/blind"
+    },
+    "blinding_light": {
+      "label": "Blinding Light",
+      "description": "Blinding Light Tokens Seraph Negative Status Effect Stack limit 1 Roll 1 to fail or reduce Attack dmg The next time a player afflicted with this token activates an Offensive Ability they must remove this token and roll 1 On 1 their Offensive Ability fails to activate and has no effect of any kind On 2–3 any dmg they would deal for the remainder of the Roll Phase is reduced by rounded up",
+      "url": "https://dice-throne.rulepop.com/#token/blinding-light"
+    },
+    "blood_power": {
+      "label": "Blood Power",
+      "description": "Blood Power Tokens Vampire Lord Positive Status Effect Stack limit 5 A player with these tokens may spend them to activate each effect once per turn 1 token If your Offensive Roll Phase results in an Attack add dmg This counts as an Attack Modifier 2 tokens Remove a status effect from a chosen player This effect may only be activated during your Main Phase 3 tokens Draw 4 tokens Heal equal to the amount of damage...",
+      "url": "https://dice-throne.rulepop.com/#token/blood-power"
+    },
+    "bounty": {
+      "label": "Bounty",
+      "description": "Bounty Tokens Gunslinger Negative Status Effect Stack limit 1 Increase incoming Attack dmg by and the Attacker gains When a player afflicted with this token is Attacked by an opponent the Attacker increases their dmg by and gains Attack Modifier Persistent",
+      "url": "https://dice-throne.rulepop.com/#token/bounty"
+    },
+    "burn": {
+      "label": "Burn",
+      "description": "Burn Tokens Pyromancer Negative Status Effect Stack limit 1 Receive dmg in Upkeep Phase A player afflicted with this token receives dmg during their Upkeep Phase Persistent",
+      "url": "https://dice-throne.rulepop.com/#token/burn"
+    },
+    "chaos": {
+      "label": "Chaos",
+      "description": "Chaos Tokens Positive Status Effect Stack limit 6 These tokens are gained and spent by various Minions and Bosses to power certain abilities The specific Minion/Boss ability indicates how these tokens are used These tokens may not be used by Heroes",
+      "url": "https://dice-throne.rulepop.com/#token/chaos"
+    },
+    "cheer": {
+      "label": "Cheer",
+      "description": "Cheer Tokens Santa Positive Status Effect Stack limit 3 Spend to re-roll or change one of your dice to a 6 A player with this token may Spend 1 to re-roll 1 of their dice Spend 3 to change any one of their dice to a 6",
+      "url": "https://dice-throne.rulepop.com/#token/cheer"
+    },
+    "chi": {
+      "label": "Chi",
+      "description": "Chi Tokens Monk Positive Status Effect Stack limit 5 A player may spend these tokens to increase or reduce dmg Chi tokens may be spent at any time to prevent incoming damage per token Alternatively you may spend Chi to increase Attack dmg by per token spent Chi may not be used to increase dmg the turn that it was gained Attack Modifier",
+      "url": "https://dice-throne.rulepop.com/#token/chi"
+    },
+    "cleanse": {
+      "label": "Cleanse",
+      "description": "Cleanse Tokens Monk Seraph Positive Status Effect Stack limit 3 Remove one status effect A player with this token may spend it at any time to remove a single status effect from themselves",
+      "url": "https://dice-throne.rulepop.com/#token/cleanse"
+    },
+    "coal": {
+      "label": "Coal",
+      "description": "Coal Tokens Krampus Negative Status Effect Stack limit 4 Prevents from being gained The next time a player with four of these tokens would gain they must first remove all Coal tokens Then reduce the amount of gained by",
+      "url": "https://dice-throne.rulepop.com/#token/coal"
+    },
+    "combo": {
+      "label": "Combo",
+      "description": "Combo Tokens Spider-Man Unique Status Effect Stack limit 1 Perform another Offensive Roll Phase If your Offensive Roll Phase resulted in an Attack you may spend this token at the conclusion of your opponent’s Defensive Roll Phase If spent immediately target the same opponent with an additional Offensive Roll Phase Can only spend once per turn This token may not be transferred by any means but can be removed",
+      "url": "https://dice-throne.rulepop.com/#token/combo"
+    },
+    "concussion": {
+      "label": "Concussion",
+      "description": "Concussion Tokens Barbarian Negative Status Effect Stack limit 1 Skip Income Phase A player afflicted with this token must skip their Income Phase and then remove this token",
+      "url": "https://dice-throne.rulepop.com/#token/concussion"
+    },
+    "conjure": {
+      "label": "Conjure",
+      "description": "Conjure Tokens Scarlet Witch Positive Status Effect Stack limit 1 Gain a chosen player’s Positive Status Effect or inflict Reality Warp Once per turn a player with this token may spend it during their Main Phase to either Gain a Positive Status Effect from a chosen player’s leaflet Any opponent may prevent this by discarding of their choice Inflict Reality Warp on a chosen opponent",
+      "url": "https://dice-throne.rulepop.com/#token/conjure"
+    },
+    "constrict": {
+      "label": "Constrict",
+      "description": "Constrict Tokens Tactician Negative Status Effect Stack limit 1 Spend per additional Roll Attempt During their next Offensive Roll Phase a player afflicted with this token must pay per Roll Attempt beyond the first At the conclusion of the Roll Phase remove this token",
+      "url": "https://dice-throne.rulepop.com/#token/constrict"
+    },
+    "corpse": {
+      "label": "Corpse",
+      "description": "Corpse Tokens Necromancer Dial Max 10 Corpses are a unique resource that may be spent for a variety of effects during your Main Phase 2 Corpses Summon Skeletal Warrior 3 Corpses Summon Skeletal Mage 6 Corpses Summon Bone Golem 10 Corpses Gain Resurrect",
+      "url": "https://dice-throne.rulepop.com/#token/corpse"
+    },
+    "cosmic_flare": {
+      "label": "Cosmic Flare",
+      "description": "Cosmic Flare Tokens Captain Marvel Positive Status Effect Stack limit 3 Deal dmg per token to all opponents During their Upkeep Phase a player with this token deals dmg per Cosmic Flare to all opponents Then remove 1 of these tokens",
+      "url": "https://dice-throne.rulepop.com/#token/cosmic-flare"
+    },
+    "cosmic_ray": {
+      "label": "Cosmic Ray",
+      "description": "Cosmic Ray Tokens Captain Marvel Unique Status Effect Stack limit 2 Roll 2 and pick one for dmg bonus After Attacking a player with this token may spend it and roll 2 Then choose one of the 2 dice and add the value of the die to the damage total Attack Modifier This token Can only spend one per turn Cannot be spent the turn it was gained Cannot be removed or transferred by any means",
+      "url": "https://dice-throne.rulepop.com/#token/cosmic-ray"
+    },
+    "covert_ops": {
+      "label": "Covert Ops",
+      "description": "Covert Ops Tokens Black Widow Unique Status Effect Stack limit 3 Use to look at or rearrange cards You may spend this token once per turn during your Main Phase to do one of the following effects Put an Ability Upgrade from your hand into play Look at the top three cards of your deck If none of them are Ability Upgrades you may reveal these cards and search your deck for an Ability Upgrade Show it to your opponent...",
+      "url": "https://dice-throne.rulepop.com/#token/covert-ops"
+    },
+    "crackle": {
+      "label": "Crackle",
+      "description": "Crackle Tokens Scarlet Witch Positive Status Effect Stack limit 3 Spend to add dmg for each status effect If a player concludes their Offensive Roll Phase with an Attack they may spend this token If spent add dmg per Positive or Negative Status Effect on their Hero Board excluding the Crackle that was just spent up to a maximum of Only two Crackle may be spent per turn Attack Modifier",
+      "url": "https://dice-throne.rulepop.com/#token/crackle"
+    },
+    "crimson_bands": {
+      "label": "Crimson Bands",
+      "description": "Crimson Bands Tokens Doctor Strange Negative Status Effect Stack limit 1 Cannot play cards during next Roll Phase A player afflicted with this token cannot play cards during their next Roll Phase Then at the conclusion of that Roll Phase remove this token",
+      "url": "https://dice-throne.rulepop.com/#token/crimson-bands"
+    },
+    "crit": {
+      "label": "Crit",
+      "description": "Crit Tokens Paladin Positive Status Effect Stack limit 1 Spend to add dmg to your Attack If a player with this token is dealing at least dmg as a result of their Offensive Roll Phase this token may be spent to add dmg Attack Modifier",
+      "url": "https://dice-throne.rulepop.com/#token/crit"
+    },
+    "cursed_doubloon": {
+      "label": "Cursed Doubloon",
+      "description": "Cursed Doubloon Tokens Cursed Pirate Unique Status Effect Stack limit 5/3 Receive dmg in Upkeep Phase except Pirate Any player other than the Pirate afflicted with Cursed Doubloons is dealt dmg per Cursed Doubloon during their Upkeep Phase These Persistent tokens may not be moved or removed from any player except as a result of abilities on the Pirate’s Hero Board Whenever the Pirate would gain a Cursed Doubloon s...",
+      "url": "https://dice-throne.rulepop.com/#token/cursed-doubloon"
+    },
+    "decrep_ify": {
+      "label": "Decrep-ify",
+      "description": "Decrep-ify Tokens Necromancer Negative Status Effect Stack limit 1 Roll Attempts and Attacks become weaker During their next Offensive Roll Phase a player afflicted with this token may only re-roll a maximum of 2 dice when performing any Roll Attempt after their first Roll Attempt Additionally reduce any Attack dmg by Attack Modifier At the conclusion of the Roll Phase remove this token",
+      "url": "https://dice-throne.rulepop.com/#token/decrep-ify"
+    },
+    "deja_vu": {
+      "label": "Déjà Vu",
+      "description": "Déj Vu Tokens Doctor Strange Positive Status Effect Stack limit 1 Restart your Offensive Roll Phase Instead of activating an Ability a player with this token may spend it to conclude their current Offensive Roll Phase and then start a new Offensive Roll Phase",
+      "url": "https://dice-throne.rulepop.com/#token/deja-vu"
+    },
+    "delayed_poison": {
+      "label": "Delayed Poison",
+      "description": "Delayed Poison Tokens Ninja Negative Status Effect Stack limit 2 Receive dmg at the end of your turn A player afflicted with this token removes it at the conclusion of their turn and then receives dmg",
+      "url": "https://dice-throne.rulepop.com/#token/delayed-poison"
+    },
+    "dice_cube": {
+      "label": "Dice Cube",
+      "description": "Dice Cube Tokens Iceman Negative Status Effect Stack limit 2 Lowest value die cannot be re-rolled A player afflicted with this token cannot alter the lowest value die from their first Roll Attempt during their Offensive Roll Phase If at Stack Limit this affects the two lowest value dice rolled instead of one At the conclusion of the Roll Phase remove these tokens even if an Ability wasn’t activated successfully",
+      "url": "https://dice-throne.rulepop.com/#token/dice-cube"
+    },
+    "disruption": {
+      "label": "Disruption",
+      "description": "Disruption Tokens Gambit Negative Status Effect Stack limit 1 Lose or else receive dmg During their Upkeep Phase a player afflicted with this token may choose to lose If they do not or cannot they receive dmg instead Then remove this token Like other status effects that affect Henchmen and Bosses are immune to this status effect token because they are considered to have infinite",
+      "url": "https://dice-throne.rulepop.com/#token/disruption"
+    },
+    "dissolution": {
+      "label": "Dissolution",
+      "description": "Dissolution Tokens Gambit Positive Status Effect Stack limit 2 Spend to Heal or remove a status effect A player with this token may spend it during their Main Phase When spent choose a player to Heal or remove a Negative Status Effect from that player",
+      "url": "https://dice-throne.rulepop.com/#token/dissolution"
+    },
+    "dominance": {
+      "label": "Dominance",
+      "description": "Dominance Tokens Unique Status Effect Stack limit 1 When a player with this token Attacks they must roll 1 On 1 they must choose a teammate to target instead If they cannot they must discard randomly Then remove this token On 2-5 do nothing On 6 remove this token This token may not be transferred by any means but can be removed",
+      "url": "https://dice-throne.rulepop.com/#token/dominance"
+    },
+    "dreadful": {
+      "label": "Dreadful",
+      "description": "Dreadful Tokens Headless Horseman Positive Status Effect Stack limit 5 Boost various abilities These tokens affect various abilities including when you can Terrorize an opponent",
+      "url": "https://dice-throne.rulepop.com/#token/dreadful"
+    },
+    "dryad_spirit": {
+      "label": "Dryad Spirit",
+      "description": "Dryad Spirit Tokens Treant Companion Stack limit 1 Spend Dryad to add dmg Attack Modifier If an opponent’s Attack would inflict a Negative Status Effect upon you you may spend Dryad at the conclusion of their Offensive Roll Phase to prevent that incoming status effect",
+      "url": "https://dice-throne.rulepop.com/#token/dryad-spirit"
+    },
+    "egg_nog": {
+      "label": "Egg Nog",
+      "description": "Egg Nog Tokens Santa Positive Status Effect Stack limit 5 Spend 3 for a benefit A player may spend 3 of these tokens at any time to roll 1 On deal to a chosen opponent as an isolated source of undefendable dmg On Heal and gain On Heal and draw",
+      "url": "https://dice-throne.rulepop.com/#token/egg-nog"
+    },
+    "electrokinesis": {
+      "label": "Electrokinesis",
+      "description": "Electrokinesis Tokens Thor Positive Status Effect Stack limit 4 Boost abilities or spend to draw Once per turn a player may spend 4 Electrokinesis during their Main Phase to draw",
+      "url": "https://dice-throne.rulepop.com/#token/electrokinesis"
+    },
+    "entangle": {
+      "label": "Entangle",
+      "description": "Entangle Tokens Moon Elf Negative Status Effect Stack limit 1 Lose 1 Roll Attempt A player afflicted with this token gets 1 fewer Roll Attempts during their next Offensive Roll Phase At the conclusion of the Roll Phase remove this token",
+      "url": "https://dice-throne.rulepop.com/#token/entangle"
+    },
+    "evasive": {
+      "label": "Evasive",
+      "description": "Evasive Tokens Gunslinger Monk Moon Elf Positive Status Effect Stack limit 3 Spend roll 1–2 to avoid damage When a player with this token has incoming damage from any source they may choose to spend it If spent roll 1 If the outcome is 1–2 no dmg is received although other associated effects may still apply Multiple tokens may be spent in an attempt to prevent the same source of damage Henchmen and Bosses will spe...",
+      "url": "https://dice-throne.rulepop.com/#token/evasive"
+    },
+    "feather": {
+      "label": "Feather",
+      "description": "Feather Raveness Positive Status Effect Stack limit 5 A player with these tokens may spend them at any time to activate a variety of effects 1 token Force the Nevermore Die Roll to be re-rolled 2 tokens Increase or decrease the value of the Nevermore Die Roll by 1 3 tokens Activate Nevermore",
+      "url": "https://dice-throne.rulepop.com/#token/feather"
+    },
+    "fire_mastery": {
+      "label": "Fire Mastery",
+      "description": "Fire Mastery Tokens Pyromancer Positive Status Effect Stack limit 5 Remove 1 token per turn A player with this token must cool off during their Upkeep Phase by removing 1 token Fire Mastery increases the power of various abilities",
+      "url": "https://dice-throne.rulepop.com/#token/fire-mastery"
+    },
+    "flame_blast": {
+      "label": "Flame Blast",
+      "description": "Flame Blast Tokens Jean Grey Positive Status Effect Stack limit 5 Dark Phoenix may spend to increase Attack dmg If Dark Phoenix is Active she may spend Flame Blast to increase her Attack dmg by or spend 3 Flame Blast to increase her Attack dmg by Attack Modifier",
+      "url": "https://dice-throne.rulepop.com/#token/flame-blast"
+    },
+    "flight": {
+      "label": "Flight",
+      "description": "Flight Tokens Seraph Positive Status Effect Stack limit 3 Roll 2 to dodge or make undefendable A player with this token may spend it at any time during the Roll Phase Once spent roll 2 If a 6 was rolled Activate this token If Activated during the Offensive Roll Phase this player’s Attack becomes undefendable If Activated during the Defensive Roll Phase ignore all incoming damage Henchmen and Bosses will spend 1 Fl...",
+      "url": "https://dice-throne.rulepop.com/#token/flight"
+    },
+    "focus_fire": {
+      "label": "Focus Fire",
+      "description": "Focus Fire Tokens Cyclops Negative Status Effect Stack limit 2 +1 incoming Attack dmg When a player with this token is Attacked by an opponent the Attacker increases their damage by Attack Modifier Persistent",
+      "url": "https://dice-throne.rulepop.com/#token/focus-fire"
+    },
+    "force_field": {
+      "label": "Force Field",
+      "description": "Force Field Tokens Jean Grey Positive Status Effect Stack limit 1 Prevent incoming dmg Remove this token and one other Positive Status Effect on your Hero Board then choose a player to prevent incoming damage rounded up",
+      "url": "https://dice-throne.rulepop.com/#token/force-field"
+    },
+    "gift": {
+      "label": "Gift",
+      "description": "Gift Tokens Krampus Unique Status Effect Stack limit 3 Spend to gain a Reject During your Main Phase you may spend this token to draw a card from the Reject deck and put it into play This token may not be transferred by any means but can be removed",
+      "url": "https://dice-throne.rulepop.com/#token/gift"
+    },
+    "glide": {
+      "label": "Glide",
+      "description": "Glide Tokens Iceman Unique Status Effect Stack limit 1 Activate a second ability during your turn If your Offensive Roll Phase resulted in an ability that has a Glide Path you may spend this token at the conclusion of your opponent’s Defensive Roll Phase If spent follow the Glide Path to immediately activate an additional Offensive Ability targeting the same opponent without needing to satisfy the activation requi...",
+      "url": "https://dice-throne.rulepop.com/#token/glide"
+    },
+    "grim_pursuit": {
+      "label": "Grim Pursuit",
+      "description": "Grim Pursuit Tokens Headless Horseman Positive Status Effect Stack limit 3 Increase Attack dmg or gain Roll Attempt A player with this token may spend it to activate one of the following effects Perform an additional Roll Attempt during your Offensive Roll Phase After Attacking roll 5 add dmg Attack Modifier Each effect may only be activated once per turn",
+      "url": "https://dice-throne.rulepop.com/#token/grim-pursuit"
+    },
+    "guard_break": {
+      "label": "Guard Break",
+      "description": "Guard Break Tokens Thor Positive Status Effect Stack limit 2 Attack becomes undefendable on 4–5 If a player concludes their Offensive Roll Phase with an Attack they may spend this token and roll 1 If the outcome is 4–5 the Attack becomes undefendable",
+      "url": "https://dice-throne.rulepop.com/#token/guard-break"
+    },
+    "haunted_head": {
+      "label": "Haunted Head",
+      "description": "Haunted Head Tokens Headless Horseman Companion Use your Pumpkin Head to frighten an opponent At the conclusion of your turn if an opponent has the Haunted Head gain Dreadful Terrorize an opponent You may Terrorize an opponent during your Upkeep Phase when you have at least four Dreadful tokens reference your Passive Ability Headless Mayhem When an opponent is Terrorized Remove four Dreadful tokens Move the Haunte...",
+      "url": "https://dice-throne.rulepop.com/#token/haunted-head"
+    },
+    "heal_bot": {
+      "label": "Heal Bot",
+      "description": "Heal Bot Tokens Artificer Companion Activation limit 2 You may Activate this Bot up to two times after being Attacked with at least dmg Upon activation roll 1 On Heal On or Heal",
+      "url": "https://dice-throne.rulepop.com/#token/heal-bot"
+    },
+    "hex": {
+      "label": "Hex",
+      "description": "Hex Tokens Unique Status Effect Stack limit 1 6’s are considered blank A player afflicted with this token must treat all of their die faces with a 6 as if those faces are completely blank instead At the conclusion of their turn remove this token This token may not be transferred by any means but can be removed",
+      "url": "https://dice-throne.rulepop.com/#token/hex"
+    },
+    "holy_presence": {
+      "label": "Holy Presence",
+      "description": "Holy Presence Tokens Seraph Unique Status Effect Stack limit 2 Deal dmg to all opponents During their Upkeep Phase a player with this token deals dmg to all opponents This token may not be transferred by any means but can be removed",
+      "url": "https://dice-throne.rulepop.com/#token/holy-presence"
+    },
+    "honor": {
+      "label": "Honor",
+      "description": "Honor Tokens Samurai Positive Status Effect Stack limit 2 Spend to increase Attack dmg Spend to increase your Attack dmg by or spend 2 Honor to increase your Attack dmg by Attack Modifier",
+      "url": "https://dice-throne.rulepop.com/#token/honor"
+    },
+    "ice_shard": {
+      "label": "Ice Shard",
+      "description": "Ice Shard Tokens Iceman Positive Status Effect Stack limit 5 Boost abilities or spend to gain Glide You may spend 5 Ice Shards at any time to gain Glide",
+      "url": "https://dice-throne.rulepop.com/#token/ice-shard"
+    },
+    "illusion": {
+      "label": "Illusion",
+      "description": "Illusion Tokens Loki Unique Status Effect Stack limit 2 Attempt to find Loki among his Illusions Begin the game with your 3 Illusion Cards set aside A player with this token may spend it when being Attacked If spent Present the 3 Illusion Cards to your opponent face-down in any order You may suggest which card they should select The Attacker chooses any card Flip over the chosen card and resolve the text This toke...",
+      "url": "https://dice-throne.rulepop.com/#token/illusion"
+    },
+    "infiltration": {
+      "label": "Infiltration",
+      "description": "Infiltration Tokens Psylocke Positive Status Effect Stack limit 2 Alter a player’s defense die A player with this token may spend it and then choose a die rolled by any player including themselves during their Defensive Roll Attempt The chosen die must be re-rolled",
+      "url": "https://dice-throne.rulepop.com/#token/infiltration"
+    },
+    "influence": {
+      "label": "Influence",
+      "description": "Influence Tokens Rogue Negative Status Effect Stack limit 3 Roll 1–3 to lose Roll Attempts A player afflicted with these tokens must roll 1 at the start of their Offensive Roll Phase per token For every 1–3 rolled they get one fewer Roll Attempt Then remove all of these tokens",
+      "url": "https://dice-throne.rulepop.com/#token/influence"
+    },
+    "invisibility": {
+      "label": "Invisibility",
+      "description": "Invisibility Tokens Spider-Man Unique Status Effect Stack limit 1 Roll defense against an undefendable Attack When a player with this token is Attacked with an undefendable Attack they may choose to spend this token to activate a Defensive Ability This token may not be transferred by any means but can be removed",
+      "url": "https://dice-throne.rulepop.com/#token/invisibility"
+    },
+    "ionic_energy_1": {
+      "label": "Ionic Energy",
+      "description": "Ionic Energy Tokens Rogue Positive Status Effect Stack limit 4 Boosts dmg A player with this token may choose to spend it to add the indicated number of damage to their Attack You may only spend up to 2 tokens per turn Alternatively pay to spend up to 4 tokens this turn Attack Modifier",
+      "url": "https://dice-throne.rulepop.com/#token/ionic-energy"
+    },
+    "ionic_energy_2": {
+      "label": "Ionic Energy",
+      "description": "Ionic Energy Tokens Rogue Positive Status Effect Stack limit 4 Boosts dmg A player with this token may choose to spend it to add the indicated number of damage to their Attack You may only spend up to 2 tokens per turn Alternatively pay to spend up to 4 tokens this turn Attack Modifier",
+      "url": "https://dice-throne.rulepop.com/#token/ionic-energy"
+    },
+    "kinetic_energy": {
+      "label": "Kinetic Energy",
+      "description": "Kinetic Energy Tokens Black Panther Positive Status Effect Stack limit 8 Boosts damage burst at Stack Limit For every 2 Kinetic Energy increase damage from your Attacks by Attack Modifier Upon reaching Kinetic Energy Stack Limit immediately remove all Kinetic Energy tokens Then gain draw and deal to a chosen opponent as an isolated source of undefendable dmg",
+      "url": "https://dice-throne.rulepop.com/#token/kinetic-energy"
+    },
+    "knockdown": {
+      "label": "Knockdown",
+      "description": "Knockdown Tokens Gunslinger Monk Pyromancer Negative Status Effect Stack limit 1 Spend or skip Offensive Roll Phase To remove this token a player afflicted with it must spend before the start of their Offensive Roll Phase If the player does not they must skip their Offensive Roll Phase and then remove this token Like other status effects that affect Henchmen and Bosses are immune to this status effect token becaus...",
+      "url": "https://dice-throne.rulepop.com/#token/knockdown"
+    },
+    "life_siphon": {
+      "label": "Life Siphon",
+      "description": "Life Siphon Tokens Unique Status Effect Stack limit 2 If your Offensive Roll Phase results in an Attack Steal 1 Health This token may not be transferred by any means but can be removed Attack Modifier Persistent",
+      "url": "https://dice-throne.rulepop.com/#token/life-siphon"
+    },
+    "manifest_die": {
+      "label": "Manifest Die",
+      "description": "Manifest Die Tokens Psylocke Special Die This special colored die can be used to help you activate Offensive Abilities or boost your Attack dmg counts as an Attack Modifier Reference your Passive Ability Manifest for additional instructions The die cannot be altered in any way except by a card or ability that specifically mentions Manifest die However when it is swapped with one of your other dice to activate an a...",
+      "url": "https://dice-throne.rulepop.com/#token/manifest-die"
+    },
+    "mesmerize": {
+      "label": "Mesmerize",
+      "description": "Mesmerize Tokens Vampire Lord Positive Status Effect Stack limit 1 Force an opponent to re-roll a die A player with this token may spend it and roll 1 On 5–6 you may force the opponent to re-roll any 1 die",
+      "url": "https://dice-throne.rulepop.com/#token/mesmerize"
+    },
+    "mjolnir": {
+      "label": "Mjölnir",
+      "description": "Mjölnir Tokens Thor Companion Throw or Retrieve to gain bonuses Begin the game with Mjölnir on your Hero Board You may Throw or Retrieve Mjölnir at any time by discarding a card If an ability tells you to Throw or Retrieve it you do not need to discard a card When you Throw Mjölnir place it on a chosen opponent and deal as an isolated source of undefendable dmg When you Retrieve Mjölnir place it back on your Hero...",
+      "url": "https://dice-throne.rulepop.com/#token/mjolnir"
+    },
+    "molecular_acceleration": {
+      "label": "Molecular Acceleration",
+      "description": "Molecular Acceleration Tokens Gambit Unique Status Effect Stack limit Varied Accelerate Ace Cards Used to keep track of filled charge slots on Ace Cards This token may not be transferred or removed by any means except High Stakes or when an Ace Card Explodes",
+      "url": "https://dice-throne.rulepop.com/#token/molecular-acceleration"
+    },
+    "moon_shard": {
+      "label": "Moon Shard",
+      "description": "Moon Shard Tokens Pale Lady Unique Status Effect Stack limit 3 These tokens have effects documented on both sides of the Hero Board These token may not be removed or transferred by any means except as a result of this Hero’s abilities cards",
+      "url": "https://dice-throne.rulepop.com/#token/moon-shard"
+    },
+    "nanite": {
+      "label": "Nanite",
+      "description": "Nanite Tokens Artificer Negative Status Effect Stack limit 3 Deals dmg based on number of Nanites When Detonated remove all tokens and deal dmg based on the number of Nanites on each player 1 Nanite dmg 2 Nanites dmg 3 Nanites dmg During Upkeep Phase a player rolls 1 per Nanite they are afflicted with on 6 remove this token",
+      "url": "https://dice-throne.rulepop.com/#token/nanite"
+    },
+    "nano_bot": {
+      "label": "Nanobot",
+      "description": "Nanobot Tokens Artificer Companion Activation limit 1 You may Activate this Bot during your Upkeep Phase Upon activation Detonate all Nanites",
+      "url": "https://dice-throne.rulepop.com/#token/nanobot"
+    },
+    "nevermore": {
+      "label": "Nevermore",
+      "description": "Nevermore Tokens Raveness Companion Nevermore joins the Raveness in battle as an instrument of chaos When Nevermore is Activated the Raveness may choose one Move Nevermore to a chosen player Absorb Vitality Absorb Vitality May only be chosen while Nevermore is on an opponent For each instance of Absorbing increase Nevermore’s dial by 1 max 3 Then that opponent receives as an isolated source of undefendable dmg Whe...",
+      "url": "https://dice-throne.rulepop.com/#token/nevermore"
+    },
+    "ninjutsu": {
+      "label": "Ninjutsu",
+      "description": "Ninjutsu Tokens Ninja Positive Status Effect Stack limit 3 Spend roll to modify your Attack After Attacking a player with this token may spend it and roll 1 On 1–3 add dmg On 4–5 add dmg On 6 choose either to add dmg inflict Delayed Poison or make your Attack undefendable Attack Modifier",
+      "url": "https://dice-throne.rulepop.com/#token/ninjutsu"
+    },
+    "nyras_bond": {
+      "label": "Nyra’s Bond",
+      "description": "Nyra’s Bond Tokens Huntress Positive Status Effect Stack limit 1 Distribute damage received between Huntress Nyra If the Huntress is Attacked while Nyra is Active she may spend this token If spent any damage received as a result of your opponent’s Attack may be distributed freely between the Huntress and Nyra Alternatively this token may be spent at anytime to Heal Nyra",
+      "url": "https://dice-throne.rulepop.com/#token/nyras-bond"
+    },
+    "onomatopoea": {
+      "label": "Onomatopoeia",
+      "description": "Onomatopoeia Tokens Deadpool Unique Status Effect Stack limit 2 Yeah I can’t say it either During any Roll Phase you may spend this token to change one of your dice to a or but only if you say a cool or funny onomatopoeia while doing so This token may not be transferred by any means but can be removed Say On oh Mot Oh Pee A I just made you say Pee I win Spend this bad boy and make a cool sound with your mouth hole...",
+      "url": "https://dice-throne.rulepop.com/#token/onomatopoeia"
+    },
+    "paralyze": {
+      "label": "Paralyze",
+      "description": "Paralyze Tokens Psylocke Negative Status Effect Stack limit 1 Prevent opponent from gaining/inflicting status effects A player afflicted with this token cannot gain or inflict any status effects associated with any of their Offensive Abilities all other effects of the ability still apply When a player with this token concludes their Roll Phase remove it",
+      "url": "https://dice-throne.rulepop.com/#token/paralyze"
+    },
+    "parasite": {
+      "label": "Parasite",
+      "description": "Parasite Tokens Negative Status Effect Stack limit 1 During their Upkeep Phase if a player inflicted with this token has a Positive Status Effect they receive dmg Additionally if they spend a Positive Status Effect to successfully prevent or avoid dmg remove Parasite and they receive as an isolated source of undefendable dmg",
+      "url": "https://dice-throne.rulepop.com/#token/parasite"
+    },
+    "parlay": {
+      "label": "Parlay",
+      "description": "Parlay Tokens Cursed Pirate Negative Status Effect Stack limit 1 Deal no dmg during Offensive Roll Phase A player afflicted with Parlay may not deal any damage as a result of their Offensive Roll Phase although other effects may still apply At the conclusion of the Roll Phase remove this token",
+      "url": "https://dice-throne.rulepop.com/#token/parlay"
+    },
+    "phoenix_burn": {
+      "label": "Phoenix Burn",
+      "description": "Phoenix Burn Tokens Jean Grey Negative Status Effect Stack limit 1 Receive dmg in Upkeep Phase Roll 1 on 5–6 remove token A player afflicted with this token is dealt dmg during their Upkeep Phase Then roll 1 on 5–6 remove this token",
+      "url": "https://dice-throne.rulepop.com/#token/phoenix-burn"
+    },
+    "poison": {
+      "label": "Poison",
+      "description": "Poison Tokens Alchemist Shadow Thief Negative Status Effect Stack limit 3 Receive dmg in Upkeep Phase A player afflicted with this token is dealt dmg per Poison token during the Upkeep Phase of their turn Persistent",
+      "url": "https://dice-throne.rulepop.com/#token/poison"
+    },
+    "powder_keg": {
+      "label": "Powder Keg",
+      "description": "Powder Keg Tokens Cursed Pirate Negative Status Effect Stack limit 1 Roll 1 in Upkeep Phase On 1–2 receive dmg on 6 pass it to anyone A player afflicted with this token must roll 1 during their Upkeep Phase On 1–2 the Keg blows up On 3–5 nothing happens On 6 the player afflicted with Powder Keg may transfer the token to a chosen player Additionally if a player becomes inflicted with Powder Keg while already inflic...",
+      "url": "https://dice-throne.rulepop.com/#token/powder-keg"
+    },
+    "premonition": {
+      "label": "Premonition",
+      "description": "Premonition Tokens Doctor Strange Positive Status Effect Stack limit 3 Draw more cards during Income Phase A player with these tokens may spend them once per turn during their Income Phase to activate one of the following effects 1 token draw instead of 3 tokens draw instead of When activated one of the drawn cards must be placed on either the top or bottom of the deck",
+      "url": "https://dice-throne.rulepop.com/#token/premonition"
+    },
+    "prey": {
+      "label": "Prey",
+      "description": "Prey Tokens Pale Lady Negative Status Effect Stack limit 2 Add or dmg when Attacking When a player afflicted with this token is Attacked by an opponent the Attacker may roll 1 On 1 remove this token On 2–5 the Attacker increased their dmg by On 6 the Attacker increased their dmg by Attack Modifier",
+      "url": "https://dice-throne.rulepop.com/#token/prey"
+    },
+    "probability_manipulation": {
+      "label": "Probability Manipulation",
+      "description": "Probability Manipulation Tokens Scarlet Witch Positive Status Effect Stack limit 2 Tip an even number up or down on your dice Spend to change the value of any of your dice displaying an even number 2 4 6 up or down by a value of 1 a value of 6 cannot be increased",
+      "url": "https://dice-throne.rulepop.com/#token/probability-manipulation"
+    },
+    "protect": {
+      "label": "Protect",
+      "description": "Protect Tokens Paladin Tactician Positive Status Effect Stack limit 1 Prevent incoming damage A player with this token may spend it at any time to prevent incoming damage rounded up",
+      "url": "https://dice-throne.rulepop.com/#token/protect"
+    },
+    "radiance": {
+      "label": "Radiance",
+      "description": "Radiance Tokens Captain Marvel Positive Status Effect Stack limit 2 Change a die to a 6 during defense A player with this token may spend it to change the value of any die rolled as a part of the Roll Attempt during their Defensive Roll Phase to a 6",
+      "url": "https://dice-throne.rulepop.com/#token/radiance"
+    },
+    "rage": {
+      "label": "Rage",
+      "description": "Rage Tokens Wolverine Positive Status Effect Stack limit 3 Spend to add dmg or draw A player with this token may Spend 1 and discard to add dmg to their Attack Attack Modifier Spend 3 to draw",
+      "url": "https://dice-throne.rulepop.com/#token/rage"
+    },
+    "reality_warp": {
+      "label": "Reality Warp",
+      "description": "Reality Warp Tokens Scarlet Witch Negative Status Effect Stack limit 1 Force your opponent to use one of your dice If a player is inflicted with this token when they begin their Offensive Roll Phase they must remove it and use one of Scarlet Witch’s dice in place of one of their own until the end of the Offensive Roll Phase",
+      "url": "https://dice-throne.rulepop.com/#token/reality-warp"
+    },
+    "reload": {
+      "label": "Reload",
+      "description": "Reload Tokens Gunslinger Positive Status Effect Stack limit 2 Spend to add of 1 to your Attack dmg After Attacking a player with this token may spend it and roll 1 to add the value as dmg rounded up Attack Modifier",
+      "url": "https://dice-throne.rulepop.com/#token/reload"
+    },
+    "resurrect": {
+      "label": "Resurrect",
+      "description": "Resurrect Tokens Necromancer Unique Status Effect Stack limit 1 Instead of being defeated become a lifeless husk of your former self The next time a player or team with this token would have their health reduced to instead remove this token and set their health to That player or team can no longer gain or spend Additionally if that player or team has any cards they must discard them all and can no longer draw card...",
+      "url": "https://dice-throne.rulepop.com/#token/resurrect"
+    },
+    "retribution": {
+      "label": "Retribution",
+      "description": "Retribution Tokens Paladin Positive Status Effect Stack limit 1 Spend when Attacked to deal dmg back This token may be spent after being Attacked as a result of an opponent’s Offensive Roll Phase to deal half of the incoming dmg rounded up back to the Attacker",
+      "url": "https://dice-throne.rulepop.com/#token/retribution"
+    },
+    "rps": {
+      "label": "RPS",
+      "description": "RPS Tokens Deadpool Positive Status Effect Stack limit 1 Rock Paper Scissors for fun and benefits A player with this token may spend it when Attacking or when being Attacked Once spent choose an opponent to play Rock Paper Scissors against If you win gain the benefit listed below If you tie play again While being Attacked Prevent incoming dmg While Attacking Add dmg If your Shoot card is Active add dmg instead If...",
+      "url": "https://dice-throne.rulepop.com/#token/rps"
+    },
+    "sapling_spirit": {
+      "label": "Sapling Spirit",
+      "description": "Sapling Spirit Tokens Treant Companion Stack limit 2 Spend Sapling to Heal and gain Spend Sapling and to draw",
+      "url": "https://dice-throne.rulepop.com/#token/sapling-spirit"
+    },
+    "seedling_spirit": {
+      "label": "Seedling Spirit",
+      "description": "Seedling Spirit Tokens Treant Companion Stack limit 3 Spend Seedling to re-roll 1 of your dice",
+      "url": "https://dice-throne.rulepop.com/#token/seedling-spirit"
+    },
+    "shadows": {
+      "label": "Shadows",
+      "description": "Shadows Tokens Shadow Thief Positive Status Effect Stack limit 1 A player with this token avoids damage When a player with this token is damaged as a result of an opponent’s Offensive Roll Phase no damage is received and no defense is made although the Offensive Ability still succeeds other effects may apply Remove this token after the affected player starts concludes a single turn while under its effects",
+      "url": "https://dice-throne.rulepop.com/#token/shadows"
+    },
+    "shame": {
+      "label": "Shame",
+      "description": "Shame Tokens Samurai Negative Status Effect Stack limit 2 Reduces Attack dmg by When a player with a Shame token would deal normal or undefendable damage as a result of an Attack remove this token and reduce that dmg by per Shame token removed Attack Modifier",
+      "url": "https://dice-throne.rulepop.com/#token/shame"
+    },
+    "shock_bot": {
+      "label": "Shock Bot",
+      "description": "Shock Bot Tokens Artificer Companion Activation limit 1 If your Offensive Roll Phase results in an Attack you may Activate this Bot Upon activation increase that dmg by This Bot may never be activated twice in one turn",
+      "url": "https://dice-throne.rulepop.com/#token/shock-bot"
+    },
+    "silence": {
+      "label": "Silence",
+      "description": "Silence Tokens Unique Status Effect Stack limit 1 A player afflicted with this token may not Activate their Small Straight or Large Straight abilities At the conclusion of their turn remove this token",
+      "url": "https://dice-throne.rulepop.com/#token/silence"
+    },
+    "skyward": {
+      "label": "Skyward",
+      "description": "Skyward Tokens Rogue Positive Status Effect Stack limit 2 When Attacked roll to prevent/deal dmg When a player with this token is Attacked they may choose to spend it If spent you and your Attacker each roll 1 The player who spent this token may pay to re-roll their die may do this multiple times If your outcome is greater deal dmg back to the Attacker If your outcome is equal prevent incoming dmg",
+      "url": "https://dice-throne.rulepop.com/#token/skyward"
+    },
+    "smoke_bomb": {
+      "label": "Smoke Bomb",
+      "description": "Smoke Bomb Tokens Ninja Positive Status Effect Stack limit 1 Spend roll 1–3 to avoid damage When a player with this token has incoming damage from any source they may choose to spend it If spent roll 1 If the outcome is 1-3 no dmg is received although other associated effects may still apply Multiple tokens may be spent in an attempt to prevent the same source of damage",
+      "url": "https://dice-throne.rulepop.com/#token/smoke-bomb"
+    },
+    "sneak_attack": {
+      "label": "Sneak Attack",
+      "description": "Sneak Attack Tokens Shadow Thief Positive Status Effect Stack limit 1 Spend to add 1 to your Attack dmg After Attacking a player with this token may spend it and roll 1 to add the value of the die to their damage total Attack Modifier",
+      "url": "https://dice-throne.rulepop.com/#token/sneak-attack"
+    },
+    "spellbound": {
+      "label": "Spellbound",
+      "description": "Spellbound Tokens Loki Unique Status Effect Stack limit 3 An Offensive Ability cannot be rolled When inflicted place this token so that it covers the name of an opponent’s Offensive Ability cannot cover an Ultimate Ability A player with this token may not activate the Offensive Ability that is covered by this token A player who only has one Offensive Ability uncovered cannot be afflicted with this token Remove thi...",
+      "url": "https://dice-throne.rulepop.com/#token/spellbound"
+    },
+    "stun": {
+      "label": "Stun",
+      "description": "Stun Tokens Barbarian Pyromancer Negative Status Effect Stack limit 1 Perform another Offensive Roll Phase A player afflicted with this token may take no actions of any kind i.e no cards may be played no defense may be made no status effect tokens or Passive Abilities may be used etc After the Attack concludes the player who inflicted Stun removes the token and then immediately targets the same opponent with an ad...",
+      "url": "https://dice-throne.rulepop.com/#token/stun"
+    },
+    "support": {
+      "label": "Support",
+      "description": "Support Tokens Cyclops Positive Status Effect Stack limit 3 Spend these tokens for a variety of effects 1 token A chosen player gains 1 token A chosen player may re-roll 1 of their dice at any time 3 tokens A chosen player may draw",
+      "url": "https://dice-throne.rulepop.com/#token/support"
+    },
+    "synth": {
+      "label": "Synth",
+      "description": "Synth Tokens Artificer Positive Status Effect Stack limit 7 Spend during Main Phase to build a Bot 2 tokens Build a Basic Bot placing it on the Artificer 3 tokens Upgrade a Basic Bot to Advanced flip token Spend to Activate Bots 2 tokens Activate a Basic Bot 1 token Activate an Advanced Bot",
+      "url": "https://dice-throne.rulepop.com/#token/synth"
+    },
+    "tactical_advantage": {
+      "label": "Tactical Advantage",
+      "description": "Tactical Advantage Tokens Tactician Positive Status Effect Stack limit 5 A player with these tokens may spend them at any time to activate a variety of effects 1 token Gain 1 token You may re-roll 1 of your dice at any time 3 tokens Draw 3 tokens Inflict Targeted on a chosen opponent 4 tokens A chosen player gains Protect 4 tokens Transfer one status effect from any player to any player This may only be done durin...",
+      "url": "https://dice-throne.rulepop.com/#token/tactical-advantage"
+    },
+    "targeted": {
+      "label": "Targeted",
+      "description": "Targeted Tokens Moon Elf Tactician Negative Status Effect Stack limit 1 Increase incoming Attack dmg by When a player afflicted with this token is Attacked by an opponent the incoming Attack dmg is increased by Attack Modifier Persistent",
+      "url": "https://dice-throne.rulepop.com/#token/targeted"
+    },
+    "time_bomb_1": {
+      "label": "Time Bomb",
+      "description": "Time Bomb Tokens Black Widow Negative Status Effect Stack limit 2 Roll a 6 to attempt to defuse Take dmg if you run out of time When inflicting this token if you have at least 6 Ability Upgrades in play place it on the side up Otherwise place it on the side up During their Upkeep Phase a player afflicted with this token must roll 1 On 1–5 advance the Time Bomb On 6 remove the token When a Time Bomb is advanced If...",
+      "url": "https://dice-throne.rulepop.com/#token/time-bomb"
+    },
+    "time_bomb_2": {
+      "label": "Time Bomb",
+      "description": "Time Bomb Tokens Black Widow Negative Status Effect Stack limit 2 Roll a 6 to attempt to defuse Take dmg if you run out of time When inflicting this token if you have at least 6 Ability Upgrades in play place it on the side up Otherwise place it on the side up During their Upkeep Phase a player afflicted with this token must roll 1 On 1–5 advance the Time Bomb On 6 remove the token When a Time Bomb is advanced If...",
+      "url": "https://dice-throne.rulepop.com/#token/time-bomb"
+    },
+    "tornado": {
+      "label": "Tornado",
+      "description": "Tornado Tokens Storm Positive Status Effect Stack limit 4 Gain opponent’s dice for your Roll Attempts A player with this token may spend it at the start of their Offensive Roll Phase For each token spent gain an opponent’s die These dice may be included in all Roll Attempts during this Offensive Roll Phase",
+      "url": "https://dice-throne.rulepop.com/#token/tornado"
+    },
+    "vibranium_suit": {
+      "label": "Vibranium Suit",
+      "description": "Vibranium Suit Tokens Black Panther Unique Status Effect Stack limit 1 Prevent incoming damage A player with this token may spend it to prevent incoming damage This token may not be transferred by any means but can be removed",
+      "url": "https://dice-throne.rulepop.com/#token/vibranium-suit"
+    },
+    "webbed": {
+      "label": "Webbed",
+      "description": "Webbed Tokens Spider-Man Negative Status Effect Stack limit 1 Next incoming Attack is undefendable When this token is inflicted deal as an isolated source of undefendable dmg The next time a player afflicted with this token is Attacked with normal damage the damage type becomes undefendable instead and this token is immediately removed",
+      "url": "https://dice-throne.rulepop.com/#token/webbed"
+    },
+    "wellspring": {
+      "label": "Wellspring",
+      "description": "Wellspring Tokens Treant Positive Status Effect Stack limit 1 Heal of 1 during Main Phase A player with this token may spend it during their Main Phase roll 1 gain the value as Health rounded up",
+      "url": "https://dice-throne.rulepop.com/#token/wellspring"
+    },
+    "wind_shear": {
+      "label": "Wind Shear",
+      "description": "Wind Shear Tokens Storm Positive Status Effect Stack limit 1 Redirect dmg to any opponent A player with this token may spend it when being Attacked to prevent incoming dmg Then choose an opponent to receive as an isolated source of undefendable dmg",
+      "url": "https://dice-throne.rulepop.com/#token/wind-shear"
+    },
+    "wither": {
+      "label": "Wither",
+      "description": "Wither Tokens Cursed Pirate Negative Status Effect Stack limit 2 Reduce Attack dmg by per token When a player with a Wither token would deal normal or undefendable damage as a result of an Attack reduce that dmg by per Wither token Attack Modifier Persistent",
+      "url": "https://dice-throne.rulepop.com/#token/wither"
+    }
+  }
+}
